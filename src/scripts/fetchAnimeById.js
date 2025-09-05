@@ -14,18 +14,8 @@ const QUERY = `
       duration
       episodes
       episodesAired
-      airedOn {
-      year
-      month
-      day
-      date
-        }
-      releasedOn {
-      year
-      month
-      day
-      date
-        }
+      airedOn { year month day date }
+      releasedOn { year month day date }
       poster { originalUrl }
       genres { id name russian }
       studios { id name }
