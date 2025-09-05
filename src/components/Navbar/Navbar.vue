@@ -1,5 +1,5 @@
 <template>
-    <!-- <header class="header">
+    <header class="header">
         <nav class="header__nav">
             <div class="header__nav-container container">
                 <ul class="header__nav-list">
@@ -31,17 +31,17 @@
                 </div>
             </div>
         </nav>
-    </header> -->
+    </header>
 </template>
 
 <script setup>
-// import { reactive } from 'vue'
+import { reactive } from 'vue'
 
-// const links = reactive([
-//     { title: 'Релизы', url: '/catalog' },
-//     { title: 'ID Shikimori', url: '/new' },
-//     { title: 'Популярное', url: '/popular' },
-// ])
+const links = reactive([
+    { title: 'Релизы', url: '/catalog' },
+    { title: 'ID Shikimori', url: '/new' },
+    { title: 'Популярное', url: '/popular' },
+])
 
 </script>
 
