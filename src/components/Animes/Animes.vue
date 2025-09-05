@@ -1,73 +1,70 @@
 <template>
   <main class="anime">
+    <!-- HERO -->
     <section class="hero" v-if="anime">
-      <div
-        class="hero__bg"
-        :style="{ backgroundImage: `url(${anime.poster?.originalUrl || fallback})` }"
-      />
-      <div class="hero__shade"></div>
+      <div class="hero__bg" :style="{ backgroundImage: `url(${anime.poster?.originalUrl || fallback})` }" />
+      <div class="hero__veil"></div>
 
       <div class="container hero__content">
-        <img
-          class="hero__poster"
-          :src="anime.poster?.originalUrl || fallback"
-          :alt="anime.russian || anime.name"
-        />
-        <div class="hero__info">
-          <h1 class="hero__title">{{ anime.russian || anime.name }}</h1>
-          <ul class="hero__facts">
-            <li v-if="anime.score">★ {{ anime.score }}</li>
-            <li v-if="anime.status">Статус: {{ anime.status }}</li>
-            <li v-if="anime.episodes">Эпизодов: {{ anime.episodes }}</li>
-          </ul>
+        <img class="hero__poster" :src="anime.poster?.originalUrl || fallback" :alt="anime.russian || anime.name" />
+
+        <!-- общая сетка для правой колонки -->
+        <div class="hero__right">
+          <div class="hero__info glass">
+            <h1 class="hero__title">{{ anime.russian || anime.name }}</h1>
+
+            <ul class="hero__facts">
+              <li v-if="anime.score" class="pill pill--gold">★ {{ anime.score }}</li>
+              <li v-if="anime.status" class="pill">{{ statusLabel(anime.status) }}</li>
+              <li v-if="anime.kind" class="pill">{{ kindLabel(anime.kind) }}</li>
+              <li v-if="anime.episodes" class="pill">Эпизодов: {{ anime.episodes }}</li>
+            </ul>
+
+            <div class="hero__meta">
+              <span v-if="anime.airedOn?.date">Премьера: {{ fmtDate(anime.airedOn.date) }}</span>
+              <span v-if="anime.releasedOn?.date">Завершено: {{ fmtDate(anime.releasedOn.date) }}</span>
+              <span v-if="anime.duration">Эпизод: ~{{ anime.duration }} мин.</span>
+            </div>
+          </div>
+
+          <article class="panel panel--desc">
+            <h2 class="panel__title">Описание</h2>
+            <p class="desc">{{ anime.description || 'Описание недоступно.' }}</p>
+          </article>
+
+          <article class="panel panel--genres">
+            <h2 class="panel__title">Жанры</h2>
+            <div v-if="anime.genres?.length" class="chips">
+              <span v-for="g in anime.genres" :key="g.id" class="chip">
+                {{ g.russian || g.name }}
+              </span>
+            </div>
+            <p v-else>—</p>
+          </article>
+
+          <article class="panel panel--studios">
+            <h2 class="panel__title">Студии</h2>
+            <div v-if="anime.studios?.length" class="chips">
+              <span v-for="s in anime.studios" :key="s.id" class="chip">{{ s.name }}</span>
+            </div>
+            <p v-else>—</p>
+          </article>
         </div>
       </div>
     </section>
 
-    <section class="container player" v-if="anime">
-      <div class="player__wrapper">
-        <iframe
-          src="https://www.youtube.com/embed/5PS0bAhbgP0"
-          title="Anime trailer"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
-      </div>
+    <!-- СООБЩЕНИЯ/ЛОАДЕР -->
+    <section class="container state">
+      <div v-if="loading" class="loader">Загрузка…</div>
+      <div v-else-if="error" class="error">{{ error }}</div>
     </section>
 
-    <section class="container body">
-      <div v-if="loading">Загрузка…</div>
-      <div v-else-if="error" class="error">{{ error }}</div>
-
-      <div v-else-if="anime" class="grid">
-        <article class="panel panel--full">
-          <h2 class="panel__title">Описание</h2>
-          <p class="desc">{{ anime.description || 'Описание недоступно.' }}</p>
-        </article>
-
-        <article class="panel">
-          <h2 class="panel__title">Информация</h2>
-          <ul class="info">
-            <li v-if="anime.kind">Тип: {{ anime.kind }}</li>
-            <li v-if="anime.rating">Рейтинг: {{ anime.rating }}</li>
-            <li v-if="anime.airedOn">Премьера: {{ anime.airedOn }}</li>
-            <li v-if="anime.releasedOn">Завершено: {{ anime.releasedOn }}</li>
-            <li v-if="anime.duration">Длительность эпизода: {{ anime.duration }} мин.</li>
-            <li v-if="anime.episodesAired">Вышло эпизодов: {{ anime.episodesAired }}</li>
-          </ul>
-        </article>
-
-        <article class="panel">
-          <h2 class="panel__title">Жанры</h2>
-          <p v-if="anime.genres?.length">{{ anime.genres.map(g => g.russian || g.name).join(', ') }}</p>
-          <p v-else>—</p>
-        </article>
-
-        <article class="panel">
-          <h2 class="panel__title">Студии</h2>
-          <p v-if="anime.studios?.length">{{ anime.studios.map(s => s.name).join(', ') }}</p>
-          <p v-else>—</p>
-        </article>
+    <!-- ПЛЕЕР -->
+    <section class="container player" v-if="anime && !loading">
+      <div class="player__wrapper">
+        <iframe src="https://www.youtube.com/embed/5PS0bAhbgP0" title="Anime trailer"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen></iframe>
       </div>
     </section>
   </main>
@@ -99,69 +96,256 @@ async function load(id) {
 
 watch(
   () => route.params.id,
-  id => {
-    if (id != null) load(Number(id))
-  },
+  id => { if (id != null) load(Number(id)) },
   { immediate: true }
 )
+
+// Вспомогательные форматтеры (без зависимостей)
+function fmtDate(isoLike) {
+  // ожидаем 'YYYY-MM-DD' или ISO
+  const d = new Date(isoLike)
+  if (String(d) === 'Invalid Date') return isoLike
+  return d.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+function statusLabel(s) {
+  const map = { anons: 'Анонс', ongoing: 'Онгоинг', released: 'Вышло' }
+  return map[s] || s
+}
+function kindLabel(k) {
+  const map = { tv: 'TV', movie: 'Фильм', ova: 'OVA', ona: 'ONA', special: 'Спешл' }
+  return map[k] || k
+}
 </script>
 
 <style scoped>
-.anime { margin-top: 100px; }
-.container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
-.error { color: #ff6b6b; margin-top: 12px; }
+:root {
+  --c-bg: #0b1220;
+  --c-surface: #111b27;
+  --c-border: rgba(255, 255, 255, .08);
+  --c-text: #e7ecf3;
+  --c-dim: #a9b3c3;
+  --c-accent: #7aa2ff;
+  --c-gold: #ffcf66;
+}
 
-/* Hero */
-.hero { position: relative; height: min(60vh, 520px); min-height: 320px; }
+/* Общая сетка */
+.anime {
+  margin-top: 96px;
+  color: var(--c-text);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.error {
+  color: #ff6b6b;
+  margin: 12px 0;
+}
+
+.state {
+  min-height: 48px;
+}
+
+/* HERO */
+.hero {
+  position: relative;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  padding: 28px 0 32px;
+  overflow: hidden;
+}
+
 .hero__bg {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center;
+  position: absolute;
+  inset: 0;
+  /* если хочешь видеть фоновую картинку полностью по ширине, раскомментируй: */
+  /* background-size: 100% auto; background-position: top center; */
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.02);
+  filter: saturate(1.05) contrast(1.02);
 }
-.hero__shade {
-  position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.65) 70%, rgba(0,0,0,.85) 100%);
+
+.hero__veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 15, 25, .2) 0%, rgba(10, 15, 25, .6) 70%, rgba(10, 15, 25, .9) 100%);
+  z-index: 1;
 }
+
 .hero__content {
-  position: relative; z-index: 1;
-  height: 100%;
-  display: flex; align-items: flex-end; gap: 24px;
-  padding-bottom: 24px;
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0,0,0,.5);
+  position: relative; z-index: 2;
+  display: grid;
+  grid-template-columns: 200px 1fr; /* постер + правая колонка */
+  gap: 32px;
+  width: 100%;
+  padding: 0 16px;
 }
+
 .hero__poster {
-  width: 180px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  width: 200px; aspect-ratio: 2/3; object-fit: cover;
+  border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
 }
-.hero__info { flex: 1; }
+
+.hero__right {
+  grid-column: 2;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.hero__info { grid-column: 1 / -1; }
+.panel--desc { grid-column: 1 / -1; }
+.panel--genres { grid-column: 1 / 10; }  /* 9/12 ≈ 75% */
+.panel--studios { grid-column: 10 / -1; } /* 3/12 ≈ 25% */
+
+.glass {
+  background: rgba(17, 27, 39, .55);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  backdrop-filter: blur(6px);
+}
+
 .hero__title {
-  margin: 0 0 8px;
+  margin: 0;
   font-weight: 800;
-  font-size: clamp(20px, 4vw, 36px);
+  font-size: clamp(22px, 4vw, 36px);
 }
+
 .hero__facts {
-  list-style: none; padding: 0; margin: 0;
-  display: flex; gap: 16px; opacity: .9;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, .08);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+}
+
+.pill--gold {
+  background: rgba(255, 207, 102, .1);
+  border-color: rgba(255, 207, 102, .35);
+  color: var(--c-gold);
+}
+
+.hero__meta {
+  display: flex;
+  gap: 16px;
+  color: var(--c-dim);
+  font-size: 13px;
   flex-wrap: wrap;
 }
-@media (max-width: 600px) {
-  .hero__content { flex-direction: column; align-items: center; text-align: center; }
-  .hero__poster { width: 140px; }
+
+@media (max-width: 780px) {
+  .hero__content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    justify-items: center;
+  }
+
+  .hero__right {
+    grid-column: 1;
+    width: 100%;
+  }
+
+  .glass {
+    padding: 14px;
+  }
+}
+
+/* BODY */
+.body {
+  padding: 28px 0 44px;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 900px) {
+  .hero__content { grid-template-columns: 1fr; gap: 20px; justify-items: center; }
+  .hero__poster { width: 160px; grid-row: auto; }
+  .hero__right { grid-column: 1; grid-template-columns: 1fr; }
+  .panel--genres, .panel--studios, .panel--desc, .hero__info { grid-column: 1 / -1; }
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .panel--full {
+    grid-column: 1 / -1;
+  }
+}
+
+.panel {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+
+.panel__title {
+  margin: 0 0 12px;
+  font-size: 18px;
+  letter-spacing: .2px;
+}
+
+.desc {
+  white-space: pre-line;
+  line-height: 1.7;
+  color: var(--c-text);
+}
+
+/* Chips */
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(122, 162, 255, .12);
+  color: var(--c-text);
+  border: 1px solid rgba(122, 162, 255, .28);
 }
 
 /* Player */
-.player { padding: 24px 0; }
+.player {
+  padding: 8px 0 40px;
+}
+
 .player__wrapper {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
   background: #000;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
+  border: 1px solid var(--c-border);
 }
+
 .player__wrapper iframe {
   position: absolute;
   inset: 0;
@@ -170,26 +354,14 @@ watch(
   border: 0;
 }
 
-/* Info */
-.info { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
-
-/* Body */
-.body { padding: 24px 0 40px; }
-.grid {
-  display: grid; gap: 16px;
-  grid-template-columns: 1fr;
+/* Loader */
+.loader {
+  width: 100%;
+  padding: 14px;
+  text-align: center;
+  color: var(--c-dim);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px dashed var(--c-border);
 }
-@media (min-width: 900px) {
-  .grid { grid-template-columns: 2fr 1fr; }
-}
-.panel {
-  background: #111b27;
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.2);
-}
-.panel--full { grid-column: 1 / -1; }
-.panel__title { margin: 0 0 12px; font-size: 18px; }
-.desc { white-space: pre-line; line-height: 1.6; }
 </style>
