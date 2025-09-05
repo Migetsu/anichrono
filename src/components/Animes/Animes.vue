@@ -89,7 +89,7 @@ watch(
 </script>
 
 <style scoped>
-.anime { margin-top: 100ox; }
+.anime { margin-top: 100px; }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 .error { color: #ff6b6b; margin-top: 12px; }
 
