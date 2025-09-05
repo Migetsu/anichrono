@@ -1,3 +1,9 @@
 {
-    "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "rewrites": [
+    {
+      "source": "/shiki/:path*",
+      "destination": "https://shikimori.one/:path*"
+    },
+    { "source": "/(.*)", "destination": "/" }
+  ]
 }
