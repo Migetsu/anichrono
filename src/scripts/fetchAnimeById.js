@@ -2,7 +2,7 @@ import { shikiGQL } from './shikiClient';
 
 const QUERY = `
   query ($ids: [ID!]!) {
-    animes(ids: $ids) {
+    animes(search: "bakemono") {
       id
       name
       russian
@@ -14,8 +14,18 @@ const QUERY = `
       duration
       episodes
       episodesAired
-      airedOn
-      releasedOn
+      airedOn {
+      year
+      month
+      day
+      date
+        }
+      releasedOn {
+      year
+      month
+      day
+      date
+        }
       poster { originalUrl }
       genres { id name russian }
       studios { id name }
