@@ -8,12 +8,19 @@
       <div class="hero__shade"></div>
 
       <div class="container hero__content">
-        <h1 class="title">{{ anime.russian || anime.name }}</h1>
-        <ul class="facts">
-          <li v-if="anime.score">★ {{ anime.score }}</li>
-          <li v-if="anime.status">Статус: {{ anime.status }}</li>
-          <li v-if="anime.episodes">Эпизодов: {{ anime.episodes }}</li>
-        </ul>
+        <img
+          class="hero__poster"
+          :src="anime.poster?.originalUrl || fallback"
+          :alt="anime.russian || anime.name"
+        />
+        <div class="hero__info">
+          <h1 class="hero__title">{{ anime.russian || anime.name }}</h1>
+          <ul class="hero__facts">
+            <li v-if="anime.score">★ {{ anime.score }}</li>
+            <li v-if="anime.status">Статус: {{ anime.status }}</li>
+            <li v-if="anime.episodes">Эпизодов: {{ anime.episodes }}</li>
+          </ul>
+        </div>
       </div>
     </section>
 
@@ -33,13 +40,13 @@
       <div v-else-if="error" class="error">{{ error }}</div>
 
       <div v-else-if="anime" class="grid">
-        <article class="panel">
-          <h2>Описание</h2>
+        <article class="panel panel--full">
+          <h2 class="panel__title">Описание</h2>
           <p class="desc">{{ anime.description || 'Описание недоступно.' }}</p>
         </article>
 
         <article class="panel">
-          <h2>Информация</h2>
+          <h2 class="panel__title">Информация</h2>
           <ul class="info">
             <li v-if="anime.kind">Тип: {{ anime.kind }}</li>
             <li v-if="anime.rating">Рейтинг: {{ anime.rating }}</li>
@@ -51,13 +58,13 @@
         </article>
 
         <article class="panel">
-          <h2>Жанры</h2>
+          <h2 class="panel__title">Жанры</h2>
           <p v-if="anime.genres?.length">{{ anime.genres.map(g => g.russian || g.name).join(', ') }}</p>
           <p v-else>—</p>
         </article>
 
         <article class="panel">
-          <h2>Студии</h2>
+          <h2 class="panel__title">Студии</h2>
           <p v-if="anime.studios?.length">{{ anime.studios.map(s => s.name).join(', ') }}</p>
           <p v-else>—</p>
         </article>
@@ -117,13 +124,32 @@ watch(
 .hero__content {
   position: relative; z-index: 1;
   height: 100%;
-  display: grid; align-content: end;
-  padding-bottom: 20px;
+  display: flex; align-items: flex-end; gap: 24px;
+  padding-bottom: 24px;
   color: #fff;
   text-shadow: 0 2px 12px rgba(0,0,0,.5);
 }
-.title { margin: 0 0 8px; font-weight: 800; font-size: clamp(20px, 4vw, 36px); }
-.facts { list-style: none; padding: 0; margin: 0; display: flex; gap: 16px; opacity: .9; }
+.hero__poster {
+  width: 180px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+.hero__info { flex: 1; }
+.hero__title {
+  margin: 0 0 8px;
+  font-weight: 800;
+  font-size: clamp(20px, 4vw, 36px);
+}
+.hero__facts {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; gap: 16px; opacity: .9;
+  flex-wrap: wrap;
+}
+@media (max-width: 600px) {
+  .hero__content { flex-direction: column; align-items: center; text-align: center; }
+  .hero__poster { width: 140px; }
+}
 
 /* Player */
 .player { padding: 24px 0; }
@@ -157,10 +183,13 @@ watch(
   .grid { grid-template-columns: 2fr 1fr; }
 }
 .panel {
-  background: #0e1620;
+  background: #111b27;
   border: 1px solid rgba(255,255,255,.06);
   border-radius: 12px;
   padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
 }
-.desc { white-space: pre-line; }
+.panel--full { grid-column: 1 / -1; }
+.panel__title { margin: 0 0 12px; font-size: 18px; }
+.desc { white-space: pre-line; line-height: 1.6; }
 </style>
