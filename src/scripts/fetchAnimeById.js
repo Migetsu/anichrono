@@ -24,7 +24,9 @@ const QUERY = `
 `;
 
 export async function fetchAnimeById(id) {
-  const data = await shikiGQL(QUERY, { ids: [String(id)] });
+  const ids = [];
+  ids.push(String(id));
+  const data = await shikiGQL(QUERY, { ids });
   const anime = data?.animes?.[0];
   if (!anime) throw new Error('Тайтл не найден по переданному id');
   return anime;
