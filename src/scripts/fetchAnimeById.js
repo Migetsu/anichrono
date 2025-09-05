@@ -1,8 +1,8 @@
 import { shikiGQL } from './shikiClient';
 
 const QUERY = `
-  query ($id: ID!) {
-    animes(ids: [$id]) {
+  query ($ids: [Int!]!) {
+    animes(ids: $ids) {
       id
       name
       russian
@@ -24,7 +24,7 @@ const QUERY = `
 `;
 
 export async function fetchAnimeById(id) {
-  const data = await shikiGQL(QUERY, { id: Number(id) });
+  const data = await shikiGQL(QUERY, { ids: [Number(id)] });
   const anime = data?.animes?.[0];
   if (!anime) throw new Error('Тайтл не найден по переданному id');
   return anime;

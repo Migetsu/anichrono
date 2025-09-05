@@ -79,7 +79,13 @@ async function load(id) {
   }
 }
 
-watch(() => route.params.id, id => { if (id != null) load(id) }, { immediate: true })
+watch(
+  () => route.params.id,
+  id => {
+    if (id != null) load(Number(id))
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
