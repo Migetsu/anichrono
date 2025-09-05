@@ -17,6 +17,17 @@
       </div>
     </section>
 
+    <section class="container player" v-if="anime">
+      <div class="player__wrapper">
+        <iframe
+          src="https://www.youtube.com/embed/5PS0bAhbgP0"
+          title="Anime trailer"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </section>
+
     <section class="container body">
       <div v-if="loading">Загрузка…</div>
       <div v-else-if="error" class="error">{{ error }}</div>
@@ -113,6 +124,25 @@ watch(
 }
 .title { margin: 0 0 8px; font-weight: 800; font-size: clamp(20px, 4vw, 36px); }
 .facts { list-style: none; padding: 0; margin: 0; display: flex; gap: 16px; opacity: .9; }
+
+/* Player */
+.player { padding: 24px 0; }
+.player__wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.player__wrapper iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
 
 /* Info */
 .info { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
