@@ -24,7 +24,7 @@
                         </form>
                     </div>
                     <div class="header__nav-profile profile">
-                        <router-link to="/profile">
+                        <router-link to="/">
                             <font-awesome-icon :icon="['fas', 'user']" />
                         </router-link>
                     </div>
@@ -38,8 +38,8 @@
 import { reactive } from 'vue'
 
 const links = reactive([
-    { title: 'Релизы', url: '/catalog' },
-    { title: 'ID Shikimori', url: '/new' },
+    { title: 'Релизы', url: '/releases' },
+    { title: 'ID Shikimori', url: '/' },
     { title: 'Популярное', url: '/popular' },
 ])
 

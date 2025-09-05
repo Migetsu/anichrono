@@ -83,6 +83,7 @@ watch(() => route.params.id, id => { if (id != null) load(id) }, { immediate: tr
 </script>
 
 <style scoped>
+.anime { margin-top: 100ox; }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 .error { color: #ff6b6b; margin-top: 12px; }
 
