@@ -2,7 +2,7 @@ import { shikiGQL } from './shikiClient';
 
 const QUERY = `
   query ($ids: [ID!]!) {
-    animes(search: "bakemono") {
+    animes(ids: $ids) {
       id
       name
       russian
