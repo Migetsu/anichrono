@@ -28,6 +28,18 @@
         </article>
 
         <article class="panel">
+          <h2>Информация</h2>
+          <ul class="info">
+            <li v-if="anime.kind">Тип: {{ anime.kind }}</li>
+            <li v-if="anime.rating">Рейтинг: {{ anime.rating }}</li>
+            <li v-if="anime.airedOn">Премьера: {{ anime.airedOn }}</li>
+            <li v-if="anime.releasedOn">Завершено: {{ anime.releasedOn }}</li>
+            <li v-if="anime.duration">Длительность эпизода: {{ anime.duration }} мин.</li>
+            <li v-if="anime.episodesAired">Вышло эпизодов: {{ anime.episodesAired }}</li>
+          </ul>
+        </article>
+
+        <article class="panel">
           <h2>Жанры</h2>
           <p v-if="anime.genres?.length">{{ anime.genres.map(g => g.russian || g.name).join(', ') }}</p>
           <p v-else>—</p>
@@ -44,29 +56,30 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { fetchAnimeById } from '@/scripts/fetchAnimeById';
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { fetchAnimeById } from '@/scripts/fetchAnimeById'
 
-const route = useRoute();
-const anime = ref(null);
-const loading = ref(true);
-const error = ref('');
+const route = useRoute()
+const anime = ref(null)
+const loading = ref(true)
+const error = ref('')
+const fallback = '/placeholder.jpg'
 
 async function load(id) {
-  loading.value = true; error.value = ''; anime.value = null;
+  loading.value = true
+  error.value = ''
+  anime.value = null
   try {
-    const { anime: a, strategy } = await fetchAnimeById(id);
-    console.log('fetchAnimeById strategy:', strategy, 'routeId:', id);
-    anime.value = a;
+    anime.value = await fetchAnimeById(id)
   } catch (e) {
-    error.value = String(e.message || e);
+    error.value = String(e.message || e)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
-watch(() => route.params.id, (id) => { if (id != null) load(id); }, { immediate: true });
+watch(() => route.params.id, id => { if (id != null) load(id) }, { immediate: true })
 </script>
 
 <style scoped>
@@ -93,6 +106,9 @@ watch(() => route.params.id, (id) => { if (id != null) load(id); }, { immediate:
 }
 .title { margin: 0 0 8px; font-weight: 800; font-size: clamp(20px, 4vw, 36px); }
 .facts { list-style: none; padding: 0; margin: 0; display: flex; gap: 16px; opacity: .9; }
+
+/* Info */
+.info { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
 
 /* Body */
 .body { padding: 24px 0 40px; }
