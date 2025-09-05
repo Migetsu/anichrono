@@ -1,7 +1,5 @@
 @import '@/assets/fonts/fonts.scss',
-'@/components/Navbar/Navbar.scss',
-'@/components/Latest/Latest.scss',
-'@/components/Popular/Popular.scss';
+'@/components/Navbar/Navbar.scss';
 
 @mixin media($size) {
     @media(max-width: #{$size}px) {
