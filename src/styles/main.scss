@@ -1,0 +1,46 @@
+@import '@/assets/fonts/fonts.scss',
+'@/components/Navbar/Navbar.scss',
+'@/components/Latest/Latest.scss',
+'@/components/Popular/Popular.scss';
+
+@mixin media($size) {
+    @media(max-width: #{$size}px) {
+        @content
+    }
+}
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: "Montserrat";
+    font-weight: 400;
+    scroll-behavior: smooth;
+    outline: none;
+}
+
+a {
+    text-decoration: none;
+}
+
+ul {
+    list-style: none;
+}
+
+button {
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+
+body {
+    background: #081b29;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1320px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 15px;
+}
