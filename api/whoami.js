@@ -1,4 +1,5 @@
-import { loadEnv } from './utils/loadEnv.js';
+// /api/whoami.js
+import { loadEnv } from '../utils/loadEnv.js';
 loadEnv();
 
 export default async function handler(req, res) {
@@ -17,4 +18,3 @@ export default async function handler(req, res) {
     res.status(500).json({ error: String(e.message || e) });
   }
 }
-
