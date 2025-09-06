@@ -34,7 +34,11 @@
             <a v-if="!auth.isLoggedIn" href="/auth/login" class="profile__login">
               Войти
             </a>
-            <router-link v-else to="/profile" class="profile__avatar">
+            <router-link
+              v-else
+              to="/profile"
+              class="profile__avatar"
+            >
               <img :src="avatarUrl" alt="avatar" />
             </router-link>
           </div>
@@ -45,7 +49,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, onUnmounted, computed } from "vue";
+import { reactive, ref, onMounted, onUnmounted } from "vue";
 import { searchAnimes } from "@/scripts/searchAnimes";
 import { useAuthStore } from "@/stores/auth";
 
@@ -61,11 +65,6 @@ const results = ref([]);
 let scrollTimeout;
 let searchTimeout;
 const auth = useAuthStore();
-const avatarUrl = computed(() => {
-  const img = auth.user?.image?.x48 || auth.user?.avatar;
-  if (!img) return "";
-  return img.startsWith("http") ? img : `https://shikimori.one${img}`;
-});
 
 const handleScroll = () => {
   isTransparent.value = true;
