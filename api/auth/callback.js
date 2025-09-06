@@ -9,9 +9,10 @@ export default async function handler(req, res) {
   const userAgent = SHIKI_USER_AGENT || 'anichrono-app';
   const { searchParams } = new URL(req.url, `https://${req.headers.host}`);
   const code = searchParams.get('code');
-  console.log('Auth callback: code', code);
+  const state = searchParams.get('state') || '';
+  console.log('Auth callback: code', code, 'state', state);
 
-  if (!SHIKI_CLIENT_ID || !SHIKI_CLIENT_SECRET || !SHIKI_REDIRECT_URI) {
+  if (!SHIKI_CLIENT_ID || !SHIKI_CLIENT_SECRET) {
     console.error('Auth callback: missing OAuth configuration');
     res.statusCode = 500;
     res.end('Missing Shikimori OAuth configuration');
@@ -25,12 +26,24 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Determine redirect_uri used during login. Prefer explicit env variable,
+  // otherwise derive from state (origin passed from login handler).
+  const redirectUri =
+    SHIKI_REDIRECT_URI || (state ? `${state}/api/auth/callback` : '');
+
+  if (!redirectUri) {
+    console.error('Auth callback: missing redirect uri');
+    res.statusCode = 500;
+    res.end('Missing Shikimori redirect URI');
+    return;
+  }
+
   const body = new URLSearchParams({
     grant_type: 'authorization_code',
     client_id: SHIKI_CLIENT_ID,
     client_secret: SHIKI_CLIENT_SECRET,
     code,
-    redirect_uri: SHIKI_REDIRECT_URI,
+    redirect_uri: redirectUri,
   });
 
   try {
@@ -52,13 +65,14 @@ export default async function handler(req, res) {
             data.refresh_token,
           )});`
         : '';
+      const redirectTarget = state || '/';
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end(`<script>
         localStorage.setItem('shikiToken', ${JSON.stringify(
           data.access_token,
         )});
         ${refreshSnippet}
-        window.location.href = '/';
+        window.location.href = ${JSON.stringify(redirectTarget)};
       </script>`);
     } else {
       console.error('Auth callback: authentication failed', data);

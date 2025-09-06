@@ -31,7 +31,7 @@
             </ul>
           </div>
           <div class="header__nav-profile profile">
-            <a v-if="!auth.isLoggedIn" href="/auth/login" class="profile__login">
+            <a v-if="!auth.isLoggedIn" href="/api/auth/login" class="profile__login">
               Войти
             </a>
             <router-link

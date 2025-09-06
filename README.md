@@ -6,10 +6,10 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 
 ## Auth (Shikimori) — важные примечания
 
-- Redirect URI в Shikimori должен строго совпадать с тем, что передаётся из `/auth/login` через `redirect_uri`.
+- Redirect URI в Shikimori должен строго совпадать с тем, что передаётся из `/api/auth/login` через `redirect_uri`.
   - DEV (через vercel dev): `http://localhost:3000/api/auth/callback`
   - PROD: `https://<ваш-домен>/api/auth/callback`
-- Локальная разработка OAuth: используйте `vercel dev` (порт 3000). Кнопка входа в интерфейсе указывает на `/auth/login`, который через `vercel.json` переписывается на серверную функцию `/api/auth/login`.
+- Локальная разработка OAuth: используйте `vercel dev` (порт 3000). Кнопка входа в интерфейсе указывает на `/api/auth/login` (в продакшн-среде также доступен короткий путь `/auth/login` благодаря `vercel.json`).
 - Для запросов к `whoami` фронтенд стучится на `/api/whoami`.
 - Токен и refresh‑токен сохраняются в `localStorage` на странице `/api/auth/callback`. Если после логина ключ `shikiToken` не появился — проверьте Redirect URI.
 - Все обращения к API Shikimori должны содержать заголовок `User-Agent`. Значение задаётся через переменную окружения `SHIKI_USER_AGENT`.
@@ -45,9 +45,9 @@ npm run build
 
 На Vercel доступны следующие серверные функции:
 
-- `/auth/login` – перенаправляет пользователя на страницу авторизации;
-- `/auth/callback` – обрабатывает редирект OAuth и сохраняет токен в `localStorage`;
-- `/auth/logout` – очищает токен и возвращает на главную страницу.
+- `/api/auth/login` – перенаправляет пользователя на страницу авторизации;
+- `/api/auth/callback` – обрабатывает редирект OAuth и сохраняет токен в `localStorage`;
+- `/api/auth/logout` – очищает токен и возвращает на главную страницу.
 
 Авторизация доступна как в продакшн-среде Vercel, так и локально через `vercel dev`. Запуск `npm run dev` без `vercel dev` не обрабатывает серверные функции `/auth/*`.
 
