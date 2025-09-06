@@ -1,17 +1,29 @@
 <template>
   <main class="watch">
-    <section class="container" v-if="anime && videos.length">
+    <section class="container" v-if="anime && currentVideo">
       <h1 class="watch__title">{{ anime.russian || anime.name }}</h1>
 
-      <div v-for="video in videos" :key="video.id" class="player">
-        <h2 v-if="video.name" class="player__title">{{ video.name }}</h2>
+      <div class="player">
+        <h2 v-if="currentVideo.name" class="player__title">{{ currentVideo.name }}</h2>
         <div class="player__wrapper">
           <iframe
-            :src="video.playerUrl || video.url"
-            :title="video.name || anime.russian || anime.name"
+            :src="currentVideo.playerUrl || currentVideo.url"
+            :title="currentVideo.name || anime.russian || anime.name"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen
           ></iframe>
+        </div>
+
+        <div v-if="videos.length > 1" class="player__buttons">
+          <button
+            v-for="video in videos"
+            :key="video.id"
+            class="player__button"
+            :class="{ active: video.id === currentVideo.id }"
+            @click="currentVideo = video"
+          >
+            {{ video.name || 'Видео' }}
+          </button>
         </div>
       </div>
     </section>
@@ -48,8 +60,16 @@ async function load(id) {
 }
 
 const videos = computed(() =>
-  (anime.value?.videos || []).filter(v => v.playerUrl || v.url)
+  (anime.value?.videos || []).filter(
+    v => (v.playerUrl || v.url) && v.kind === 'pv'
+  )
 )
+
+const currentVideo = ref(null)
+
+watch(videos, vids => {
+  currentVideo.value = vids[0] || null
+})
 
 watch(
   () => route.params.id,
@@ -99,6 +119,28 @@ watch(
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.player__buttons {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.player__button {
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(255, 255, 255, .08);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.player__button.active {
+  background: rgba(255, 255, 255, .2);
 }
 
 .state {
