@@ -1,7 +1,3 @@
-import { loadEnv } from '../utils/loadEnv.js';
-
-loadEnv();
-
 export default async function handler(req, res) {
   const { SHIKI_CLIENT_ID, SHIKI_CLIENT_SECRET, SHIKI_REDIRECT_URI } =
     process.env;

@@ -1,6 +1,3 @@
-import { loadEnv } from './utils/loadEnv.js';
-loadEnv();
-
 export default async function handler(req, res) {
   try {
     const auth = req.headers.authorization || '';
