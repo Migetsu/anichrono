@@ -95,7 +95,9 @@ async function load(id) {
   } catch (e) {
     error.value = String(e.message || e)
   } finally {
-    console.log(anime.value)
+    if (import.meta.env.DEV) {
+      console.log(anime.value)
+    }
     loading.value = false
   }
 }
