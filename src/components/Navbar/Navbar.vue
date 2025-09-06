@@ -39,8 +39,8 @@ import { reactive } from 'vue'
 
 const links = reactive([
     { title: 'Релизы', url: '/releases' },
-    // { title: 'ID Shikimori', url: '/' },
-    { title: 'Популярное', url: '/popular' },
+    { title: 'Онгоинги', url: '/ongoings' },
+    { title: 'Популярное', url: '/populars' },
 ])
 
 </script>
