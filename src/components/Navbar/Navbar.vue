@@ -48,12 +48,20 @@
             </ul>
           </div>
           <div class="header__nav-profile profile">
-            <a v-if="!auth.isLoggedIn" href="/api/auth/login">
-              <font-awesome-icon :icon="['fas', 'user']" />
+            <a
+              v-if="!auth.isLoggedIn"
+              href="/api/auth/login"
+              class="profile__login"
+            >
+              Войти
             </a>
-            <a v-else href="/api/auth/logout">
-              <font-awesome-icon :icon="['fas', 'right-from-bracket']" />
-            </a>
+            <router-link
+              v-else
+              to="/profile"
+              class="profile__avatar"
+            >
+              <img :src="avatarUrl" alt="avatar" />
+            </router-link>
           </div>
         </div>
       </div>
@@ -62,7 +70,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, onUnmounted } from "vue";
+import { reactive, ref, onMounted, onUnmounted, computed } from "vue";
 import { searchAnimes } from "@/scripts/searchAnimes";
 import { useAuthStore } from "@/stores/auth";
 
@@ -78,6 +86,11 @@ const results = ref([]);
 let scrollTimeout;
 let searchTimeout;
 const auth = useAuthStore();
+const avatarUrl = computed(() => {
+  const img = auth.user?.image?.x48 || auth.user?.avatar;
+  if (!img) return "";
+  return img.startsWith("http") ? img : `https://shikimori.one${img}`;
+});
 
 const handleScroll = () => {
   isTransparent.value = true;

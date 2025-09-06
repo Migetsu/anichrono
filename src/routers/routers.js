@@ -5,6 +5,7 @@ import Releases from '@/components/Releases/Releases.vue'
 import Ongoings from '@/components/Ongoings/Ongoings.vue'
 import Populars from '@/components/Popular/Populars.vue'
 import Watch from '@/components/Watch/Watch.vue'
+import Profile from '@/components/Profile/Profile.vue'
 
 export const routers = createRouter({
     history: createWebHistory(),
@@ -15,5 +16,6 @@ export const routers = createRouter({
         { path: '/releases', name: 'releases', component: Releases, props: true },
         { path: '/ongoings', name: 'ongoings', component: Ongoings, props: true },
         { path: '/populars', name: 'populars', component: Populars, props: true },
+        { path: '/profile', name: 'profile', component: Profile },
     ]
 })
