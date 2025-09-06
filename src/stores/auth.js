@@ -31,6 +31,11 @@ export const useAuthStore = defineStore('auth', {
         this.user = await res.json();
       } catch (e) {
         this.user = null;
+        this.token = null;
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('shikiToken');
+          localStorage.removeItem('shikiRefreshToken');
+        }
       }
     },
   },
