@@ -48,9 +48,12 @@
             </ul>
           </div>
           <div class="header__nav-profile profile">
-            <router-link to="/">
+            <a v-if="!auth.isLoggedIn" href="/api/auth/login">
               <font-awesome-icon :icon="['fas', 'user']" />
-            </router-link>
+            </a>
+            <a v-else href="/api/auth/logout">
+              <font-awesome-icon :icon="['fas', 'right-from-bracket']" />
+            </a>
           </div>
         </div>
       </div>
@@ -61,6 +64,7 @@
 <script setup>
 import { reactive, ref, onMounted, onUnmounted } from "vue";
 import { searchAnimes } from "@/scripts/searchAnimes";
+import { useAuthStore } from "@/stores/auth";
 
 const links = reactive([
   { title: "Релизы", url: "/releases" },
@@ -73,6 +77,7 @@ const query = ref("");
 const results = ref([]);
 let scrollTimeout;
 let searchTimeout;
+const auth = useAuthStore();
 
 const handleScroll = () => {
   isTransparent.value = true;
@@ -109,10 +114,13 @@ const clearSearch = () => {
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
+  auth.loadToken();
+  window.addEventListener("storage", auth.loadToken);
 });
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener("storage", auth.loadToken);
   clearTimeout(scrollTimeout);
   clearTimeout(searchTimeout);
 });
