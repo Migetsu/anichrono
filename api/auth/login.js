@@ -10,14 +10,22 @@ export default function handler(req, res) {
   }
 
   // Determine redirect URI. Prefer explicit env variable, but fall back to
-  // the origin from the request (useful for local development on different ports).
+  // the current request host. The page origin is passed in "state" so that
+  // after authentication we can redirect the user back to the same site.
   let redirectUri = SHIKI_REDIRECT_URI || '';
   let state = '';
+
+  // Fallback redirect URI based on the host header.
+  if (!redirectUri && req.headers.host) {
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    redirectUri = `${proto}://${req.headers.host}/api/auth/callback`;
+  }
+
+  // Remember the origin of the page that initiated the login to redirect
+  // the user back after the OAuth flow completes.
   try {
-    if (!redirectUri && req.headers.referer) {
-      const origin = new URL(req.headers.referer).origin;
-      redirectUri = `${origin}/api/auth/callback`;
-      state = origin;
+    if (req.headers.referer) {
+      state = new URL(req.headers.referer).origin;
     }
   } catch (e) {
     console.error('Auth login: failed to parse referer', e);

@@ -9,6 +9,8 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 - Redirect URI в Shikimori должен строго совпадать с тем, что передаётся из `/api/auth/login` через `redirect_uri`.
   - DEV (через vercel dev): `http://localhost:3000/api/auth/callback`
   - PROD: `https://<ваш-домен>/api/auth/callback`
+- Если переменная `SHIKI_REDIRECT_URI` не задана, адрес колбэка автоматически
+  определяется на основе текущего хоста.
 - Локальная разработка OAuth: используйте `vercel dev` (порт 3000). Кнопка входа в интерфейсе указывает на `/api/auth/login` (в продакшн-среде также доступен короткий путь `/auth/login` благодаря `vercel.json`).
 - Для запросов к `whoami` фронтенд стучится на `/api/whoami`.
 - Токен и refresh‑токен сохраняются в `localStorage` на странице `/api/auth/callback`. Если после логина ключ `shikiToken` не появился — проверьте Redirect URI.
