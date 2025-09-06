@@ -1,7 +1,18 @@
+import { loadEnv } from '../utils/loadEnv.js';
+
+loadEnv();
+
 export default async function handler(req, res) {
-  const { SHIKI_CLIENT_ID, SHIKI_CLIENT_SECRET, SHIKI_REDIRECT_URI } = process.env;
+  const { SHIKI_CLIENT_ID, SHIKI_CLIENT_SECRET, SHIKI_REDIRECT_URI } =
+    process.env;
   const { searchParams } = new URL(req.url, `https://${req.headers.host}`);
   const code = searchParams.get('code');
+
+  if (!SHIKI_CLIENT_ID || !SHIKI_CLIENT_SECRET || !SHIKI_REDIRECT_URI) {
+    res.statusCode = 500;
+    res.end('Missing Shikimori OAuth configuration');
+    return;
+  }
 
   if (!code) {
     res.statusCode = 400;
@@ -27,7 +38,9 @@ export default async function handler(req, res) {
 
     if (data.access_token) {
       const refreshSnippet = data.refresh_token
-        ? `localStorage.setItem('shikiRefreshToken', ${JSON.stringify(data.refresh_token)});`
+        ? `localStorage.setItem('shikiRefreshToken', ${JSON.stringify(
+            data.refresh_token,
+          )});`
         : '';
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end(`<script>
