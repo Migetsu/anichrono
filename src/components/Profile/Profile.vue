@@ -7,7 +7,7 @@
       <button class="profile-page__logout" @click="logout">Выйти</button>
     </div>
     <div v-else>
-      <a href="/api/auth/login" class="profile-page__login">Войти</a>
+      <a href="/auth/login" class="profile-page__login">Войти</a>
     </div>
   </section>
 </template>
@@ -25,7 +25,7 @@ const avatarUrl = computed(() => {
 });
 
 const logout = () => {
-  window.location.href = '/api/auth/logout';
+  window.location.href = '/auth/logout';
 };
 
 </script>
