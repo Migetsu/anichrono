@@ -1,13 +1,8 @@
 {
-  "rewrites": [
-    {
-      "source": "/auth/:path*",
-      "destination": "/api/auth/:path*"
-    },
-    {
-      "source": "/shiki/:path*",
-      "destination": "https://shikimori.one/:path*"
-    },
-    { "source": "/(.*)", "destination": "/" }
+  "routes": [
+    { "src": "/auth/(.*)", "dest": "/api/auth/$1" },
+    { "src": "/shiki/(.*)", "dest": "https://shikimori.one/$1" },
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/" }
   ]
 }

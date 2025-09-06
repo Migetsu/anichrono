@@ -10,7 +10,7 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
   - DEV (через vercel dev): `http://localhost:3000/api/auth/callback`
   - PROD: `https://<ваш-домен>/api/auth/callback`
 - Локальная разработка OAuth: используйте `vercel dev` (порт 3000). Кнопка входа в интерфейсе указывает на `/auth/login`, который через `vercel.json` переписывается на серверную функцию `/api/auth/login`.
-- Для запросов к `whoami` фронтенд стучится на `/api/whoami`. Если вы запускаете чистый Vite без `vercel dev`, в сторе предусмотрен fallback на Vite‑proxy `/shiki/api/users/whoami`.
+- Для запросов к `whoami` фронтенд стучится на `/api/whoami`.
 - Токен и refresh‑токен сохраняются в `localStorage` на странице `/api/auth/callback`. Если после логина ключ `shikiToken` не появился — проверьте Redirect URI.
 - Все обращения к API Shikimori должны содержать заголовок `User-Agent`. Значение задаётся через переменную окружения `SHIKI_USER_AGENT`.
 
@@ -20,11 +20,11 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 
 ```json
 {
-  "rewrites": [
-    {
-      "source": "/shiki/:path*",
-      "destination": "https://shikimori.one/:path*"
-    }
+  "routes": [
+    { "src": "/auth/(.*)", "dest": "/api/auth/$1" },
+    { "src": "/shiki/(.*)", "dest": "https://shikimori.one/$1" },
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/" }
   ]
 }
 ```
@@ -49,6 +49,6 @@ npm run build
 - `/auth/callback` – обрабатывает редирект OAuth и сохраняет токен в `localStorage`;
 - `/auth/logout` – очищает токен и возвращает на главную страницу.
 
-Авторизация доступна только в продакшн-среде Vercel. При запуске `npm run dev` локально эти маршруты недоступны, поэтому для проверки входа используйте развернутое приложение на Vercel.
+Авторизация доступна как в продакшн-среде Vercel, так и локально через `vercel dev`. Запуск `npm run dev` без `vercel dev` не обрабатывает серверные функции `/auth/*`.
 
 После авторизации в навигации отображается кнопка выхода.
