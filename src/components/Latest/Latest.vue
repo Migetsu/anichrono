@@ -91,7 +91,6 @@ onMounted(async () => {
       body: JSON.stringify({ query: QUERY_LATEST, variables: { limit: 10, status: "ongoing" } })
     })
     const json = await res.json()
-    console.log('Shikimori Latest JSON:', json)
     if (json.errors) throw new Error(json.errors[0]?.message || 'GraphQL error')
     animes.value = json.data?.animes ?? []
   } catch (e) {

@@ -79,7 +79,6 @@ onMounted(async () => {
       body: JSON.stringify({ query: QUERY_POPULAR, variables: { limit: 12 } })
     })
     const json = await res.json()
-    console.log('Shikimori popular JSON:', json)
     if (json.errors) throw new Error(json.errors[0]?.message || 'GraphQL error')
     animes.value = json.data?.animes ?? []
   } catch (e) {
