@@ -10,6 +10,7 @@ import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 import VueLazyLoad from 'vue-lazyload'
 import { useAuthStore } from '@/stores/auth'
+import defaultImg from '@/assets/images/default.jpg'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -22,7 +23,7 @@ app.component('font-awesome-icon', FontAwesomeIcon)
 app.use(pinia)
 app.use(routers)
 app.use(VueLazyLoad, {
-  loading: '@/assets/images/default.jpg', // картинка-заглушка
-  error: '@/assets/images/default.jpg'          // если картинка не загрузилась
+  loading: defaultImg, // картинка-заглушка
+  error: defaultImg // если картинка не загрузилась
 })
 app.mount('#app')
