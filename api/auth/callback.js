@@ -27,9 +27,19 @@ export default async function handler(req, res) {
   }
 
   // Determine redirect_uri used during login. Prefer explicit env variable,
-  // otherwise derive from state (origin passed from login handler).
-  const redirectUri =
-    SHIKI_REDIRECT_URI || (state ? `${state}/api/auth/callback` : '');
+  // otherwise derive from state (origin passed from login handler) or from the
+  // current request host as a last resort.
+  let redirectUri = SHIKI_REDIRECT_URI;
+  if (!redirectUri) {
+    if (state) {
+      redirectUri = `${state}/api/auth/callback`;
+    } else if (req.headers.host) {
+      const proto = req.headers['x-forwarded-proto'] || 'http';
+      redirectUri = `${proto}://${req.headers.host}/api/auth/callback`;
+    } else {
+      redirectUri = '';
+    }
+  }
 
   if (!redirectUri) {
     console.error('Auth callback: missing redirect uri');
