@@ -5,7 +5,11 @@
       <div class="anime__veil"></div>
 
       <div class="container anime__content">
-        <img class="anime__poster" :src="anime.poster?.originalUrl || fallback" :alt="anime.russian || anime.name" />
+        <div class="anime__left">
+          <img class="anime__poster" loading="lazy" :src="anime.poster?.originalUrl || fallback"
+            :alt="anime.russian || anime.name" />
+          <router-link class="button anime__watch" :to="`/watch/${anime.id}`">Смотреть</router-link>
+        </div>
 
         <!-- общая сетка для правой колонки -->
         <div class="anime__right">
@@ -29,7 +33,7 @@
           <article class="panel panel--desc">
             <h2 class="panel__title">Описание</h2>
             <!-- <p class="desc">{{ anime.description || 'Описание недоступно.' }}</p> -->
-             <div class="desc" v-html="safeDesc"></div>
+            <div class="desc" v-html="safeDesc"></div>
           </article>
 
           <article class="panel panel--genres">
@@ -60,13 +64,13 @@
     </section>
 
     <!-- ПЛЕЕР -->
-    <section class="container player" v-if="anime && !loading">
+    <!-- <section class="container player" v-if="anime && !loading">
       <div class="player__wrapper">
         <iframe src="https://www.youtube.com/embed/5PS0bAhbgP0" title="Anime trailer"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen></iframe>
       </div>
-    </section>
+    </section> -->
   </main>
 </template>
 
@@ -97,16 +101,16 @@ async function load(id) {
 }
 
 // разрешённые теги/атрибуты
-const ALLOWED_TAGS = ['div','p','br','a','span','strong','b','em','i','ul','ol','li']
-const ALLOWED_ATTR = ['href','title']
+const ALLOWED_TAGS = ['div', 'p', 'br', 'a', 'span', 'strong', 'b', 'em', 'i', 'ul', 'ol', 'li']
+const ALLOWED_ATTR = ['href', 'title']
 
 DOMPurify.addHook('afterSanitizeAttributes', node => {
   node.removeAttribute?.('class')
   node.removeAttribute?.('style')
-  // убираем любые data-*
-  ;[...(node.attributes || [])].forEach(attr => {
-    if (attr.name.startsWith('data-')) node.removeAttribute(attr.name)
-  })
+    // убираем любые data-*
+    ;[...(node.attributes || [])].forEach(attr => {
+      if (attr.name.startsWith('data-')) node.removeAttribute(attr.name)
+    })
   // ссылки — безопасно в новой вкладке
   if (node.tagName === 'A' && node.hasAttribute('href')) {
     node.setAttribute('target', '_blank')
@@ -118,10 +122,10 @@ const safeDesc = computed(() => {
   const html = anime.value?.descriptionHtml || ''
   return html
     ? DOMPurify.sanitize(html, {
-        ALLOWED_TAGS,
-        ALLOWED_ATTR,
-        USE_PROFILES: { html: true }
-      })
+      ALLOWED_TAGS,
+      ALLOWED_ATTR,
+      USE_PROFILES: { html: true }
+    })
     : '' // пусто — чтобы не вставлять "undefined"
 })
 
@@ -180,6 +184,25 @@ function kindLabel(k) {
   min-height: 48px;
 }
 
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 18px;
+  background-color: rgba(20, 20, 20, 0.7);;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color .2s;
+  margin-top: 15px;
+}
+
+.button:hover {
+  background-color: rgba(20, 20, 20, 1);
+}
+
 .anime {
   position: relative;
   min-height: 420px;
@@ -209,17 +232,22 @@ function kindLabel(k) {
 }
 
 .anime__content {
-  position: relative; z-index: 2;
+  position: relative;
+  z-index: 2;
   display: grid;
-  grid-template-columns: 200px 1fr; /* постер + правая колонка */
+  grid-template-columns: 200px 1fr;
+  /* постер + правая колонка */
   gap: 32px;
   width: 100%;
   padding: 0 16px;
 }
 
 .anime__poster {
-  width: 200px; aspect-ratio: 2/3; object-fit: cover;
-  border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  width: 200px;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
 }
 
 .anime__right {
@@ -229,10 +257,24 @@ function kindLabel(k) {
   grid-template-columns: repeat(12, 1fr);
 }
 
-.anime__info { grid-column: 1 / -1; }
-.panel--desc { grid-column: 1 / -1; }
-.panel--genres { grid-column: 1 / 10; }  /* 9/12 ≈ 75% */
-.panel--studios { grid-column: 10 / -1; } /* 3/12 ≈ 25% */
+.anime__info {
+  grid-column: 1 / -1;
+}
+
+.panel--desc {
+  grid-column: 1 / -1;
+}
+
+.panel--genres {
+  grid-column: 1 / 10;
+}
+
+/* 9/12 ≈ 75% */
+.panel--studios {
+  grid-column: 10 / -1;
+}
+
+/* 3/12 ≈ 25% */
 
 .glass {
   background: rgba(17, 27, 39, .55);
@@ -246,6 +288,7 @@ function kindLabel(k) {
   margin: 0;
   font-weight: 800;
   font-size: clamp(22px, 4vw, 36px);
+  color: #fff;
 }
 
 .anime__facts {
@@ -262,20 +305,20 @@ function kindLabel(k) {
   border-radius: 999px;
   font-size: 13px;
   background: rgba(255, 255, 255, .08);
-  color: var(--c-text);
+  color: #fff;
   border: 1px solid var(--c-border);
 }
 
 .pill--gold {
   background: rgba(255, 207, 102, .1);
   border-color: rgba(255, 207, 102, .35);
-  color: var(--c-gold);
+  color: gold;
 }
 
 .anime__meta {
   display: flex;
   gap: 16px;
-  color: var(--c-dim);
+  color: #fff;
   font-size: 13px;
   flex-wrap: wrap;
 }
@@ -309,10 +352,28 @@ function kindLabel(k) {
 }
 
 @media (max-width: 900px) {
-  .anime__content { grid-template-columns: 1fr; gap: 20px; justify-items: center; }
-  .anime__poster { width: 160px; grid-row: auto; }
-  .anime__right { grid-column: 1; grid-template-columns: 1fr; }
-  .panel--genres, .panel--studios, .panel--desc, .anime__info { grid-column: 1 / -1; }
+  .anime__content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    justify-items: center;
+  }
+
+  .anime__poster {
+    width: 160px;
+    grid-row: auto;
+  }
+
+  .anime__right {
+    grid-column: 1;
+    grid-template-columns: 1fr;
+  }
+
+  .panel--genres,
+  .panel--studios,
+  .panel--desc,
+  .anime__info {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (min-width: 900px) {
@@ -326,7 +387,7 @@ function kindLabel(k) {
 }
 
 .panel {
-  background: var(--c-surface);
+  background: rgba(17, 27, 39, .55);
   border: 1px solid var(--c-border);
   border-radius: 14px;
   padding: 16px 18px;
@@ -335,8 +396,9 @@ function kindLabel(k) {
 
 .panel__title {
   margin: 0 0 12px;
-  font-size: 18px;
+  font-size: 26px;
   letter-spacing: .2px;
+  color: #fff;
 }
 
 .desc {
@@ -347,9 +409,12 @@ function kindLabel(k) {
 
 /* базовая типографика блока описания */
 .desc {
-  color: #fff;                    /* белый текст */
-  font-size: 15.5px;              /* подкорректированный размер */
-  line-height: 1.75;              /* комфортный межстрочный */
+  color: #fff;
+  /* белый текст */
+  font-size: 15.5px;
+  /* подкорректированный размер */
+  line-height: 1.75;
+  /* комфортный межстрочный */
   letter-spacing: .1px;
 }
 
@@ -362,30 +427,44 @@ function kindLabel(k) {
 .desc :where(ul, ol) {
   padding-left: 20px;
 }
-.desc li { margin: 4px 0; }
+
+.desc li {
+  margin: 4px 0;
+}
 
 /* переносы <br> не дают больших дыр — полагаемся на line-height */
-.desc br { line-height: 1.2; }
+.desc br {
+  line-height: 1.2;
+}
 
 /* ссылки */
-.desc a {
+:deep(.desc a) {
   color: var(--c-accent, #7aa2ff);
   text-decoration: none;
-  border-bottom: 1px dashed rgba(122,162,255,.5);
+  /* border-bottom: 1px dashed rgba(122, 162, 255, .5); */
   transition: border-color .2s, color .2s, opacity .2s;
 }
-.desc a:hover {
-  border-bottom-color: rgba(122,162,255,.9);
+
+:deep(.desc a:hover) {
+  border-bottom-color: rgba(122, 162, 255, .9);
   color: #9bb6ff;
 }
 
 /* выделения */
-.desc :where(strong, b) { font-weight: 700; }
-.desc :where(em, i)     { font-style: italic; }
+.desc :where(strong, b) {
+  font-weight: 700;
+}
+
+.desc :where(em, i) {
+  font-style: italic;
+}
 
 /* на очень узких экранах — чуть менее плотный текст */
 @media (max-width: 600px) {
-  .desc { font-size: 15px; line-height: 1.7; }
+  .desc {
+    font-size: 15px;
+    line-height: 1.7;
+  }
 }
 
 /* Chips */
@@ -400,7 +479,7 @@ function kindLabel(k) {
   padding: 6px 10px;
   border-radius: 999px;
   background: rgba(122, 162, 255, .12);
-  color: var(--c-text);
+  color: #fff;
   border: 1px solid rgba(122, 162, 255, .28);
 }
 
