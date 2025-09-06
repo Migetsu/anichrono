@@ -127,7 +127,6 @@ const clearSearch = () => {
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
-  auth.loadToken();
   window.addEventListener("storage", auth.loadToken);
 });
 
