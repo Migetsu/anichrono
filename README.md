@@ -12,6 +12,7 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 - Локальная разработка OAuth: используйте `vercel dev` (порт 3000). Кнопка входа в интерфейсе указывает на `/auth/login`, который через `vercel.json` переписывается на серверную функцию `/api/auth/login`.
 - Для запросов к `whoami` фронтенд стучится на `/api/whoami`. Если вы запускаете чистый Vite без `vercel dev`, в сторе предусмотрен fallback на Vite‑proxy `/shiki/api/users/whoami`.
 - Токен и refresh‑токен сохраняются в `localStorage` на странице `/api/auth/callback`. Если после логина ключ `shikiToken` не появился — проверьте Redirect URI.
+- Все обращения к API Shikimori должны содержать заголовок `User-Agent`. Значение задаётся через переменную окружения `SHIKI_USER_AGENT`.
 
 ## Деплой
 
@@ -40,7 +41,7 @@ npm run build
 
 ## Авторизация
 
-Для входа через Shikimori должны быть определены переменные окружения `SHIKI_CLIENT_ID`, `SHIKI_CLIENT_SECRET` и `SHIKI_REDIRECT_URI`. Пример файла с настройками находится в `.env.example`. Скопируйте его в `.env` и при необходимости измените значения.
+Для входа через Shikimori должны быть определены переменные окружения `SHIKI_CLIENT_ID`, `SHIKI_CLIENT_SECRET`, `SHIKI_REDIRECT_URI` и `SHIKI_USER_AGENT`. Пример файла с настройками находится в `.env.example`. Скопируйте его в `.env` и при необходимости измените значения.
 
 На Vercel доступны следующие серверные функции:
 
