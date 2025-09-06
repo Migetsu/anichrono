@@ -76,7 +76,19 @@
     }
 }
 
+.header__nav-list2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header__nav-form {
+  width: 400px;      /* фиксируем или регулируем ширину */
+  max-width: 800px;  /* можно добавить ограничение */
+}
+
 .nav__search {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -88,6 +100,7 @@
     cursor: pointer;
 
     &-input {
+        width: 100%;
         background: transparent;
         border: none;
         padding: 8px 8px;

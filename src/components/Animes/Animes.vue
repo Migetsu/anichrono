@@ -1,26 +1,25 @@
 <template>
-  <main class="anime">
-    <!-- HERO -->
-    <section class="hero" v-if="anime">
-      <div class="hero__bg" :style="{ backgroundImage: `url(${anime.poster?.originalUrl || fallback})` }" />
-      <div class="hero__veil"></div>
+  <main class="animes">
+    <section class="anime" v-if="anime">
+      <div class="anime__bg" :style="{ backgroundImage: `url(${anime.poster?.originalUrl || fallback})` }" />
+      <div class="anime__veil"></div>
 
-      <div class="container hero__content">
-        <img class="hero__poster" :src="anime.poster?.originalUrl || fallback" :alt="anime.russian || anime.name" />
+      <div class="container anime__content">
+        <img class="anime__poster" :src="anime.poster?.originalUrl || fallback" :alt="anime.russian || anime.name" />
 
         <!-- общая сетка для правой колонки -->
-        <div class="hero__right">
-          <div class="hero__info glass">
-            <h1 class="hero__title">{{ anime.russian || anime.name }}</h1>
+        <div class="anime__right">
+          <div class="anime__info glass">
+            <h1 class="anime__title">{{ anime.russian || anime.name }}</h1>
 
-            <ul class="hero__facts">
+            <ul class="anime__facts">
               <li v-if="anime.score" class="pill pill--gold">★ {{ anime.score }}</li>
               <li v-if="anime.status" class="pill">{{ statusLabel(anime.status) }}</li>
               <li v-if="anime.kind" class="pill">{{ kindLabel(anime.kind) }}</li>
               <li v-if="anime.episodes" class="pill">Эпизодов: {{ anime.episodes }}</li>
             </ul>
 
-            <div class="hero__meta">
+            <div class="anime__meta">
               <span v-if="anime.airedOn?.date">Премьера: {{ fmtDate(anime.airedOn.date) }}</span>
               <span v-if="anime.releasedOn?.date">Завершено: {{ fmtDate(anime.releasedOn.date) }}</span>
               <span v-if="anime.duration">Эпизод: ~{{ anime.duration }} мин.</span>
@@ -29,7 +28,8 @@
 
           <article class="panel panel--desc">
             <h2 class="panel__title">Описание</h2>
-            <p class="desc">{{ anime.description || 'Описание недоступно.' }}</p>
+            <!-- <p class="desc">{{ anime.description || 'Описание недоступно.' }}</p> -->
+             <div class="desc" v-html="safeDesc"></div>
           </article>
 
           <article class="panel panel--genres">
@@ -71,9 +71,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchAnimeById } from '@/scripts/fetchAnimeById'
+import DOMPurify from 'dompurify'
 
 const route = useRoute()
 const anime = ref(null)
@@ -90,9 +91,39 @@ async function load(id) {
   } catch (e) {
     error.value = String(e.message || e)
   } finally {
+    console.log(anime.value)
     loading.value = false
   }
 }
+
+// разрешённые теги/атрибуты
+const ALLOWED_TAGS = ['div','p','br','a','span','strong','b','em','i','ul','ol','li']
+const ALLOWED_ATTR = ['href','title']
+
+DOMPurify.addHook('afterSanitizeAttributes', node => {
+  node.removeAttribute?.('class')
+  node.removeAttribute?.('style')
+  // убираем любые data-*
+  ;[...(node.attributes || [])].forEach(attr => {
+    if (attr.name.startsWith('data-')) node.removeAttribute(attr.name)
+  })
+  // ссылки — безопасно в новой вкладке
+  if (node.tagName === 'A' && node.hasAttribute('href')) {
+    node.setAttribute('target', '_blank')
+    node.setAttribute('rel', 'noopener noreferrer nofollow')
+  }
+})
+
+const safeDesc = computed(() => {
+  const html = anime.value?.descriptionHtml || ''
+  return html
+    ? DOMPurify.sanitize(html, {
+        ALLOWED_TAGS,
+        ALLOWED_ATTR,
+        USE_PROFILES: { html: true }
+      })
+    : '' // пусто — чтобы не вставлять "undefined"
+})
 
 watch(
   () => route.params.id,
@@ -129,8 +160,8 @@ function kindLabel(k) {
 }
 
 /* Общая сетка */
-.anime {
-  margin-top: 96px;
+.animes {
+  margin-top: 80px;
   color: var(--c-text);
 }
 
@@ -149,8 +180,7 @@ function kindLabel(k) {
   min-height: 48px;
 }
 
-/* HERO */
-.hero {
+.anime {
   position: relative;
   min-height: 420px;
   display: flex;
@@ -159,7 +189,7 @@ function kindLabel(k) {
   overflow: hidden;
 }
 
-.hero__bg {
+.anime__bg {
   position: absolute;
   inset: 0;
   /* если хочешь видеть фоновую картинку полностью по ширине, раскомментируй: */
@@ -167,17 +197,18 @@ function kindLabel(k) {
   background-size: cover;
   background-position: center;
   transform: scale(1.02);
-  filter: saturate(1.05) contrast(1.02);
+  filter: saturate(1.1) brightness(0.6);
 }
 
-.hero__veil {
+.anime__veil {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(10, 15, 25, .2) 0%, rgba(10, 15, 25, .6) 70%, rgba(10, 15, 25, .9) 100%);
   z-index: 1;
+  backdrop-filter: blur(5px);
 }
 
-.hero__content {
+.anime__content {
   position: relative; z-index: 2;
   display: grid;
   grid-template-columns: 200px 1fr; /* постер + правая колонка */
@@ -186,19 +217,19 @@ function kindLabel(k) {
   padding: 0 16px;
 }
 
-.hero__poster {
+.anime__poster {
   width: 200px; aspect-ratio: 2/3; object-fit: cover;
   border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
 }
 
-.hero__right {
+.anime__right {
   grid-column: 2;
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(12, 1fr);
 }
 
-.hero__info { grid-column: 1 / -1; }
+.anime__info { grid-column: 1 / -1; }
 .panel--desc { grid-column: 1 / -1; }
 .panel--genres { grid-column: 1 / 10; }  /* 9/12 ≈ 75% */
 .panel--studios { grid-column: 10 / -1; } /* 3/12 ≈ 25% */
@@ -211,13 +242,13 @@ function kindLabel(k) {
   backdrop-filter: blur(6px);
 }
 
-.hero__title {
+.anime__title {
   margin: 0;
   font-weight: 800;
   font-size: clamp(22px, 4vw, 36px);
 }
 
-.hero__facts {
+.anime__facts {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -241,7 +272,7 @@ function kindLabel(k) {
   color: var(--c-gold);
 }
 
-.hero__meta {
+.anime__meta {
   display: flex;
   gap: 16px;
   color: var(--c-dim);
@@ -250,13 +281,13 @@ function kindLabel(k) {
 }
 
 @media (max-width: 780px) {
-  .hero__content {
+  .anime__content {
     grid-template-columns: 1fr;
     gap: 20px;
     justify-items: center;
   }
 
-  .hero__right {
+  .anime__right {
     grid-column: 1;
     width: 100%;
   }
@@ -278,10 +309,10 @@ function kindLabel(k) {
 }
 
 @media (max-width: 900px) {
-  .hero__content { grid-template-columns: 1fr; gap: 20px; justify-items: center; }
-  .hero__poster { width: 160px; grid-row: auto; }
-  .hero__right { grid-column: 1; grid-template-columns: 1fr; }
-  .panel--genres, .panel--studios, .panel--desc, .hero__info { grid-column: 1 / -1; }
+  .anime__content { grid-template-columns: 1fr; gap: 20px; justify-items: center; }
+  .anime__poster { width: 160px; grid-row: auto; }
+  .anime__right { grid-column: 1; grid-template-columns: 1fr; }
+  .panel--genres, .panel--studios, .panel--desc, .anime__info { grid-column: 1 / -1; }
 }
 
 @media (min-width: 900px) {
@@ -312,6 +343,49 @@ function kindLabel(k) {
   white-space: pre-line;
   line-height: 1.7;
   color: var(--c-text);
+}
+
+/* базовая типографика блока описания */
+.desc {
+  color: #fff;                    /* белый текст */
+  font-size: 15.5px;              /* подкорректированный размер */
+  line-height: 1.75;              /* комфортный межстрочный */
+  letter-spacing: .1px;
+}
+
+/* отступы между абзацами/списками */
+.desc :where(p, ul, ol) {
+  margin: 0 0 12px;
+}
+
+/* списки — немного воздуха и отступ слева */
+.desc :where(ul, ol) {
+  padding-left: 20px;
+}
+.desc li { margin: 4px 0; }
+
+/* переносы <br> не дают больших дыр — полагаемся на line-height */
+.desc br { line-height: 1.2; }
+
+/* ссылки */
+.desc a {
+  color: var(--c-accent, #7aa2ff);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(122,162,255,.5);
+  transition: border-color .2s, color .2s, opacity .2s;
+}
+.desc a:hover {
+  border-bottom-color: rgba(122,162,255,.9);
+  color: #9bb6ff;
+}
+
+/* выделения */
+.desc :where(strong, b) { font-weight: 700; }
+.desc :where(em, i)     { font-style: italic; }
+
+/* на очень узких экранах — чуть менее плотный текст */
+@media (max-width: 600px) {
+  .desc { font-size: 15px; line-height: 1.7; }
 }
 
 /* Chips */

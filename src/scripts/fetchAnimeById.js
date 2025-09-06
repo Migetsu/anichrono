@@ -7,6 +7,7 @@ const QUERY = `
       name
       russian
       description
+      descriptionHtml
       score
       kind
       rating
