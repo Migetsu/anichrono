@@ -50,7 +50,7 @@
           <div class="header__nav-profile profile">
             <a
               v-if="!auth.isLoggedIn"
-              href="/api/auth/login"
+              href="/auth/login"
               class="profile__login"
             >
               Войти
