@@ -18,6 +18,7 @@ const QUERY = `
       airedOn { year month day date }
       releasedOn { year month day date }
       poster { originalUrl }
+      videos { url playerUrl }
       genres { id name russian }
       studios { id name }
     }

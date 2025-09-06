@@ -184,33 +184,42 @@ function kindLabel(k) {
   min-height: 48px;
 }
 
-.button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 10px 18px;
-  background-color: rgba(20, 20, 20, 0.7);;
-  color: #fff;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: background-color .2s;
-  margin-top: 15px;
-}
+  .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px 18px;
+    background-color: rgba(20, 20, 20, 0.7);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background-color .2s;
+    margin-top: 15px;
+  }
 
-.button:hover {
-  background-color: rgba(20, 20, 20, 1);
-}
+  .button:hover {
+    background-color: rgba(20, 20, 20, 1);
+  }
 
-.anime {
-  position: relative;
-  min-height: 420px;
-  display: flex;
-  align-items: center;
-  padding: 28px 0 32px;
-  overflow: hidden;
-}
+  .anime__watch {
+    background: var(--c-accent);
+    box-shadow: 0 4px 12px rgba(122, 162, 255, .35);
+  }
+
+  .anime__watch:hover {
+    background: #648dff;
+  }
+
+    .anime {
+      position: relative;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      padding: 28px 0 32px;
+      overflow: hidden;
+    }
 
 .anime__bg {
   position: absolute;
