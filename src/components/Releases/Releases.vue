@@ -35,7 +35,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import axios from 'axios'
+import { shikiGQL } from '../../scripts/shikiClient.js'
 
 const animes = ref([])
 const loading = ref(true)
@@ -64,12 +64,8 @@ const loadAnimes = async () => {
   if (isFetching.value || !hasMore.value) return
   isFetching.value = true
   try {
-    const { data } = await axios.post('/shiki/api/graphql', {
-      query: QUERY_RELEASES,
-      variables: { limit: LIMIT, page: page.value }
-    })
-    if (data.errors) throw new Error(data.errors[0]?.message || 'GraphQL error')
-    const newAnimes = data.data?.animes ?? []
+    const data = await shikiGQL(QUERY_RELEASES, { limit: LIMIT, page: page.value })
+    const newAnimes = data.animes ?? []
     if (newAnimes.length < LIMIT) hasMore.value = false
     animes.value.push(...newAnimes)
     page.value++

@@ -44,6 +44,7 @@ import { Navigation, Pagination, Autoplay } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
+import { shikiGQL } from '../../scripts/shikiClient.js'
 
 const animes = ref([])
 const loading = ref(true)
@@ -73,14 +74,8 @@ const QUERY_POPULAR = `
 
 onMounted(async () => {
   try {
-    const res = await fetch('/shiki/api/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: QUERY_POPULAR, variables: { limit: 12 } })
-    })
-    const json = await res.json()
-    if (json.errors) throw new Error(json.errors[0]?.message || 'GraphQL error')
-    animes.value = json.data?.animes ?? []
+    const data = await shikiGQL(QUERY_POPULAR, { limit: 12 })
+    animes.value = data.animes ?? []
   } catch (e) {
     error.value = String(e.message || e)
     console.error('Shikimori request error:', e)
