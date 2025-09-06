@@ -39,8 +39,13 @@
         </SwiperSlide>
 
         <!-- Скелетоны -->
-        <SwiperSlide v-if="loading" >
-          <div class="skeleton" v-for="i in 6" :key="'skeleton-'+i"></div>
+        <SwiperSlide
+          v-if="loading"
+          v-for="i in 6"
+          :key="'skeleton-' + i"
+          class="latest__swiper-item"
+        >
+          <div class="skeleton"></div>
         </SwiperSlide>
       </Swiper>
 
