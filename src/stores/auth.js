@@ -11,10 +11,16 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     loadToken() {
       if (typeof window !== 'undefined') {
-        this.token = localStorage.getItem('shikiToken');
-        if (this.token) {
+        const stored = localStorage.getItem('shikiToken');
+        if (stored) {
+          try {
+            this.token = JSON.parse(stored);
+          } catch {
+            this.token = stored;
+          }
           this.fetchUser();
         } else {
+          this.token = null;
           this.user = null;
         }
       }
