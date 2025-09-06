@@ -4,6 +4,15 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 
 Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
 
+## Auth (Shikimori) — важные примечания
+
+- Redirect URI в Shikimori должен строго совпадать с тем, что передаётся из `/auth/login` через `redirect_uri`.
+  - DEV (через vercel dev): `http://localhost:3000/api/auth/callback`
+  - PROD: `https://<ваш-домен>/api/auth/callback`
+- Локальная разработка OAuth: используйте `vercel dev` (порт 3000). Кнопка входа в интерфейсе указывает на `/auth/login`, который через `vercel.json` переписывается на серверную функцию `/api/auth/login`.
+- Для запросов к `whoami` фронтенд стучится на `/api/whoami`. Если вы запускаете чистый Vite без `vercel dev`, в сторе предусмотрен fallback на Vite‑proxy `/shiki/api/users/whoami`.
+- Токен и refresh‑токен сохраняются в `localStorage` на странице `/api/auth/callback`. Если после логина ключ `shikiToken` не появился — проверьте Redirect URI.
+
 ## Деплой
 
 Проект готов к размещению на [Vercel](https://vercel.com). Конфигурация находится в файле `vercel.json` и включает проксиирование запросов к API Shikimori:
