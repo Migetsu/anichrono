@@ -38,13 +38,11 @@ export default async function handler(req, res) {
 
     if (data.access_token) {
       const refreshSnippet = data.refresh_token
-        ? `localStorage.setItem('shikiRefreshToken', ${JSON.stringify(
-            data.refresh_token,
-          )});`
+        ? `localStorage.setItem('shikiRefreshToken', '${data.refresh_token}');`
         : '';
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end(`<script>
-        localStorage.setItem('shikiToken', ${JSON.stringify(data.access_token)});
+        localStorage.setItem('shikiToken', '${data.access_token}');
         ${refreshSnippet}
         window.location.href = '/';
       </script>`);
