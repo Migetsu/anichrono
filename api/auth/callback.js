@@ -26,20 +26,15 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Determine redirect_uri used during login. Prefer explicit env variable,
-  // otherwise derive from state (origin passed from login handler) or from the
-  // current request host as a last resort.
-  let redirectUri = SHIKI_REDIRECT_URI;
+  // Determine the redirect URI that was used during the authorization
+  // request. It must match exactly; otherwise Shikimori rejects the token
+  // exchange. Unlike the login handler, the "state" parameter here is used
+  // only to remember the original page and should not influence redirect_uri.
+  let redirectUri = SHIKI_REDIRECT_URI || '';
   const host = req.headers['x-forwarded-host'] || req.headers.host;
-  if (!redirectUri) {
-    if (state) {
-      redirectUri = `${state}/api/auth/callback`;
-    } else if (host) {
-      const proto = req.headers['x-forwarded-proto'] || 'http';
-      redirectUri = `${proto}://${host}/api/auth/callback`;
-    } else {
-      redirectUri = '';
-    }
+  if (!redirectUri && host) {
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    redirectUri = `${proto}://${host}/api/auth/callback`;
   }
 
   if (!redirectUri) {
