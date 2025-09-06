@@ -1,21 +1,25 @@
 <template>
   <main class="watch">
-    <section class="container" v-if="anime && trailerUrl">
+    <section class="container" v-if="anime && videos.length">
       <h1 class="watch__title">{{ anime.russian || anime.name }}</h1>
-      <div class="player__wrapper">
-        <iframe
-          :src="trailerUrl"
-          :title="anime.russian || anime.name"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
+
+      <div v-for="video in videos" :key="video.id" class="player">
+        <h2 v-if="video.name" class="player__title">{{ video.name }}</h2>
+        <div class="player__wrapper">
+          <iframe
+            :src="video.playerUrl || video.url"
+            :title="video.name || anime.russian || anime.name"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        </div>
       </div>
     </section>
 
     <section class="container state">
       <div v-if="loading" class="loader">Загрузка…</div>
       <div v-else-if="error" class="error">{{ error }}</div>
-      <div v-else-if="!trailerUrl" class="error">Трейлер недоступен</div>
+      <div v-else-if="!videos.length" class="error">Трейлер недоступен</div>
     </section>
   </main>
 </template>
@@ -43,10 +47,9 @@ async function load(id) {
   }
 }
 
-const trailerUrl = computed(() => {
-  const video = anime.value?.videos?.[0]
-  return video?.playerUrl || video?.url || ''
-})
+const videos = computed(() =>
+  (anime.value?.videos || []).filter(v => v.playerUrl || v.url)
+)
 
 watch(
   () => route.params.id,
@@ -65,6 +68,17 @@ watch(
   margin: 0 0 16px;
   font-size: 26px;
   font-weight: 700;
+  text-align: center;
+}
+
+.player {
+  margin-bottom: 24px;
+}
+
+.player__title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
   text-align: center;
 }
 
