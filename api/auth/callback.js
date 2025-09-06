@@ -1,7 +1,12 @@
 export default async function handler(req, res) {
   console.log('Auth callback: start');
-  const { SHIKI_CLIENT_ID, SHIKI_CLIENT_SECRET, SHIKI_REDIRECT_URI } =
-    process.env;
+  const {
+    SHIKI_CLIENT_ID,
+    SHIKI_CLIENT_SECRET,
+    SHIKI_REDIRECT_URI,
+    SHIKI_USER_AGENT,
+  } = process.env;
+  const userAgent = SHIKI_USER_AGENT || 'anichrono-app';
   const { searchParams } = new URL(req.url, `https://${req.headers.host}`);
   const code = searchParams.get('code');
   console.log('Auth callback: code', code);
@@ -32,7 +37,10 @@ export default async function handler(req, res) {
     console.log('Auth callback: requesting token');
     const response = await fetch('https://shikimori.one/oauth/token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': userAgent,
+      },
       body,
     });
     const data = await response.json();
@@ -40,11 +48,15 @@ export default async function handler(req, res) {
 
     if (data.access_token) {
       const refreshSnippet = data.refresh_token
-        ? `localStorage.setItem('shikiRefreshToken', '${data.refresh_token}');`
+        ? `localStorage.setItem('shikiRefreshToken', ${JSON.stringify(
+            data.refresh_token,
+          )});`
         : '';
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end(`<script>
-        localStorage.setItem('shikiToken', '${data.access_token}');
+        localStorage.setItem('shikiToken', ${JSON.stringify(
+          data.access_token,
+        )});
         ${refreshSnippet}
         window.location.href = '/';
       </script>`);
