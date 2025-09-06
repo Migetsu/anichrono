@@ -1,6 +1,6 @@
 <template>
     <header class="header">
-        <nav class="header__nav">
+        <nav class="header__nav" :class="{ transparent: isTransparent }" @click="handleInteraction">
             <div class="header__nav-container container">
                 <ul class="header__nav-list">
                     <li>
@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref, onMounted, onUnmounted } from 'vue'
 
 const links = reactive([
     { title: 'Релизы', url: '/releases' },
@@ -43,6 +43,29 @@ const links = reactive([
     { title: 'Популярное', url: '/populars' },
 ])
 
+const isTransparent = ref(false)
+let scrollTimeout
+
+const handleScroll = () => {
+    isTransparent.value = true
+    clearTimeout(scrollTimeout)
+    scrollTimeout = setTimeout(() => {
+        isTransparent.value = false
+    }, 200)
+}
+
+const handleInteraction = () => {
+    isTransparent.value = false
+}
+
+onMounted(() => {
+    window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll)
+    clearTimeout(scrollTimeout)
+})
 </script>
 
 <style></style>
