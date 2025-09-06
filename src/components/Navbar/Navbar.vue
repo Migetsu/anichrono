@@ -1,10 +1,6 @@
 <template>
   <header class="header">
-    <nav
-      class="header__nav"
-      :class="{ transparent: isTransparent }"
-      @click="handleInteraction"
-    >
+    <nav class="header__nav" :class="{ transparent: isTransparent }" @click="handleInteraction">
       <div class="header__nav-container container">
         <ul class="header__nav-list">
           <li>
@@ -21,45 +17,24 @@
         <div class="header__nav-list2">
           <div class="header__nav-form" @click.stop>
             <form class="nav__search" @submit.prevent>
-              <input
-                v-model="query"
-                @input="handleSearch"
-                type="text"
-                class="nav__search-input"
-                placeholder="Поиск"
-              />
+              <input v-model="query" @input="handleSearch" type="text" class="nav__search-input" placeholder="Поиск" />
               <button type="submit" class="nav__search-button">
-                <font-awesome-icon
-                  :icon="['fas', 'search']"
-                  class="nav__search-icon"
-                />
+                <font-awesome-icon :icon="['fas', 'search']" class="nav__search-icon" />
               </button>
             </form>
             <ul v-if="results.length" class="nav__search-results">
               <li v-for="a in results" :key="a.id">
-                <router-link
-                  class="nav__search-result"
-                  :to="`/animes/${a.id}`"
-                  @click="clearSearch"
-                >
+                <router-link class="nav__search-result" :to="`/animes/${a.id}`" @click="clearSearch">
                   {{ a.russian || a.name }}
                 </router-link>
               </li>
             </ul>
           </div>
           <div class="header__nav-profile profile">
-            <a
-              v-if="!auth.isLoggedIn"
-              href="/auth/login"
-              class="profile__login"
-            >
+            <a v-if="!auth.isLoggedIn" href="/auth/login" class="profile__login">
               Войти
             </a>
-            <router-link
-              v-else
-              to="/profile"
-              class="profile__avatar"
-            >
+            <router-link v-else to="/profile" class="profile__avatar">
               <img :src="avatarUrl" alt="avatar" />
             </router-link>
           </div>
