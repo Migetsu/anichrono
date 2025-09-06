@@ -37,9 +37,9 @@
             <router-link
               v-else
               to="/profile"
-              class="profile__avatar"
+              class="profile__nickname"
             >
-              <img :src="avatarUrl" alt="avatar" />
+              {{ nickname }}
             </router-link>
           </div>
         </div>
@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, onUnmounted } from "vue";
+import { reactive, ref, onMounted, onUnmounted, computed } from "vue";
 import { searchAnimes } from "@/scripts/searchAnimes";
 import { useAuthStore } from "@/stores/auth";
 
@@ -65,6 +65,7 @@ const results = ref([]);
 let scrollTimeout;
 let searchTimeout;
 const auth = useAuthStore();
+const nickname = computed(() => auth.user?.nickname || "");
 
 const handleScroll = () => {
   isTransparent.value = true;
@@ -100,6 +101,7 @@ const clearSearch = () => {
 };
 
 onMounted(() => {
+  auth.loadToken();
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("storage", auth.loadToken);
 });
