@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
 const auth = useAuthStore();
@@ -28,9 +28,6 @@ const logout = () => {
   window.location.href = '/api/auth/logout';
 };
 
-onMounted(() => {
-  auth.loadToken();
-});
 </script>
 
 <style lang="scss" scoped>
