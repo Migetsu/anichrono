@@ -27,23 +27,30 @@
           </RouterLink>
         </template>
       </div>
+      <div ref="loadTrigger"></div>
       <p v-if="error" class="error">{{ error }}</p>
     </section>
   </main>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 
 const animes = ref([])
 const loading = ref(true)
 const error = ref('')
 const fallback = '/placeholder.jpg'
+const page = ref(1)
+const hasMore = ref(true)
+const isFetching = ref(false)
+const loadTrigger = ref(null)
+const LIMIT = 24
+let observer
 
 const QUERY_RELEASES = `
-  query ($limit: Int) {
-    animes(limit: $limit) {
+  query ($limit: Int, $page: Int) {
+    animes(limit: $limit, page: $page) {
       id
       name
       russian
@@ -53,20 +60,41 @@ const QUERY_RELEASES = `
   }
 `
 
-onMounted(async () => {
+const loadAnimes = async () => {
+  if (isFetching.value || !hasMore.value) return
+  isFetching.value = true
   try {
     const { data } = await axios.post('/shiki/api/graphql', {
       query: QUERY_RELEASES,
-      variables: { limit: 24 }
+      variables: { limit: LIMIT, page: page.value }
     })
     if (data.errors) throw new Error(data.errors[0]?.message || 'GraphQL error')
-    animes.value = data.data?.animes ?? []
+    const newAnimes = data.data?.animes ?? []
+    if (newAnimes.length < LIMIT) hasMore.value = false
+    animes.value.push(...newAnimes)
+    page.value++
   } catch (e) {
     error.value = String(e.message || e)
     console.error('Shikimori request error:', e)
+    hasMore.value = false
   } finally {
     loading.value = false
+    isFetching.value = false
   }
+}
+
+onMounted(() => {
+  loadAnimes()
+  observer = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      loadAnimes()
+    }
+  })
+  if (loadTrigger.value) observer.observe(loadTrigger.value)
+})
+
+onBeforeUnmount(() => {
+  if (observer && loadTrigger.value) observer.unobserve(loadTrigger.value)
 })
 </script>
 
