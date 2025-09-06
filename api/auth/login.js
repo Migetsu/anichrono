@@ -15,10 +15,13 @@ export default function handler(req, res) {
   let redirectUri = SHIKI_REDIRECT_URI || '';
   let state = '';
 
-  // Fallback redirect URI based on the host header.
-  if (!redirectUri && req.headers.host) {
+  // Fallback redirect URI based on the request host. Some deployments
+  // (e.g. behind proxies) expose the original host via x-forwarded-host,
+  // so prefer that value when available.
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  if (!redirectUri && host) {
     const proto = req.headers['x-forwarded-proto'] || 'http';
-    redirectUri = `${proto}://${req.headers.host}/api/auth/callback`;
+    redirectUri = `${proto}://${host}/api/auth/callback`;
   }
 
   // Remember the origin of the page that initiated the login to redirect

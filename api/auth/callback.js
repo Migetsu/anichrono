@@ -30,12 +30,13 @@ export default async function handler(req, res) {
   // otherwise derive from state (origin passed from login handler) or from the
   // current request host as a last resort.
   let redirectUri = SHIKI_REDIRECT_URI;
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
   if (!redirectUri) {
     if (state) {
       redirectUri = `${state}/api/auth/callback`;
-    } else if (req.headers.host) {
+    } else if (host) {
       const proto = req.headers['x-forwarded-proto'] || 'http';
-      redirectUri = `${proto}://${req.headers.host}/api/auth/callback`;
+      redirectUri = `${proto}://${host}/api/auth/callback`;
     } else {
       redirectUri = '';
     }
