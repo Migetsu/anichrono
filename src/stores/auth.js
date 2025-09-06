@@ -22,20 +22,14 @@ export const useAuthStore = defineStore('auth', {
     async fetchUser() {
       if (!this.token) return;
       try {
-        const res = await fetch('https://shikimori.one/api/users/whoami', {
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-          },
+        const res = await fetch('/api/whoami', {
+          headers: { Authorization: `Bearer ${this.token}` },
         });
         if (!res.ok) throw new Error('Failed to fetch user');
         this.user = await res.json();
       } catch (e) {
+        console.error('whoami failed:', e);
         this.user = null;
-        this.token = null;
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('shikiToken');
-          localStorage.removeItem('shikiRefreshToken');
-        }
       }
     },
   },
