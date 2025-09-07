@@ -32,7 +32,7 @@ const logout = () => {
 
 <style lang="scss" scoped>
 .profile-page {
-  padding: 40px 0;
+  margin-top: 100px;
   color: #fff;
 
   &__info {

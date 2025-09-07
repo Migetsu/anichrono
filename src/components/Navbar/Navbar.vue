@@ -31,16 +31,15 @@
             </ul>
           </div>
           <div class="header__nav-profile profile">
-            <a v-if="!auth.isLoggedIn" href="/api/auth/login" class="profile__login">
+            <!-- <a v-if="!auth.isLoggedIn" href="/api/auth/login" class="profile__login">
               Войти
-            </a>
-            <router-link
-              v-else
-              to="/profile"
-              class="profile__nickname"
-            >
-              {{ nickname }}
-            </router-link>
+            </a> -->
+            <button v-if="!auth.isLoggedIn" @click="auth.login" class="profile__login">Войти</button>
+            <div v-else class="profile_info">
+              <router-link to="/profile"><img v-if="auth.user?.image && auth.user.image.x160" :src="auth.user.image.x160" alt="avatar" class="profile__avatar" /></router-link>
+              <!-- <span class="name">{{ auth.user?.nickname || 'Профиль' }}</span> -->
+              <!-- <button class="btn ghost" @click="auth.logout">Выйти</button> -->
+            </div>
           </div>
         </div>
       </div>
@@ -51,6 +50,7 @@
 <script setup>
 import { reactive, ref, onMounted, onUnmounted, computed } from "vue";
 import { searchAnimes } from "@/scripts/searchAnimes";
+import { useRouter } from 'vue-router'
 import { useAuthStore } from "@/stores/auth";
 
 const links = reactive([
@@ -64,6 +64,7 @@ const query = ref("");
 const results = ref([]);
 let scrollTimeout;
 let searchTimeout;
+const router = useRouter()
 const auth = useAuthStore();
 const nickname = computed(() => auth.user?.nickname || "");
 
@@ -101,9 +102,18 @@ const clearSearch = () => {
 };
 
 onMounted(() => {
-  auth.loadToken();
-  window.addEventListener("scroll", handleScroll);
-  window.addEventListener("storage", auth.loadToken);
+  const hash = new URLSearchParams(location.hash.slice(1))
+  const token = hash.get('access_token')
+  if (token) {
+    auth.setToken(token)   // сохранит и триггернет fetchUser()
+    // подчистим hash, чтобы токен не торчал в адресной строке
+    history.replaceState(null, '', '/')
+  } else {
+    router.replace('/')
+  }
+auth.loadToken();
+window.addEventListener("scroll", handleScroll);
+window.addEventListener("storage", auth.loadToken);
 });
 
 onUnmounted(() => {
