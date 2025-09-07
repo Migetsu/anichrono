@@ -7,6 +7,19 @@
 
 <script setup>
 import Navbar from '@/components/Navbar/Navbar.vue'
+import { onMounted } from 'vue'
+
+onMounted(async () => {
+  try {
+    const data = await shikiGQL(QUERY_POPULAR, { limit: 12 })
+    animes.value = data.animes ?? []
+  } catch (e) {
+    error.value = String(e.message || e)
+    console.error('Shikimori request error:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 // в любом месте старта приложения (например, в App.vue или main.js)
 const hash = window.location.hash;

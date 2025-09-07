@@ -53,32 +53,28 @@
 // /api/auth/callback.js
 export default async function handler(req, res) {
   try {
-    // На Vercel req.url — относительный путь, поэтому задаём базу из заголовков
     const proto = req.headers['x-forwarded-proto'] || 'http';
     const host = req.headers['x-forwarded-host'] || req.headers.host;
     const url = new URL(req.url, `${proto}://${host}`);
 
-    // 1) Забираем code и (опционально) state
-    const code = url.searchParams.get('code');
     const oauthError = url.searchParams.get('error');
     const oauthErrorDesc = url.searchParams.get('error_description');
-
     if (oauthError) {
       res.statusCode = 400;
-      return res.end(`OAuth error: ${oauthError} ${oauthErrorDesc ? `- ${oauthErrorDesc}` : ''}`);
+      return res.end(`OAuth error: ${oauthError}${oauthErrorDesc ? ` - ${oauthErrorDesc}` : ''}`);
     }
 
+    const code = url.searchParams.get('code');
     if (!code) {
       res.statusCode = 400;
       return res.end('Missing code');
     }
 
-    // 2) Меняем code на токен
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: process.env.SHIKI_CLIENT_ID,
       client_secret: process.env.SHIKI_CLIENT_SECRET,
-      redirect_uri: process.env.SHIKI_REDIRECT_URI, // ДОЛЖЕН совпадать с URL этого обработчика
+      redirect_uri: process.env.SHIKI_REDIRECT_URI,
       code
     });
 
@@ -87,7 +83,6 @@ export default async function handler(req, res) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
       body
     });
-
     const data = await tokenResp.json();
 
     if (!tokenResp.ok || !data.access_token) {
@@ -95,12 +90,13 @@ export default async function handler(req, res) {
       return res.end(`Token exchange failed: ${JSON.stringify(data)}`);
     }
 
-    // 3) Редиректим на фронт. Используем "/#access_token=..."
-    // чтобы SPA не пыталась сматчить несуществующий роут "/auth/callback"
-    const FRONT = process.env.FRONTEND_ORIGIN || 'https://anichrono.vercel.app';
-    const location = `${FRONT}/#access_token=${encodeURIComponent(data.access_token)}`;
+    // Безопасно собираем фронтовый URL и кладём токен в hash
+    const front = new URL(process.env.FRONTEND_ORIGIN || 'https://anichrono.vercel.app');
+    // Если у тебя Vue Router в history-режиме — так оставляем.
+    // Если вдруг hash-режим (/#/...), см. комментарий ниже.
+    front.hash = `access_token=${encodeURIComponent(data.access_token)}`;
 
-    res.writeHead(302, { Location: location });
+    res.writeHead(302, { Location: front.toString() });
     res.end();
   } catch (e) {
     res.statusCode = 500;
