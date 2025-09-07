@@ -66,25 +66,3 @@ const logout = () => {
   }
 }
 </style>
-
-<!-- /src/components/Profile/Profile.vue (фрагменты) -->
-<!-- <script setup>
-import { computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-const auth = useAuthStore()
-const avatarUrl = computed(() => auth.user?.avatar || auth.user?.image?.x160 || null)
-</script>
-
-<template>
-  <section class="profile-page container">
-    <h1>Профиль</h1>
-    <div v-if="auth.isLoggedIn" class="profile-page__info">
-      <img v-if="avatarUrl" :src="avatarUrl" alt="avatar" class="profile-page__avatar" />
-      <p class="profile-page__name">{{ auth.user?.nickname }}</p>
-      <button class="profile-page__logout" @click="auth.logout">Выйти</button>
-    </div>
-    <div v-else>
-      <button class="profile-page__login" @click="auth.login">Войти</button>
-    </div>
-  </section>
-</template> -->
