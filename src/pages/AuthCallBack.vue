@@ -20,3 +20,18 @@ onMounted(async () => {
   }
 })
 </script>
+<template>
+  <div>
+    Входим...
+  </div>
+</template>
+<style scoped>
+div {
+    margin-top: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-size: 40px;
+}
+</style>
