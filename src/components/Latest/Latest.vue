@@ -61,7 +61,7 @@ import { Navigation, Pagination, Autoplay } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
-import { shikiGQL } from '../../scripts/shikiClient.js'
+import { shikiGQL } from '@/scripts/shikiClient.js'
 
 const animes = ref([])
 const loading = ref(true)

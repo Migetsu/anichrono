@@ -1,4 +1,4 @@
-import { shikiGQL } from './shikiClient';
+import { shikiGQL } from '@/scripts/shikiClient.js';
 
 const QUERY = `
   query ($ids: String!) {
