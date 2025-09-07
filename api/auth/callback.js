@@ -24,7 +24,12 @@ export default async function handler(req, res) {
       return res.end(`Token exchange failed: ${JSON.stringify(data)}`);
     }
 
-    const FRONT = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+    let FRONT = process.env.FRONTEND_ORIGIN;
+    if (!FRONT) {
+      const proto = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      FRONT = host.includes('localhost') ? 'http://localhost:5173' : `${proto}://${host}`;
+    }
     // 302 на фронт, токен в hash (не уходит на сервер)
     res.writeHead(302, {
       Location: `${FRONT}/auth/callback#access_token=${encodeURIComponent(data.access_token)}`
