@@ -24,17 +24,26 @@ export default async function handler(req, res) {
       return res.end(`Token exchange failed: ${JSON.stringify(data)}`);
     }
 
-    let FRONT = process.env.FRONTEND_ORIGIN;
-    if (!FRONT) {
-      const proto = req.headers['x-forwarded-proto'] || 'http';
-      const host = req.headers['x-forwarded-host'] || req.headers.host;
-      FRONT = host.includes('localhost') ? 'http://localhost:5173' : `${proto}://${host}`;
+    let frontendOrigin = process.env.FRONTEND_ORIGIN;
+    if (!frontendOrigin) {
+      if (req.headers.host && req.headers.host.includes('localhost')) {
+        frontendOrigin = 'http://localhost:5173';
+      } else {
+        const proto = req.headers['x-forwarded-proto'] || 'https';
+        frontendOrigin = `${proto}://${req.headers.host}`;
+      }
     }
     // 302 на фронт, токен в hash (не уходит на сервер)
-    res.writeHead(302, {
-      Location: `${FRONT}/auth/callback#access_token=${encodeURIComponent(data.access_token)}`
-    });
-    res.end();
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.end(`<!doctype html>
+<html><head><meta charset="utf-8"><title>Auth Callback</title></head>
+<body>
+<script>
+  try { localStorage.setItem('shikiToken', ${JSON.stringify(data.access_token)}); } catch(e) {}
+  const frontendOrigin = ${JSON.stringify(frontendOrigin)};
+  location.replace(frontendOrigin);
+</script>
+</body></html>`);
   } catch (e) {
     res.statusCode = 500;
     res.end(String(e?.message || e));
