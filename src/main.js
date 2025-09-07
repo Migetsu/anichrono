@@ -35,16 +35,17 @@ if (tokenFromHash) {
 
 const app = createApp(App)
 const pinia = createPinia()
-const auth = useAuthStore()
+const auth = useAuthStore(pinia)
 // auth.loadTokenFromHash();
-auth.loadToken()
-auth.fetchMe();
+
 
 library.add(fas, far, fab)
 
 app.component('font-awesome-icon', FontAwesomeIcon)
 app.use(pinia)
 app.use(routers)
+auth.loadToken()
+auth.fetchMe();
 app.use(VueLazyLoad, {
   loading: defaultImg, // картинка-заглушка
   error: defaultImg // если картинка не загрузилась
