@@ -31,14 +31,9 @@
             </ul>
           </div>
           <div class="header__nav-profile profile">
-            <!-- <a v-if="!auth.isLoggedIn" href="/api/auth/login" class="profile__login">
-              Войти
-            </a> -->
             <button v-if="!auth.isLoggedIn" @click="auth.login" class="profile__login">Войти</button>
             <div v-else class="profile_info">
               <router-link to="/profile"><img v-if="auth.user?.image && auth.user.image.x160" :src="auth.user.image.x160" alt="avatar" class="profile__avatar" /></router-link>
-              <!-- <span class="name">{{ auth.user?.nickname || 'Профиль' }}</span> -->
-              <!-- <button class="btn ghost" @click="auth.logout">Выйти</button> -->
             </div>
           </div>
         </div>
@@ -47,7 +42,9 @@
   </header>
 </template>
 
-<script setup>
+
+
+ <script setup>
 import { reactive, ref, onMounted, onUnmounted } from "vue";
 import { searchAnimes } from "@/scripts/searchAnimes";
 import { useAuthStore } from "@/stores/auth";
@@ -113,3 +110,4 @@ onUnmounted(() => {
 </script>
 
 <style></style>
+

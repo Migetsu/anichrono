@@ -1,3 +1,4 @@
+<!-- /src/pages/AuthCallback.vue -->
 <script setup>
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -7,31 +8,44 @@ const router = useRouter()
 const auth = useAuthStore()
 
 onMounted(async () => {
-  const hash = new URLSearchParams(location.hash.slice(1))
-  const token = hash.get('access_token')
+  const params = new URLSearchParams(location.hash.slice(1))
+  const token = params.get('access_token')
 
-  if (token) {
-    auth.setToken(token)          // положили токен (LS, стор)
-    try { await auth.fetchUser?.() } catch {}
-    // ВАЖНО: навигация через роутер, чтобы размонтировать /auth/callback
-    await router.replace({ name: 'home' }) // или router.replace('/')
-  } else {
-    await router.replace({ name: 'home' }) // или '/'
+  if (!token) {
+    // нет токена в hash — уходим на главную
+    return router.replace({ name: 'home' })
+  }
+
+  // 1) Сохраняем токен в стор/LS
+  auth.setToken(token)
+
+  // 2) Чистим url (убираем #access_token=...)
+  history.replaceState(null, '', location.pathname + location.search)
+
+  // 3) Тянем профиль
+  try {
+    await auth.fetchMe()
+  } catch (e) {
+    // на всякий — чистим и уходим
+    auth.clearToken?.()
+  } finally {
+    // 4) Переход на главную (или куда нужно)
+    router.replace({ name: 'home' })
   }
 })
 </script>
+
 <template>
-  <div>
-    Входим...
-  </div>
+  <div>Входим...</div>
 </template>
+
 <style scoped>
 div {
-    margin-top: 100px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    font-size: 40px;
+  margin-top: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-size: 40px;
 }
 </style>

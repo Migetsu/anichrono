@@ -57,24 +57,14 @@ export default async function handler(req, res) {
     const host = req.headers['x-forwarded-host'] || req.headers.host;
     const url = new URL(req.url, `${proto}://${host}`);
 
-    const oauthError = url.searchParams.get('error');
-    const oauthErrorDesc = url.searchParams.get('error_description');
-    if (oauthError) {
-      res.statusCode = 400;
-      return res.end(`OAuth error: ${oauthError}${oauthErrorDesc ? ` - ${oauthErrorDesc}` : ''}`);
-    }
-
     const code = url.searchParams.get('code');
-    if (!code) {
-      res.statusCode = 400;
-      return res.end('Missing code');
-    }
+    if (!code) { res.statusCode = 400; return res.end('Missing code'); }
 
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: process.env.SHIKI_CLIENT_ID,
       client_secret: process.env.SHIKI_CLIENT_SECRET,
-      redirect_uri: process.env.SHIKI_REDIRECT_URI,
+      redirect_uri: process.env.SHIKI_REDIRECT_URI, // ДОЛЖЕН в точности совпадать
       code
     });
 
@@ -84,16 +74,15 @@ export default async function handler(req, res) {
       body
     });
     const data = await tokenResp.json();
-
     if (!tokenResp.ok || !data.access_token) {
       res.statusCode = tokenResp.status || 500;
       return res.end(`Token exchange failed: ${JSON.stringify(data)}`);
     }
 
-    // Безопасно собираем фронтовый URL и кладём токен в hash
-    const front = new URL(process.env.FRONTEND_ORIGIN || 'https://anichrono.vercel.app');
-    // Если у тебя Vue Router в history-режиме — так оставляем.
-    // Если вдруг hash-режим (/#/...), см. комментарий ниже.
+    const front = new URL(process.env.FRONTEND_ORIGIN || 'http://localhost:5173');
+    // КЛЮЧЕВОЕ: идём на страницу /auth/callback
+    front.pathname = '/auth/callback';
+    // Токен кладём в hash, чтобы он не уходил на сервер
     front.hash = `access_token=${encodeURIComponent(data.access_token)}`;
 
     res.writeHead(302, { Location: front.toString() });
