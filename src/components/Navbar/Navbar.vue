@@ -50,7 +50,6 @@
 <script setup>
 import { reactive, ref, onMounted, onUnmounted, computed } from "vue";
 import { searchAnimes } from "@/scripts/searchAnimes";
-import { useRouter } from 'vue-router'
 import { useAuthStore } from "@/stores/auth";
 
 const links = reactive([
@@ -64,7 +63,6 @@ const query = ref("");
 const results = ref([]);
 let scrollTimeout;
 let searchTimeout;
-const router = useRouter()
 const auth = useAuthStore();
 const nickname = computed(() => auth.user?.nickname || "");
 
@@ -102,18 +100,9 @@ const clearSearch = () => {
 };
 
 onMounted(() => {
-  const hash = new URLSearchParams(location.hash.slice(1))
-  const token = hash.get('access_token')
-  if (token) {
-    auth.setToken(token)   // сохранит и триггернет fetchUser()
-    // подчистим hash, чтобы токен не торчал в адресной строке
-    history.replaceState(null, '', '/')
-  } else {
-    router.replace('/')
-  }
-auth.loadToken();
-window.addEventListener("scroll", handleScroll);
-window.addEventListener("storage", auth.loadToken);
+  auth.loadToken();
+  window.addEventListener("scroll", handleScroll);
+  window.addEventListener("storage", auth.loadToken);
 });
 
 onUnmounted(() => {
