@@ -27,14 +27,8 @@ export default async function handler(req, res) {
       return res.end(`Token exchange failed: ${JSON.stringify(data)}`);
     }
 
-    // const front = new URL(process.env.FRONTEND_ORIGIN || 'https://anichrono.vercel.app');
-    // front.pathname = '/auth/callback'; // <— КЛЮЧЕВОЕ
-    // front.hash = `access_token=${encodeURIComponent(data.access_token)}`;
-
-    // res.writeHead(302, { Location: front.toString() });
-    // res.end();
     const front = new URL(process.env.FRONTEND_ORIGIN || 'https://anichrono.vercel.app');
-    front.pathname = '/'; // <-- было '/auth/callback'
+    front.pathname = '/';
     front.hash = `access_token=${encodeURIComponent(data.access_token)}`;
     res.writeHead(302, { Location: front.toString() });
     res.end();
