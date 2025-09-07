@@ -35,7 +35,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { shikiGQL } from '../../scripts/shikiClient.js'
+import { shikiGQL } from '@/scripts/shikiClient.js'
 
 const animes = ref([])
 const loading = ref(true)
