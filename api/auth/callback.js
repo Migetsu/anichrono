@@ -2,8 +2,8 @@
 export default async function handler(req, res) {
   try {
     const proto = req.headers['x-forwarded-proto'] || 'http';
-    const host  = req.headers['x-forwarded-host']  || req.headers.host;
-    const url   = new URL(req.url, `${proto}://${host}`);
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    const url = new URL(req.url, `${proto}://${host}`);
 
     const code = url.searchParams.get('code');
     if (!code) { res.statusCode = 400; return res.end('Missing code'); }
@@ -27,10 +27,15 @@ export default async function handler(req, res) {
       return res.end(`Token exchange failed: ${JSON.stringify(data)}`);
     }
 
-    const front = new URL(process.env.FRONTEND_ORIGIN || 'https://anichrono.vercel.app');
-    front.pathname = '/auth/callback'; // <— КЛЮЧЕВОЕ
-    front.hash = `access_token=${encodeURIComponent(data.access_token)}`;
+    // const front = new URL(process.env.FRONTEND_ORIGIN || 'https://anichrono.vercel.app');
+    // front.pathname = '/auth/callback'; // <— КЛЮЧЕВОЕ
+    // front.hash = `access_token=${encodeURIComponent(data.access_token)}`;
 
+    // res.writeHead(302, { Location: front.toString() });
+    // res.end();
+    const front = new URL(process.env.FRONTEND_ORIGIN || 'https://anichrono.vercel.app');
+    front.pathname = '/'; // <-- было '/auth/callback'
+    front.hash = `access_token=${encodeURIComponent(data.access_token)}`;
     res.writeHead(302, { Location: front.toString() });
     res.end();
   } catch (e) {
