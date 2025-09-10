@@ -8,9 +8,13 @@ export default async function handler(req, res) {
     const url = new URL(req.url, 'http://localhost')
     if (req.method === 'GET') {
       const userId = url.searchParams.get('user_id')
-      const r = await fetch(`https://shikimori.one/api/users/${userId}/anime_rates`, {
-        headers: { Authorization: auth }
-      })
+      const params = new URLSearchParams(url.searchParams)
+      params.delete('user_id')
+      const qs = params.toString()
+      const r = await fetch(
+        `https://shikimori.one/api/users/${userId}/anime_rates${qs ? `?${qs}` : ''}`,
+        { headers: { Authorization: auth } }
+      )
       const data = await r.json()
       res.statusCode = r.status
       res.setHeader('Content-Type', 'application/json')
