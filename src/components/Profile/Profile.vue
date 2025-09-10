@@ -39,7 +39,7 @@
   </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useListsStore } from '@/stores/lists'
 
@@ -66,6 +66,10 @@ const fallback = '/placeholder.jpg'
 
 onMounted(() => {
   if (auth.isLoggedIn && !lists.rates.length) lists.fetchRates()
+})
+
+watch(() => auth.isLoggedIn, val => {
+  if (val && !lists.rates.length) lists.fetchRates()
 })
 
 const logout = () => {
