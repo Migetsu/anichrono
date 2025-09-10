@@ -22,11 +22,20 @@ export const useListsStore = defineStore('lists', {
       this.loading = true
       this.error = null
       try {
-        const r = await fetch(`/api/user-rates?user_id=${auth.user.id}`, {
-          headers: { Authorization: `Bearer ${auth.token}` }
-        })
-        if (!r.ok) throw new Error(`rates ${r.status}`)
-        this.rates = await r.json()
+        const all = []
+        const LIMIT = 50
+        let page = 1
+        while (true) {
+          const r = await fetch(`/api/user-rates?user_id=${auth.user.id}&page=${page}&limit=${LIMIT}`, {
+            headers: { Authorization: `Bearer ${auth.token}` }
+          })
+          if (!r.ok) throw new Error(`rates ${r.status}`)
+          const data = await r.json()
+          all.push(...data)
+          if (data.length < LIMIT) break
+          page++
+        }
+        this.rates = all
       } catch (e) {
         this.error = String(e.message || e)
         this.rates = []
