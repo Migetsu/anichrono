@@ -1,5 +1,6 @@
 // /src/stores/auth.js
 import { defineStore } from 'pinia'
+import { useListsStore } from './lists'
 const TOKEN_KEY = 'shiki_access_token'
 
 export const useAuthStore = defineStore('auth', {
@@ -26,6 +27,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = null
       this.user = null
       try { localStorage.removeItem(TOKEN_KEY) } catch {}
+      try { useListsStore().$reset() } catch {}
     },
 
     // ЕДИНСТВЕННЫЙ fetchMe (подтягивает профиль и сбрасывает флаги)
@@ -39,6 +41,7 @@ export const useAuthStore = defineStore('auth', {
         })
         if (!r.ok) throw new Error(`whoami ${r.status}`)
         this.user = await r.json()
+        try { useListsStore().fetchRates() } catch {}
       } catch (e) {
         this.error = String(e?.message || e)
         this.clearToken()
