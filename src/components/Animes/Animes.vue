@@ -87,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchAnimeById } from '@/scripts/fetchAnimeById'
 import DOMPurify from 'dompurify'
@@ -112,6 +112,14 @@ const statusOptions = [
 const auth = useAuthStore()
 const lists = useListsStore()
 
+onMounted(() => {
+  if (auth.isLoggedIn && !lists.rates.length) lists.fetchRates()
+})
+
+watch(() => auth.isLoggedIn, val => {
+  if (val && !lists.rates.length) lists.fetchRates()
+})
+
 function toggleStatus() {
   showStatus.value = !showStatus.value
 }
@@ -119,7 +127,7 @@ function toggleStatus() {
 function selectStatus(val) {
   showStatus.value = false
   if (!anime.value) return
-  lists.setStatus(anime.value.id, val)
+  lists.setStatus(anime.value, val)
 }
 
 function removeStatus() {

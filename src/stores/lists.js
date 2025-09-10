@@ -34,9 +34,10 @@ export const useListsStore = defineStore('lists', {
         this.loading = false
       }
     },
-    async setStatus(animeId, status) {
+    async setStatus(anime, status) {
       const auth = useAuthStore()
       if (!auth.token || !auth.user) return
+      const animeId = typeof anime === 'object' ? anime.id : anime
       const existing = this.rates.find(r => r.target_id === animeId)
       try {
         if (existing) {
@@ -67,7 +68,8 @@ export const useListsStore = defineStore('lists', {
           })
           if (!r.ok) throw new Error(`create ${r.status}`)
           const data = await r.json()
-          this.rates.push(data)
+          const animeObj = typeof anime === 'object' ? anime : null
+          this.rates.push(animeObj ? { ...data, anime: animeObj } : data)
         }
       } catch (e) {
         console.error(e)
