@@ -138,7 +138,7 @@ function removeStatus() {
 
 const currentStatus = computed(() => {
   if (!anime.value) return null
-  return lists.rateFor(anime.value.id)?.status || null
+  return lists.rateFor(Number(anime.value.id))?.status || null
 })
 const currentStatusLabel = computed(() => {
   const s = statusOptions.find(o => o.value === currentStatus.value)

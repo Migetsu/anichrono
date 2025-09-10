@@ -8,7 +8,10 @@ export const useListsStore = defineStore('lists', {
     error: null
   }),
   getters: {
-    rateFor: s => id => s.rates.find(r => r.target_id === id),
+    rateFor: s => id => {
+      const animeId = Number(id)
+      return s.rates.find(r => r.target_id === animeId)
+    },
     grouped: s =>
       s.rates.reduce((acc, r) => {
         (acc[r.status] = acc[r.status] || []).push(r)
@@ -35,7 +38,7 @@ export const useListsStore = defineStore('lists', {
           if (data.length < LIMIT) break
           page++
         }
-        this.rates = all
+        this.rates = all.map(r => ({ ...r, target_id: Number(r.target_id) }))
       } catch (e) {
         this.error = String(e.message || e)
         this.rates = []
@@ -46,7 +49,7 @@ export const useListsStore = defineStore('lists', {
     async setStatus(anime, status) {
       const auth = useAuthStore()
       if (!auth.token || !auth.user) return
-      const animeId = typeof anime === 'object' ? anime.id : anime
+      const animeId = Number(typeof anime === 'object' ? anime.id : anime)
       const existing = this.rates.find(r => r.target_id === animeId)
       try {
         if (existing) {
@@ -78,7 +81,9 @@ export const useListsStore = defineStore('lists', {
           if (!r.ok) throw new Error(`create ${r.status}`)
           const data = await r.json()
           const animeObj = typeof anime === 'object' ? anime : null
-          this.rates.push(animeObj ? { ...data, anime: animeObj } : data)
+          this.rates.push(
+            animeObj ? { ...data, anime: animeObj, target_id: animeId } : { ...data, target_id: animeId }
+          )
         }
       } catch (e) {
         console.error(e)
@@ -87,7 +92,8 @@ export const useListsStore = defineStore('lists', {
     async remove(animeId) {
       const auth = useAuthStore()
       if (!auth.token || !auth.user) return
-      const existing = this.rates.find(r => r.target_id === animeId)
+      const idNum = Number(animeId)
+      const existing = this.rates.find(r => r.target_id === idNum)
       if (!existing) return
       try {
         const r = await fetch(`/api/user-rates?id=${existing.id}`, {

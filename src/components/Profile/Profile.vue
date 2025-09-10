@@ -20,7 +20,7 @@
               :to="`/animes/${r.anime.id}`"
               :title="r.anime.russian || r.anime.name"
               :style="{
-                backgroundImage: `linear-gradient(0deg, rgba(0,0,0,.55), rgba(0,0,0,.55)), url(${r.anime.poster?.originalUrl || fallback})`,
+                backgroundImage: `linear-gradient(0deg, rgba(0,0,0,.55), rgba(0,0,0,.55)), url(${r.anime.image?.original || fallback})`,
                 backgroundSize: '100% 100%, cover',
                 backgroundPosition: 'center, center',
                 backgroundRepeat: 'no-repeat, no-repeat'
