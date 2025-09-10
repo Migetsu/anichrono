@@ -9,18 +9,34 @@
     <div v-else>
       <a href="/api/auth/login" class="profile-page__login">Войти</a>
     </div>
-    <div v-if="auth.isLoggedIn" class="profile-page__lists">
-      <div v-for="(items, status) in groupedLists" :key="status" class="profile-page__list">
-        <h2 class="profile-page__list-title">{{ statusLabels[status] || status }}</h2>
-        <ul class="profile-page__animes">
-          <li v-for="r in items" :key="r.id" class="profile-page__anime">
-            <router-link :to="`/animes/${r.anime.id}`">{{ r.anime.russian || r.anime.name }}</router-link>
-          </li>
-        </ul>
+      <div v-if="auth.isLoggedIn" class="profile-page__lists">
+        <div v-for="s in statuses" :key="s.value" class="profile-page__list">
+          <h2 class="profile-page__list-title">{{ s.label }}</h2>
+          <div v-if="groupedLists[s.value]?.length" class="cards">
+            <RouterLink
+              v-for="r in groupedLists[s.value]"
+              :key="r.id"
+              class="card"
+              :to="`/animes/${r.anime.id}`"
+              :title="r.anime.russian || r.anime.name"
+              :style="{
+                backgroundImage: `linear-gradient(0deg, rgba(0,0,0,.55), rgba(0,0,0,.55)), url(${r.anime.poster?.originalUrl || fallback})`,
+                backgroundSize: '100% 100%, cover',
+                backgroundPosition: 'center, center',
+                backgroundRepeat: 'no-repeat, no-repeat'
+              }"
+            >
+              <div class="card__content">
+                <h3 class="card__title">{{ r.anime.russian || r.anime.name }}</h3>
+                <small class="card__meta">★ {{ r.anime.score || '—' }}</small>
+              </div>
+            </RouterLink>
+          </div>
+          <p v-else class="profile-page__empty">Пусто</p>
+        </div>
       </div>
-    </div>
-  </section>
-</template>
+    </section>
+  </template>
 
 <script setup>
 import { computed, onMounted } from 'vue'
@@ -36,16 +52,17 @@ const avatarUrl = computed(() => {
   return img.startsWith('http') ? img : `https://shikimori.one${img}`
 })
 
-const statusLabels = {
-  planned: 'Запланировано',
-  completed: 'Просмотрено',
-  dropped: 'Брошено',
-  rewatching: 'Пересматриваю',
-  on_hold: 'Отложено',
-  watching: 'Смотрю'
-}
+const statuses = [
+  { value: 'planned', label: 'Запланировано' },
+  { value: 'watching', label: 'Смотрю' },
+  { value: 'rewatching', label: 'Пересматриваю' },
+  { value: 'completed', label: 'Просмотрено' },
+  { value: 'on_hold', label: 'Отложено' },
+  { value: 'dropped', label: 'Брошено' }
+]
 
 const groupedLists = computed(() => lists.grouped)
+const fallback = '/placeholder.jpg'
 
 onMounted(() => {
   if (auth.isLoggedIn && !lists.rates.length) lists.fetchRates()
@@ -103,17 +120,63 @@ const logout = () => {
     font-size: 22px;
   }
 
-  &__animes {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  &__empty {
+    color: #ccc;
   }
+}
 
-  &__anime a {
-    color: #fff;
-    text-decoration: none;
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  position: relative;
+  display: block;
+  border-radius: 14px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  text-decoration: none;
+  aspect-ratio: 2 / 3;
+}
+
+.card__content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  padding: 0 12px;
+  color: #fff;
+  z-index: 2;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .45);
+  display: grid;
+  gap: 4px;
+}
+
+.card__title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 1200px) {
+  .card__title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
+}
+
+.card__meta {
+  opacity: .9;
+  font-weight: 600;
+  font-size: 16px;
 }
 </style>

@@ -9,10 +9,11 @@ export const useListsStore = defineStore('lists', {
   }),
   getters: {
     rateFor: s => id => s.rates.find(r => r.target_id === id),
-    grouped: s => s.rates.reduce((acc, r) => {
-      (acc[r.status] = acc[r.status] || []).push(r)
-      return acc
-    }, {})
+    grouped: s =>
+      s.rates.reduce((acc, r) => {
+        (acc[r.status] = acc[r.status] || []).push(r)
+        return acc
+      }, {})
   },
   actions: {
     async fetchRates() {
@@ -71,6 +72,23 @@ export const useListsStore = defineStore('lists', {
       } catch (e) {
         console.error(e)
       }
+    },
+    async remove(animeId) {
+      const auth = useAuthStore()
+      if (!auth.token || !auth.user) return
+      const existing = this.rates.find(r => r.target_id === animeId)
+      if (!existing) return
+      try {
+        const r = await fetch(`/api/user-rates?id=${existing.id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${auth.token}` }
+        })
+        if (!r.ok) throw new Error(`delete ${r.status}`)
+        this.rates = this.rates.filter(r => r.id !== existing.id)
+      } catch (e) {
+        console.error(e)
+      }
     }
   }
 })
+
