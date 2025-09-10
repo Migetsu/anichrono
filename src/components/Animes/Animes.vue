@@ -72,19 +72,10 @@
     </section>
 
     <!-- СООБЩЕНИЯ/ЛОАДЕР -->
-    <section class="container state">
+    <section v-if="loading" class="container state">
       <div v-if="loading" class="loader">Загрузка…</div>
       <div v-else-if="error" class="error">{{ error }}</div>
     </section>
-
-    <!-- ПЛЕЕР -->
-    <!-- <section class="container player" v-if="anime && !loading">
-      <div class="player__wrapper">
-        <iframe src="https://www.youtube.com/embed/5PS0bAhbgP0" title="Anime trailer"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen></iframe>
-      </div>
-    </section> -->
   </main>
 </template>
 
@@ -211,9 +202,8 @@ function kindLabel(k) {
 
 /* Общая сетка */
 .animes {
-  margin-top: 80px;
+  /* margin-top: 80px; */
   color: var(--c-text);
-  min-height: calc(100vh - 80px);
 }
 
 .container {
@@ -290,14 +280,13 @@ function kindLabel(k) {
     background-color: rgba(20, 20, 20, 1);
   }
 
-    .anime {
+.anime {
       position: relative;
-      min-height: 420px;
+      min-height: 100vh;
       display: flex;
       align-items: center;
-      padding: 28px 0 32px;
-      overflow: hidden;
-    }
+      /* padding: 28px 0 32px; */
+}
 
 .anime__bg {
   position: absolute;
@@ -306,7 +295,7 @@ function kindLabel(k) {
   /* background-size: 100% auto; background-position: top center; */
   background-size: cover;
   background-position: center;
-  transform: scale(1.02);
+  transform: scale(1);
   filter: saturate(1.1) brightness(0.6);
 }
 
