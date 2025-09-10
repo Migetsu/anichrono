@@ -9,6 +9,14 @@
           <img class="anime__poster" loading="lazy" :src="anime.poster?.originalUrl || fallback"
             :alt="anime.russian || anime.name" />
           <router-link class="button anime__watch" :to="`/watch/${anime.id}`">Смотреть</router-link>
+          <div class="dropdown">
+            <button class="button anime__list" @click="toggleStatus">Добавить в список</button>
+            <ul v-if="showStatus" class="dropdown__menu">
+              <li v-for="s in statusOptions" :key="s" class="dropdown__item" @click="selectStatus(s)">
+                {{ s }}
+              </li>
+            </ul>
+          </div>
         </div>
 
         <!-- общая сетка для правой колонки -->
@@ -85,6 +93,24 @@ const anime = ref(null)
 const loading = ref(true)
 const error = ref('')
 const fallback = '/placeholder.jpg'
+
+const showStatus = ref(false)
+const statusOptions = [
+  'Запланировано',
+  'Просмотрено',
+  'Брошено',
+  'Пересматриваю',
+  'Отложено',
+  'Смотрю'
+]
+
+function toggleStatus() {
+  showStatus.value = !showStatus.value
+}
+
+function selectStatus() {
+  showStatus.value = false
+}
 
 async function load(id) {
   loading.value = true
@@ -166,6 +192,7 @@ function kindLabel(k) {
 .animes {
   margin-top: 80px;
   color: var(--c-text);
+  min-height: calc(100vh - 80px);
 }
 
 .container {
@@ -202,12 +229,44 @@ function kindLabel(k) {
     background-color: rgba(20, 20, 20, 1);
   }
 
-  .anime__watch {
+  .anime__watch,
+  .anime__list {
     box-shadow: 0 4px 12px rgba(122, 162, 255, .35);
   }
 
-  .anime__watch:hover {
+  .anime__watch:hover,
+  .anime__list:hover {
     background: blue;
+  }
+
+  .dropdown {
+    position: relative;
+    width: 100%;
+  }
+
+  .dropdown__menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    margin-top: 4px;
+    list-style: none;
+    padding: 0;
+    background-color: rgba(20, 20, 20, 0.7);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 3;
+  }
+
+  .dropdown__item {
+    padding: 10px 18px;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color .2s;
+  }
+
+  .dropdown__item:hover {
+    background-color: rgba(20, 20, 20, 1);
   }
 
     .anime {
