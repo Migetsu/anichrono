@@ -9,14 +9,20 @@
           <img class="anime__poster" loading="lazy" :src="anime.poster?.originalUrl || fallback"
             :alt="anime.russian || anime.name" />
           <router-link class="button anime__watch" :to="`/watch/${anime.id}`">Смотреть</router-link>
-          <div class="dropdown">
-            <button class="button anime__list" @click="toggleStatus">Добавить в список</button>
+          <div class="dropdown" v-if="auth.isLoggedIn">
+            <button class="button anime__list" @click="toggleStatus">{{ currentStatusLabel || 'Добавить в список' }}</button>
             <ul v-if="showStatus" class="dropdown__menu">
-              <li v-for="s in statusOptions" :key="s" class="dropdown__item" @click="selectStatus(s)">
-                {{ s }}
+              <li
+                v-for="s in statusOptions"
+                :key="s.value"
+                class="dropdown__item"
+                @click="selectStatus(s.value)"
+              >
+                {{ s.label }}
               </li>
             </ul>
           </div>
+          <button v-else class="button anime__list" @click="auth.login">Войти</button>
         </div>
 
         <!-- общая сетка для правой колонки -->
@@ -87,6 +93,8 @@ import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchAnimeById } from '@/scripts/fetchAnimeById'
 import DOMPurify from 'dompurify'
+import { useAuthStore } from '@/stores/auth'
+import { useListsStore } from '@/stores/lists'
 
 const route = useRoute()
 const anime = ref(null)
@@ -96,21 +104,34 @@ const fallback = '/placeholder.jpg'
 
 const showStatus = ref(false)
 const statusOptions = [
-  'Запланировано',
-  'Просмотрено',
-  'Брошено',
-  'Пересматриваю',
-  'Отложено',
-  'Смотрю'
+  { label: 'Запланировано', value: 'planned' },
+  { label: 'Просмотрено', value: 'completed' },
+  { label: 'Брошено', value: 'dropped' },
+  { label: 'Пересматриваю', value: 'rewatching' },
+  { label: 'Отложено', value: 'on_hold' },
+  { label: 'Смотрю', value: 'watching' }
 ]
+const auth = useAuthStore()
+const lists = useListsStore()
 
 function toggleStatus() {
   showStatus.value = !showStatus.value
 }
 
-function selectStatus() {
+function selectStatus(val) {
   showStatus.value = false
+  if (!anime.value) return
+  lists.setStatus(anime.value.id, val)
 }
+
+const currentStatus = computed(() => {
+  if (!anime.value) return null
+  return lists.rateFor(anime.value.id)?.status || null
+})
+const currentStatusLabel = computed(() => {
+  const s = statusOptions.find(o => o.value === currentStatus.value)
+  return s ? s.label : null
+})
 
 async function load(id) {
   loading.value = true
