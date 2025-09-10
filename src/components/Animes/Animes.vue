@@ -20,6 +20,13 @@
               >
                 {{ s.label }}
               </li>
+              <li
+                v-if="currentStatus"
+                class="dropdown__item dropdown__item--remove"
+                @click="removeStatus"
+              >
+                Удалить из списка
+              </li>
             </ul>
           </div>
           <button v-else class="button anime__list" @click="auth.login">Войти</button>
@@ -113,6 +120,12 @@ function selectStatus(val) {
   showStatus.value = false
   if (!anime.value) return
   lists.setStatus(anime.value.id, val)
+}
+
+function removeStatus() {
+  showStatus.value = false
+  if (!anime.value) return
+  lists.remove(anime.value.id)
 }
 
 const currentStatus = computed(() => {
@@ -274,6 +287,10 @@ function kindLabel(k) {
     color: #fff;
     cursor: pointer;
     transition: background-color .2s;
+  }
+
+  .dropdown__item--remove {
+    color: #ff6b6b;
   }
 
   .dropdown__item:hover {

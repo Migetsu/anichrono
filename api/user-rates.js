@@ -42,6 +42,17 @@ export default async function handler(req, res) {
       res.setHeader('Content-Type', 'application/json')
       return res.end(JSON.stringify(data))
     }
+    if (req.method === 'DELETE') {
+      const id = url.searchParams.get('id')
+      const r = await fetch(`https://shikimori.one/api/v2/user_rates/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: auth }
+      })
+      res.statusCode = r.status
+      const data = await r.text()
+      res.setHeader('Content-Type', 'application/json')
+      return res.end(data)
+    }
     res.statusCode = 405
     res.end('Method not allowed')
   } catch (e) {
