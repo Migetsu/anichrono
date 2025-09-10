@@ -44,12 +44,10 @@ if (tokenFromHash) {
   const cleanUrl = window.location.pathname + window.location.search
   history.replaceState(null, '', cleanUrl)
 } else {
-  // иначе попытка восстановить токен из localStorage
+  // попытка восстановить токен из localStorage
   auth.loadToken()
 }
-
 // 4) подтянуть профиль (если токен есть)
 auth.fetchMe()
 
-// 5) монтируем приложение
 app.mount('#app')

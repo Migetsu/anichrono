@@ -203,12 +203,11 @@ function kindLabel(k) {
   }
 
   .anime__watch {
-    background: var(--c-accent);
     box-shadow: 0 4px 12px rgba(122, 162, 255, .35);
   }
 
   .anime__watch:hover {
-    background: #648dff;
+    background: blue;
   }
 
     .anime {

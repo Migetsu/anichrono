@@ -17,6 +17,7 @@ import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
 const auth = useAuthStore();
+console.log(auth.user);
 
 const avatarUrl = computed(() => {
   const img = auth.user?.image?.x48 || auth.user?.avatar;
