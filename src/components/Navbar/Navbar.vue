@@ -2,38 +2,41 @@
   <header class="header">
     <nav class="header__nav" :class="{ transparent: isTransparent }" @click="handleInteraction">
       <div class="header__nav-container container">
-        <ul class="header__nav-list">
-          <li>
-            <router-link to="/" class="header__nav-logo">
-              <img src="@/assets/images/logo.svg" alt="Logo" />
-            </router-link>
-          </li>
-          <li v-for="link in links" :key="link.url">
-            <router-link :to="link.url" class="header__nav-link">
-              {{ link.title }}
-            </router-link>
-          </li>
-        </ul>
-        <div class="header__nav-list2">
-          <div class="header__nav-form" @click.stop>
-            <form class="nav__search" @submit.prevent>
-              <input v-model="query" @input="handleSearch" type="text" class="nav__search-input" placeholder="Поиск" />
-              <button type="submit" class="nav__search-button">
-                <font-awesome-icon :icon="['fas', 'search']" class="nav__search-icon" />
-              </button>
-            </form>
-            <ul v-if="results.length" class="nav__search-results">
-              <li v-for="a in results" :key="a.id">
-                <router-link class="nav__search-result" :to="`/animes/${a.id}`" @click="clearSearch">
-                  {{ a.russian || a.name }}
-                </router-link>
-              </li>
-            </ul>
-          </div>
-          <div class="header__nav-profile profile">
-            <button v-if="!auth.isLoggedIn" @click="auth.login" class="profile__login">Войти</button>
-            <div v-else class="profile_info">
-              <router-link to="/profile"><img v-if="auth.user?.image && auth.user.image.x160" :src="auth.user.image.x160" alt="avatar" class="profile__avatar" /></router-link>
+        <router-link to="/" class="header__nav-logo">
+          <img src="@/assets/images/logo.svg" alt="Logo" />
+        </router-link>
+        <button class="header__nav-burger" @click.stop="toggleMenu">
+          <font-awesome-icon :icon="['fas','bars']" />
+        </button>
+        <div class="header__nav-menu" :class="{ open: isMenuOpen }" @click.stop>
+          <ul class="header__nav-list">
+            <li v-for="link in links" :key="link.url">
+              <router-link :to="link.url" class="header__nav-link" @click="closeMenu">
+                {{ link.title }}
+              </router-link>
+            </li>
+          </ul>
+          <div class="header__nav-list2">
+            <div class="header__nav-form">
+              <form class="nav__search" @submit.prevent>
+                <input v-model="query" @input="handleSearch" type="text" class="nav__search-input" placeholder="Поиск" />
+                <button type="submit" class="nav__search-button">
+                  <font-awesome-icon :icon="['fas', 'search']" class="nav__search-icon" />
+                </button>
+              </form>
+              <ul v-if="results.length" class="nav__search-results">
+                <li v-for="a in results" :key="a.id">
+                  <router-link class="nav__search-result" :to="`/animes/${a.id}`" @click="closeMenu">
+                    {{ a.russian || a.name }}
+                  </router-link>
+                </li>
+              </ul>
+            </div>
+            <div class="header__nav-profile profile">
+              <button v-if="!auth.isLoggedIn" @click="auth.login" class="profile__login">Войти</button>
+              <div v-else class="profile_info">
+                <router-link to="/profile"><img v-if="auth.user?.image && auth.user.image.x160" :src="auth.user.image.x160" alt="avatar" class="profile__avatar" /></router-link>
+              </div>
             </div>
           </div>
         </div>
@@ -62,6 +65,21 @@ let scrollTimeout;
 let searchTimeout;
 const auth = useAuthStore();
 
+const clearSearch = () => {
+  query.value = "";
+  results.value = [];
+};
+
+const isMenuOpen = ref(false);
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value;
+};
+
+const closeMenu = () => {
+  isMenuOpen.value = false;
+  clearSearch();
+};
+
 const handleScroll = () => {
   isTransparent.value = true;
   clearTimeout(scrollTimeout);
@@ -72,7 +90,7 @@ const handleScroll = () => {
 
 const handleInteraction = () => {
   isTransparent.value = false;
-  clearSearch();
+  closeMenu();
 };
 
 const handleSearch = () => {
@@ -88,11 +106,6 @@ const handleSearch = () => {
       results.value = [];
     }
   }, 300);
-};
-
-const clearSearch = () => {
-  query.value = "";
-  results.value = [];
 };
 
 onMounted(() => {
