@@ -30,7 +30,6 @@ export const useAuthStore = defineStore('auth', {
       try { useListsStore().$reset() } catch {}
     },
 
-    // ЕДИНСТВЕННЫЙ fetchMe (подтягивает профиль и сбрасывает флаги)
     async fetchMe() {
       if (!this.token) return
       this.loading = true
@@ -53,7 +52,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     login() {
-      this.loggingIn = true                  // показываем «Входим…» сразу после клика
+      this.loggingIn = true
       try { localStorage.setItem('oauth_in_progress', '1') } catch {}
       location.href = '/api/auth/login'
     },

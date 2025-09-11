@@ -10,15 +10,12 @@
       </div>
     </header>
 
-    <!-- Списки -->
     <section v-for="s in statuses" :key="s.key" class="section">
       <h2 class="section__title">{{ s.title }}</h2>
 
-      <!-- лоадер/ошибка -->
       <div v-if="loading" class="section__state">Загрузка…</div>
       <div v-else-if="error" class="section__state error">{{ error }}</div>
 
-      <!-- карточки или "Пусто" -->
       <template v-else>
         <ul v-if="groupedLists[s.key].length" class="cards">
           <li v-for="rate in groupedLists[s.key]" :key="rate.id || rate.target_id">
@@ -52,7 +49,6 @@ import { fetchAnimeById } from '@/scripts/fetchAnimeById'
 const auth  = useAuthStore()
 const lists = useListsStore()
 
-/* ===================== FETCH RATES ===================== */
 async function pullRates(force = false) {
   if (!auth?.token || !auth?.user?.id) return
   if (lists.loading) return
@@ -64,7 +60,6 @@ async function pullRates(force = false) {
 onMounted(() => pullRates(true))
 watch(() => [auth?.token, auth?.user?.id], () => pullRates(true))
 
-/* ===================== USER ===================== */
 function toAbs(url) {
   if (!url) return ''
   if (url.startsWith('//')) return 'https:' + url
@@ -72,7 +67,6 @@ function toAbs(url) {
   return `https://shikimori.one${url}`
 }
 
-// собрать все возможные кандидаты
 function collectCandidates(src) {
   if (!src) return []
   const list = [
@@ -106,7 +100,6 @@ function logout() {
   auth.logout()
 }
 
-/* ===================== GROUPED LISTS ===================== */
 const groupedLists = computed(() => ({
   planned:    lists.grouped?.planned    ?? [],
   watching:   lists.grouped?.watching   ?? [],
@@ -127,7 +120,6 @@ const statuses = [
   { key: 'dropped',    title: 'Брошено' },
 ]
 
-// ===================== POSTERS (robust) =====================
 const posterCache = reactive({})
 const inFlight    = reactive(new Set())
 
@@ -140,18 +132,15 @@ function rateId(rate) {
   )
 }
 
-// из полного объекта anime
 function posterFromAnime(a) {
   const cands = [
     ...collectCandidates(a),
-    // иногда Shiki кладёт путь как image.original без домена/схемы:
     a?.image && toAbs(a.image.original),
     a?.image && toAbs(a.image.preview),
   ].filter(Boolean)
   return cands[0] || ''
 }
 
-// проверяем, что ссылка реально грузится
 function imageOk(url) {
   return new Promise((res) => {
     const img = new Image()
@@ -161,12 +150,10 @@ function imageOk(url) {
   })
 }
 
-// главный загрузчик постера
 async function ensurePosterForRate(rate) {
   const id = rateId(rate)
   if (!Number.isFinite(id)) return
 
-  // если уже знаем ответ (даже null) — выходим
   if (id in posterCache) return
 
   if (inFlight.has(id)) return
@@ -177,7 +164,7 @@ async function ensurePosterForRate(rate) {
     if (fromApi && await imageOk(fromApi)) {
       posterCache[id] = fromApi
     } else {
-      posterCache[id] = null // кэшируем «нет постера»
+      posterCache[id] = null 
     }
   } catch {
     posterCache[id] = null
@@ -188,14 +175,12 @@ async function ensurePosterForRate(rate) {
 function cardBg(rate) {
   const id = rateId(rate)
   const url = posterCache[id]
-  // плейсхолдер, если нет постера
   const finalUrl = url || '/poster-placeholder.jpg'
   return { backgroundImage: `url(${finalUrl})` }
 }
 const bgStyle = cardBg
 const posterStyle = cardBg
 
-// Prefill: как только списки приехали — мягко подгружаем первые постеры через API
 watch(
   () => [
     groupedLists.value.planned.length,
@@ -223,7 +208,6 @@ watch(
   { immediate: true }
 )
 
-// === Тёплый старт: подгрузим по 4–6 постеров на вершине каждой секции (мягко)
 async function warmUp() {
   const take = (arr) => arr.slice(0, 6)
   const firstBatch = [
@@ -243,7 +227,6 @@ watch(
   { immediate: true }
 )
 
-// === Директива v-inview: подгружает постер при попадании карточки в зону видимости
 const io = new IntersectionObserver(
   (entries) => {
     for (const e of entries) {

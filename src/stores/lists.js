@@ -2,11 +2,9 @@
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
 
-// Универсальная нормализация записи user_rate
 function normalizeRate(raw) {
   if (!raw || typeof raw !== 'object') return null
 
-  // Возможные источники id
   const maybeId =
     raw.target_id ??
     raw.targetId ??
@@ -15,8 +13,6 @@ function normalizeRate(raw) {
 
   const tid = Number(maybeId)
   if (!Number.isFinite(tid)) {
-    // На время отладки можно раскомментировать
-    // console.warn('[lists] cannot normalize rate, no target_id in', raw)
     return { ...raw, target_id: undefined }
   }
 
@@ -33,7 +29,6 @@ export const useListsStore = defineStore('lists', {
   getters: {
     rateFor: (s) => (id) => {
       const aid = Number(id)
-      // На всякий случай — если какие-то записи попали без нормализации
       for (const r of s.rates) {
         const tid =
           Number(r.target_id ?? r.targetId ?? r.target?.id ?? r.anime?.id)
@@ -87,7 +82,7 @@ export const useListsStore = defineStore('lists', {
         }
         this.rates = all
           .map(normalizeRate)
-          .filter(Boolean) // выкинуть невалидные
+          .filter(Boolean) 
       } catch (e) {
         this.error = String(e?.message || e)
         this.rates = []
@@ -96,13 +91,11 @@ export const useListsStore = defineStore('lists', {
       }
     },
 
-    // НАДЁЖНЫЙ поиск записи для конкретного тайтла
     async fetchRateForTarget(targetId) {
       const auth = useAuthStore()
       if (!auth.token || !auth.user?.id) return null
       const idNum = Number(targetId)
 
-      // 1) Быстрая попытка: ручка с target_id (если фильтр реально работает)
       try {
         const url = `/api/user-rates?user_id=${auth.user.id}&target_type=Anime&target_id=${idNum}&limit=1`
         const r = await fetch(url, { headers: { Authorization: `Bearer ${auth.token}` } })
@@ -115,10 +108,8 @@ export const useListsStore = defineStore('lists', {
           }
         }
       } catch (_) {
-        // игнорируем и идём в fallback
       }
 
-      // 2) Fallback: постраничный поиск до первого совпадения
       const LIMIT = 100
       let page = 1
       while (true) {

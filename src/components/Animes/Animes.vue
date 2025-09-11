@@ -5,7 +5,6 @@
       <div class="anime__veil"></div>
 
       <div class="container anime__content">
-        <!-- ЛЕВАЯ КОЛОНКА -->
         <div class="anime__left">
           <img class="anime__poster" loading="lazy" :src="anime.poster?.originalUrl || fallback"
             :alt="anime.russian || anime.name" />
@@ -30,7 +29,6 @@
           </div>
         </div>
 
-        <!-- ПРАВАЯ КОЛОНКА -->
         <div class="anime__right">
           <div class="anime__info glass">
             <h1 class="anime__title">{{ anime.russian || anime.name }}</h1>
@@ -75,7 +73,6 @@
       </div>
     </section>
 
-    <!-- Сообщения/Лоадер -->
     <section class="container state" v-show="loading || error">
       <div v-if="loading" class="loader">Загрузка…</div>
       <div v-else-if="error" class="error">{{ error }}</div>
@@ -131,7 +128,6 @@ async function load(id) {
 }
 watch(() => route.params.id, id => { if (id != null) load(Number(id)) }, { immediate: true })
 
-/* ---- безопасное описание ---- */
 const ALLOWED_TAGS = ['div', 'p', 'br', 'a', 'span', 'strong', 'b', 'em', 'i', 'ul', 'ol', 'li']
 const ALLOWED_ATTR = ['href', 'title']
 DOMPurify.addHook('afterSanitizeAttributes', n => {
@@ -148,28 +144,23 @@ const safeDesc = computed(() => {
   return html ? DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR, USE_PROFILES: { html: true } }) : ''
 })
 
-/* ---- локальное состояние выпадашки и записи ---- */
 const showStatus = ref(false)
-const rate = ref(null)          // ← локальная запись для текущего тайтла
-const ratePending = ref(false)  // флажок точечного запроса
+const rate = ref(null)          
+const ratePending = ref(false)  
 
-/** синхронизация rate для текущего anime.id (кэш → при необходимости точечный запрос) */
 async function syncRateForCurrent() {
   const id = Number(anime.value?.id)
   if (!auth.isLoggedIn || !id) { rate.value = null; return }
 
-  // 1) пробуем кэш
   const cached = lists.rateFor(id)
   if (cached) { rate.value = cached; return }
 
-  // 2) если кэш вообще пуст (или почти), подтяни весь список один раз
   if (!lists.loading && lists.rates.length === 0) {
-    await lists.ensureRates() // твой метод; он поставит loading=true/false
+    await lists.ensureRates() 
     const again = lists.rateFor(id)
     if (again) { rate.value = again; return }
   }
 
-  // 3) точечный догруз (надёжный поиск строго по target_id)
   try {
     ratePending.value = true
     const fresh = await lists.fetchRateForTarget(Number(id))
@@ -184,21 +175,17 @@ watch(
   ([id, st]) => console.log('[rate]', id, st)
 )
 
-/* триггеры синхронизации */
 onMounted(syncRateForCurrent)
 watch(() => [auth.isLoggedIn, auth.token, auth.user?.id], syncRateForCurrent)
 watch(() => anime.value?.id, syncRateForCurrent)
-// если стор изменился (после setStatus/remove) – пересинхронизируй
 watch(() => lists.rates.length, syncRateForCurrent)
 
-/* ---- подпись кнопки ---- */
 const buttonLabel = computed(() => {
   if (!auth.isLoggedIn) return 'Добавить в список'
   if (ratePending.value || lists.loading) return 'Загрузка…'
   return rate.value ? (STATUS_LABELS[rate.value.status] ?? 'В списке') : 'Добавить в список'
 })
 
-/* ---- действия ---- */
 async function selectStatus(code) {
   if (!anime.value) return
   await lists.setStatus(anime.value, code)
@@ -212,7 +199,6 @@ async function removeStatus() {
   showStatus.value = false
 }
 
-/* ---- утилиты для шаблона ---- */
 const mapTitleStatus = (s) => ({ anons: 'Анонс', ongoing: 'Онгоинг', released: 'Вышло' }[s] ?? s)
 const mapTitleKind = (k) => ({ tv: 'TV', movie: 'Фильм', ova: 'OVA', ona: 'ONA', special: 'Спешл' }[k] ?? k)
 function fmtDate(isoLike) {
@@ -248,7 +234,6 @@ function fmtDate(isoLike) {
   align-items: center;
   padding: 28px 0 32px;
   overflow: visible;
-  /* чтобы меню не обрезалось */
 }
 
 .anime__bg {
@@ -421,7 +406,6 @@ function fmtDate(isoLike) {
   margin: 4px 0;
 }
 
-/* Разное */
 .panel {
   background: rgba(17, 27, 39, .55);
   border: 1px solid var(--c-border);
@@ -489,7 +473,6 @@ function fmtDate(isoLike) {
 :deep(.desc a) {
   color: var(--c-accent, #7aa2ff);
   text-decoration: none;
-  /* border-bottom: 1px dashed rgba(122, 162, 255, .5); */
   transition: border-color .2s, color .2s, opacity .2s;
 }
 
@@ -498,7 +481,6 @@ function fmtDate(isoLike) {
   color: #9bb6ff;
 }
 
-/* Адаптив */
 @media (max-width: 780px) {
   .anime__content {
     grid-template-columns: 1fr;
