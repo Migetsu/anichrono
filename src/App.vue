@@ -28,10 +28,6 @@ if (m) {
     headers: { Authorization: `Bearer ${token}` }
   })
     .then(r => r.json())
-    .then(user => {
-      console.log('USER:', user); // <-- объект с данными пользователя
-      // здесь можешь положить user в Pinia
-    })
     .catch(err => console.error('whoami failed:', err));
 }
 })

@@ -170,10 +170,6 @@ async function syncRateForCurrent() {
   }
 }
 
-watch(
-  () => [anime.value?.id, rate.value?.status],
-  ([id, st]) => console.log('[rate]', id, st)
-)
 
 onMounted(syncRateForCurrent)
 watch(() => [auth.isLoggedIn, auth.token, auth.user?.id], syncRateForCurrent)
