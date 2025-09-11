@@ -1,186 +1,309 @@
 <template>
-  <section class="profile-page container">
-    <h1>Профиль</h1>
-    <div v-if="auth.isLoggedIn" class="profile-page__info">
-      <img v-if="avatarUrl" :src="avatarUrl" alt="avatar" class="profile-page__avatar" />
-      <p class="profile-page__name">{{ auth.user?.nickname }}</p>
-      <button class="profile-page__logout" @click="logout">Выйти</button>
-    </div>
-    <div v-else>
-      <a href="/api/auth/login" class="profile-page__login">Войти</a>
-    </div>
-      <div v-if="auth.isLoggedIn" class="profile-page__lists">
-        <div v-for="s in statuses" :key="s.value" class="profile-page__list">
-          <h2 class="profile-page__list-title">{{ s.label }}</h2>
-          <div v-if="groupedLists[s.value]?.length" class="cards">
+  <main class="profile container">
+    <!-- Шапка профиля -->
+    <header class="profile__head">
+      <img class="profile__avatar" :src="avatarUrl" alt="avatar" />
+      <div class="profile__info">
+        <h1 class="profile__title">Профиль</h1>
+        <div class="profile__name">{{ nickname }}</div>
+        <button class="logout-btn" @click="logout">Выйти</button>
+      </div>
+    </header>
+
+    <!-- Списки -->
+    <section v-for="s in statuses" :key="s.key" class="section">
+      <h2 class="section__title">{{ s.title }}</h2>
+
+      <!-- лоадер/ошибка -->
+      <div v-if="loading" class="section__state">Загрузка…</div>
+      <div v-else-if="error" class="section__state error">{{ error }}</div>
+
+      <!-- карточки или "Пусто" -->
+      <template v-else>
+        <ul v-if="groupedLists[s.key].length" class="cards">
+          <li v-for="rate in groupedLists[s.key]" :key="rate.id || rate.target_id">
             <RouterLink
-              v-for="r in groupedLists[s.value]"
-              :key="r.id"
               class="card"
-              :to="`/animes/${r.anime.id}`"
-              :title="r.anime.russian || r.anime.name"
-              :style="{
-                backgroundImage: `linear-gradient(0deg, rgba(0,0,0,.55), rgba(0,0,0,.55)), url(${r.anime.image?.original || fallback})`,
-                backgroundSize: '100% 100%, cover',
-                backgroundPosition: 'center, center',
-                backgroundRepeat: 'no-repeat, no-repeat'
-              }"
+              :to="`/animes/${rateId(rate)}`"
+              :style="cardBg(rate)"
+              v-inview="rate"
             >
+              <div class="card__veil"></div>
               <div class="card__content">
-                <h3 class="card__title">{{ r.anime.russian || r.anime.name }}</h3>
-                <small class="card__meta">★ {{ r.anime.score || '—' }}</small>
+                <div class="card__name">
+                  {{ rate.anime?.russian || rate.anime?.name || rate.target?.russian || rate.target?.name || rateId(rate) }}
+                </div>
               </div>
             </RouterLink>
-          </div>
-          <p v-else class="profile-page__empty">Пусто</p>
-        </div>
-      </div>
+          </li>
+        </ul>
+        <p v-else class="section__state">Пусто</p>
+      </template>
     </section>
-  </template>
+  </main>
+</template>
 
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, watch, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useListsStore } from '@/stores/lists'
+import { fetchAnimeById } from '@/scripts/fetchAnimeById'
 
-const auth = useAuthStore()
+const auth  = useAuthStore()
 const lists = useListsStore()
 
+/* ===================== FETCH RATES ===================== */
+async function pullRates(force = false) {
+  if (!auth?.token || !auth?.user?.id) return
+  if (lists.loading) return
+  if (force || !lists.rates.length) {
+    try { await lists.fetchRates() } catch {}
+  }
+}
+
+onMounted(() => pullRates(true))
+watch(() => [auth?.token, auth?.user?.id], () => pullRates(true))
+
+/* ===================== USER ===================== */
+function toAbs(url) {
+  if (!url) return ''
+  if (url.startsWith('//')) return 'https:' + url
+  if (/^https?:\/\//i.test(url)) return url
+  return `https://shikimori.one${url}`
+}
+
+// собрать все возможные кандидаты
+function collectCandidates(src) {
+  if (!src) return []
+  const list = [
+    src.poster?.originalUrl,
+    src.poster?.previewUrl,
+    src.image?.original,
+    src.image?.preview,
+    src.image?.x256,
+    src.image?.x192,
+    src.image?.x96,
+    src.image?.x48,
+  ]
+  return list.filter(Boolean).map(toAbs)
+}
+
 const avatarUrl = computed(() => {
-  const img = auth.user?.image?.x48 || auth.user?.avatar
-  if (!img) return ''
-  return img.startsWith('http') ? img : `https://shikimori.one${img}`
+  const u = auth?.user ?? {}
+  const cand = [
+    u.avatar, u.avatar_url,
+    u.image?.x160, u.image?.x148, u.image?.x80, u.image?.x48,
+    u.profile?.avatar
+  ]
+  for (const x of cand) if (x) return toAbs(x)
+  return '/avatar.svg'
 })
+const nickname = computed(() =>
+  auth?.user?.nickname || auth?.user?.name || auth?.user?.login || '—'
+)
+
+function logout() {
+  auth.logout()
+}
+
+/* ===================== GROUPED LISTS ===================== */
+const groupedLists = computed(() => ({
+  planned:    lists.grouped?.planned    ?? [],
+  watching:   lists.grouped?.watching   ?? [],
+  rewatching: lists.grouped?.rewatching ?? [],
+  completed:  lists.grouped?.completed  ?? [],
+  on_hold:    lists.grouped?.on_hold    ?? [],
+  dropped:    lists.grouped?.dropped    ?? [],
+}))
+const loading = computed(() => lists.loading)
+const error   = computed(() => lists.error)
 
 const statuses = [
-  { value: 'planned', label: 'Запланировано' },
-  { value: 'watching', label: 'Смотрю' },
-  { value: 'rewatching', label: 'Пересматриваю' },
-  { value: 'completed', label: 'Просмотрено' },
-  { value: 'on_hold', label: 'Отложено' },
-  { value: 'dropped', label: 'Брошено' }
+  { key: 'planned',    title: 'Запланировано' },
+  { key: 'watching',   title: 'Смотрю' },
+  { key: 'rewatching', title: 'Пересматриваю' },
+  { key: 'completed',  title: 'Просмотрено' },
+  { key: 'on_hold',    title: 'Отложено' },
+  { key: 'dropped',    title: 'Брошено' },
 ]
 
-const groupedLists = computed(() => lists.grouped)
-const fallback = '/placeholder.jpg'
+// ===================== POSTERS (robust) =====================
+const posterCache = reactive({})
+const inFlight    = reactive(new Set())
 
-onMounted(() => {
-  if (auth.isLoggedIn && !lists.rates.length) lists.fetchRates()
-})
-
-watch(() => auth.isLoggedIn, val => {
-  if (val && !lists.rates.length) lists.fetchRates()
-})
-
-const logout = () => {
-  window.location.href = '/api/auth/logout'
+function rateId(rate) {
+  return Number(
+    rate?.target_id ??
+    rate?.targetId ??
+    rate?.target?.id ??
+    rate?.anime?.id
+  )
 }
 
+// быстрая попытка из rate
+function posterFromRate(rate) {
+  const a = rate?.anime || rate?.target
+  const cands = collectCandidates(a)
+  return cands[0] || ''
+}
+
+// из полного объекта anime
+function posterFromAnime(a) {
+  const cands = [
+    ...collectCandidates(a),
+    // иногда Shiki кладёт путь как image.original без домена/схемы:
+    a?.image && toAbs(a.image.original),
+    a?.image && toAbs(a.image.preview),
+  ].filter(Boolean)
+  return cands[0] || ''
+}
+
+// проверяем, что ссылка реально грузится
+function imageOk(url) {
+  return new Promise((res) => {
+    const img = new Image()
+    img.onload  = () => res(true)
+    img.onerror = () => res(false)
+    img.src = url
+  })
+}
+
+// главный загрузчик постера
+async function ensurePosterForRate(rate) {
+  const id = rateId(rate)
+  if (!Number.isFinite(id)) return
+
+  // если уже знаем ответ (даже null) — выходим
+  if (id in posterCache) return
+
+  // 1) моментально попробовать из rate
+  const quick = posterFromRate(rate)
+  if (quick && await imageOk(quick)) {
+    posterCache[id] = quick
+    return
+  }
+
+  // 2) аккуратно добираем из API
+  if (inFlight.has(id)) return
+  inFlight.add(id)
+  try {
+    const full = await fetchAnimeById(id)
+    const fromApi = posterFromAnime(full)
+    if (fromApi && await imageOk(fromApi)) {
+      posterCache[id] = fromApi
+    } else {
+      posterCache[id] = null // кэшируем «нет постера»
+    }
+  } catch {
+    posterCache[id] = null
+  } finally {
+    inFlight.delete(id)
+  }
+}
+function cardBg(rate) {
+  const id = rateId(rate)
+  const url = posterCache[id]
+  // плейсхолдер, если нет постера
+  const finalUrl = url || '/poster-placeholder.jpg'
+  return { backgroundImage: `url(${finalUrl})` }
+}
+const bgStyle = cardBg
+const posterStyle = cardBg
+
+// Prefill: как только списки приехали — проставим то, что точно валидно из rate (без API)
+watch(
+  () => [
+    groupedLists.value.planned.length,
+    groupedLists.value.watching.length,
+    groupedLists.value.rewatching.length,
+    groupedLists.value.completed.length,
+    groupedLists.value.on_hold.length,
+    groupedLists.value.dropped.length,
+  ],
+  async () => {
+    const all = [
+      ...groupedLists.value.planned,
+      ...groupedLists.value.watching,
+      ...groupedLists.value.rewatching,
+      ...groupedLists.value.completed,
+      ...groupedLists.value.on_hold,
+      ...groupedLists.value.dropped,
+    ]
+    // мягко валидируем первые 30, чтобы шапки секций сразу ожили
+    for (const r of all.slice(0, 30)) {
+      const id = rateId(r)
+      if (id in posterCache) continue
+      const quick = posterFromRate(r)
+      if (quick && await imageOk(quick)) posterCache[id] = quick
+    }
+  },
+  { immediate: true }
+)
+
+// === Тёплый старт: подгрузим по 4–6 постеров на вершине каждой секции (мягко)
+async function warmUp() {
+  const take = (arr) => arr.slice(0, 6)
+  const firstBatch = [
+    ...take(groupedLists.value.planned),
+    ...take(groupedLists.value.watching),
+    ...take(groupedLists.value.rewatching),
+    ...take(groupedLists.value.completed),
+    ...take(groupedLists.value.on_hold),
+    ...take(groupedLists.value.dropped),
+  ]
+  for (const r of firstBatch) ensurePosterForRate(r)
+}
+
+watch(
+  () => lists.rates.length,
+  (n) => { if (n) warmUp() },
+  { immediate: true }
+)
+
+// === Директива v-inview: подгружает постер при попадании карточки в зону видимости
+const io = new IntersectionObserver(
+  (entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue
+      const rate = (e.target).__rate
+      if (rate) ensurePosterForRate(rate)
+      io.unobserve(e.target)
+    }
+  },
+  { root: null, rootMargin: '200px 0px 200px 0px', threshold: 0 }
+)
+
+const vInview = {
+  mounted(el, binding) {
+    el.__rate = binding.value
+    io.observe(el)
+  },
+  updated(el, binding) {
+    el.__rate = binding.value
+  },
+  unmounted(el) {
+    io.unobserve(el)
+    delete el.__rate
+  },
+}
 </script>
 
-<style lang="scss" scoped>
-.profile-page {
-  margin-top: 100px;
-  color: #fff;
+<style scoped>
+.profile { padding: 24px 0 48px; color: #e7ecf3; margin-top: 100px; }
+.profile__head { display: flex; gap: 16px; align-items: center; margin-bottom: 18px; }
+.profile__avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,.15); }
+.profile__title { margin: 0 0 6px; font-size: 28px; }
+.profile__name { opacity: .9; color: #fff; }
+.logout-btn { margin-top: 8px; padding: 6px 12px; border: none; border-radius: 6px; background: #e74c3c; color: #fff; cursor: pointer; font-weight: 600; }
+.logout-btn:hover { background: #c0392b; }
 
-  &__info {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    align-items: flex-start;
-  }
+.section { margin: 22px 0; }
+.section__title { margin: 0 0 10px; font-size: 20px; }
+.section__state { opacity: .8; }
 
-  &__avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-
-  &__logout {
-    padding: 8px 16px;
-    border-radius: 8px;
-    background: red;
-    color: #fff;
-    font-weight: 700;
-  }
-
-  &__login {
-    padding: 8px 16px;
-    border-radius: 8px;
-    background: red;
-    color: #fff;
-    font-weight: 700;
-  }
-
-  &__lists {
-    margin-top: 40px;
-    display: grid;
-    gap: 32px;
-  }
-
-  &__list-title {
-    margin: 0 0 12px;
-    font-size: 22px;
-  }
-
-  &__empty {
-    color: #ccc;
-  }
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
-}
-
-.card {
-  position: relative;
-  display: block;
-  border-radius: 14px;
-  overflow: hidden;
-  background-size: cover;
-  background-position: center;
-  text-decoration: none;
-  aspect-ratio: 2 / 3;
-}
-
-.card__content {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 12px;
-  padding: 0 12px;
-  color: #fff;
-  z-index: 2;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, .45);
-  display: grid;
-  gap: 4px;
-}
-
-.card__title {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media (min-width: 1200px) {
-  .card__title {
-    white-space: normal;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-}
-
-.card__meta {
-  opacity: .9;
-  font-weight: 600;
-  font-size: 16px;
-}
+.cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 12px; }
+.card { position: relative; display: block; height: 280px; border-radius: 12px; overflow: hidden; background: #0e1624; background-size: cover; background-position: center; box-shadow: 0 10px 24px rgba(0,0,0,.25); }
+.card__veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,15,25,.12) 0%, rgba(10,15,25,.65) 65%, rgba(10,15,25,.92) 100%); }
+.card__content { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 12px; }
+.card__name { font-weight: 700; color: #fff; }
 </style>
