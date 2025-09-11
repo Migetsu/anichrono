@@ -22,6 +22,7 @@ function normalizeRate(raw) {
 export const useListsStore = defineStore('lists', {
   state: () => ({
     rates: /** @type {Array<any>} */ ([]),
+    ratesMap: /** @type {Map<number, any>} */ (new Map()),
     loading: false,
     error: null,
   }),
@@ -29,22 +30,25 @@ export const useListsStore = defineStore('lists', {
   getters: {
     rateFor: (s) => (id) => {
       const aid = Number(id)
-      for (const r of s.rates) {
-        const tid =
-          Number(r.target_id ?? r.targetId ?? r.target?.id ?? r.anime?.id)
-        if (tid === aid) return r
-      }
-      return null
+      return s.ratesMap.get(aid) ?? null
     },
 
-    grouped: (s) => ({
-      planned:    s.rates.filter(r => r.status === 'planned'),
-      watching:   s.rates.filter(r => r.status === 'watching'),
-      rewatching: s.rates.filter(r => r.status === 'rewatching'),
-      completed:  s.rates.filter(r => r.status === 'completed'),
-      on_hold:    s.rates.filter(r => r.status === 'on_hold'),
-      dropped:    s.rates.filter(r => r.status === 'dropped'),
-    }),
+    grouped: (s) =>
+      s.rates.reduce(
+        (acc, r) => {
+          const bucket = acc[r.status]
+          if (bucket) bucket.push(r)
+          return acc
+        },
+        {
+          planned: [],
+          watching: [],
+          rewatching: [],
+          completed: [],
+          on_hold: [],
+          dropped: [],
+        }
+      ),
   },
 
   actions: {
@@ -55,8 +59,14 @@ export const useListsStore = defineStore('lists', {
       const i = this.rates.findIndex(r =>
         Number(r.target_id ?? r.targetId ?? r.target?.id ?? r.anime?.id) === aid
       )
-      if (i >= 0) this.rates.splice(i, 1, { ...this.rates[i], ...rate })
-      else this.rates.push(rate)
+      if (i >= 0) {
+        const merged = { ...this.rates[i], ...rate }
+        this.rates.splice(i, 1, merged)
+        this.ratesMap.set(aid, merged)
+      } else {
+        this.rates.push(rate)
+        this.ratesMap.set(aid, rate)
+      }
     },
 
     async fetchRates() {
@@ -80,12 +90,14 @@ export const useListsStore = defineStore('lists', {
           if (data.length < LIMIT) break
           page++
         }
-        this.rates = all
-          .map(normalizeRate)
-          .filter(Boolean) 
+        this.rates = all.map(normalizeRate).filter(Boolean)
+        this.ratesMap = new Map(
+          this.rates.map(r => [r.target_id, r])
+        )
       } catch (e) {
         this.error = String(e?.message || e)
         this.rates = []
+        this.ratesMap = new Map()
       } finally {
         this.loading = false
       }
@@ -196,6 +208,7 @@ export const useListsStore = defineStore('lists', {
         })
         if (!res.ok) throw new Error(`delete ${res.status}`)
         this.rates = this.rates.filter(r => r.id !== existing.id)
+        this.ratesMap.delete(existing.target_id)
       } catch (e) {
         this.error = String(e?.message || e)
         console.error(e)
