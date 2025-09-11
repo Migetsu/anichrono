@@ -8,29 +8,11 @@
 
 <script setup>
 import Navbar from '@/components/Navbar/Navbar.vue'
-import { onMounted, computed } from 'vue'
+import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const authBusy = computed(() => auth.loggingIn || auth.loading)
-
-onMounted(async () => {
-  // в любом месте старта приложения (например, в App.vue или main.js)
-const hash = window.location.hash;
-const m = hash.match(/access_token=([^&]+)/);
-if (m) {
-  const token = decodeURIComponent(m[1]);
-
-  // очищаем hash, чтобы не мешался в адресной строке
-  history.replaceState(null, '', window.location.pathname + window.location.search);
-
-  fetch('https://shikimori.one/api/users/whoami', {
-    headers: { Authorization: `Bearer ${token}` }
-  })
-    .then(r => r.json())
-    .catch(err => console.error('whoami failed:', err));
-}
-})
 
 </script>
 
