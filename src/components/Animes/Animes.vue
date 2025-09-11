@@ -81,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import DOMPurify from 'dompurify'
 import { fetchAnimeById } from '@/scripts/fetchAnimeById'
@@ -171,10 +171,22 @@ async function syncRateForCurrent() {
 }
 
 
-onMounted(syncRateForCurrent)
-watch(() => [auth.isLoggedIn, auth.token, auth.user?.id], syncRateForCurrent)
-watch(() => anime.value?.id, syncRateForCurrent)
-watch(() => lists.rates.length, syncRateForCurrent)
+let syncTimer
+watch(
+  [
+    () => auth.isLoggedIn,
+    () => auth.token,
+    () => auth.user?.id,
+    () => anime.value?.id,
+    () => lists.rates.length,
+  ],
+  () => {
+    clearTimeout(syncTimer)
+    syncTimer = setTimeout(syncRateForCurrent, 0)
+  },
+  { immediate: true }
+)
+onUnmounted(() => clearTimeout(syncTimer))
 
 const buttonLabel = computed(() => {
   if (!auth.isLoggedIn) return 'Добавить в список'
