@@ -27,11 +27,15 @@ export default async function handler(req, res) {
       return res.end(`Token exchange failed: ${JSON.stringify(data)}`);
     }
 
-    const front = new URL(process.env.FRONTEND_ORIGIN || 'https://anichrono.vercel.app');
-    front.pathname = '/';
-    front.hash = `access_token=${encodeURIComponent(data.access_token)}`;
-    res.writeHead(302, { Location: front.toString() });
-    res.end();
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    const token = JSON.stringify(data.access_token)
+    res.end(`<!doctype html><html><body><script>
+      try {
+        localStorage.setItem('shiki_access_token', ${token});
+        localStorage.setItem('shikiToken', ${token});
+      } catch(e) {}
+      location.replace('/')
+    </script></body></html>`)
   } catch (e) {
     res.statusCode = 500;
     res.end(`Internal error: ${e?.message || e}`);

@@ -12,13 +12,6 @@ import VueLazyLoad from 'vue-lazyload'
 import { useAuthStore } from '@/stores/auth'
 import defaultImg from '@/assets/images/default.jpg'
 
-// --- утилита для токена из hash ---
-function getTokenFromHash() {
-  const h = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
-  const params = new URLSearchParams(h)
-  return params.get('access_token')
-}
-
 // 1) создаём приложение и подключаем Pinia/роутер/плагины
 const app = createApp(App)
 const pinia = createPinia()
@@ -36,17 +29,10 @@ app.use(VueLazyLoad, {
 // 2) получаем стор уже ПОСЛЕ app.use(pinia)
 const auth = useAuthStore()
 
-// 3) если вернулись с OAuth — кладём токен и чистим URL
-const tokenFromHash = getTokenFromHash()
-if (tokenFromHash) {
-  auth.setToken(tokenFromHash) // пишет и в стор, и в localStorage
-  auth.loggingIn = true        // покажем «Входим…», пока тянется профиль
-  const cleanUrl = window.location.pathname + window.location.search
-  history.replaceState(null, '', cleanUrl)
-} else {
-  // попытка восстановить токен из localStorage
-  auth.loadToken()
-}
+// 3) восстановить токен из localStorage и показать оверлей, если логин в процессе
+auth.loadToken()
+try { if (localStorage.getItem('oauth_in_progress')) auth.loggingIn = true } catch {}
+
 // 4) подтянуть профиль (если токен есть)
 auth.fetchMe()
 
