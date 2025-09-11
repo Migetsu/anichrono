@@ -1,56 +1,81 @@
-# Vue 3 + Vite
+# AniChrono
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+AniChrono — веб‑приложение на Vue 3 для изучения актуальных аниме‑релизов и ведения личного списка просмотра через сервис [Shikimori](https://shikimori.one/). Клиент собирается с помощью Vite и развёртывается на Vercel, где также выполняются серверные функции для OAuth‑авторизации.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## Возможности
+- просмотр свежих релизов, популярных и продолжающихся тайтлов;
+- получение подробной информации о каждом аниме, включая жанры, студии и трейлеры;
+- просмотр пользовательских рейтингов и списка «хочу посмотреть»;
+- авторизация через Shikimori и синхронизация прогресса.
 
-## Auth (Shikimori) — важные примечания
+## Стек
+- [Vue 3](https://vuejs.org/) + [Vite](https://vitejs.dev/);
+- [Pinia](https://pinia.vuejs.org/) для глобального состояния;
+- [Vue Router](https://router.vuejs.org/) для навигации;
+- SCSS для оформления;
+- [axios](https://axios-http.com/) для HTTP‑запросов;
+- [vue‑lazyload](https://github.com/hilongjw/vue-lazyload) для ленивой загрузки изображений;
+- [Swiper](https://swiperjs.com/) для слайдеров;
+- серверные функции Vercel на Node.js.
 
-- Redirect URI в Shikimori должен строго совпадать с тем, что передаётся из `/api/auth/login` через `redirect_uri`.
-  - DEV (через vercel dev): `http://localhost:3000/api/auth/callback`
-  - PROD: `https://<ваш-домен>/api/auth/callback`
-- Если переменная `SHIKI_REDIRECT_URI` не задана, адрес колбэка автоматически
-  определяется на основе текущего хоста.
-- Локальная разработка OAuth: используйте `vercel dev` (порт 3000). Кнопка входа в интерфейсе указывает на `/api/auth/login` (в продакшн-среде также доступен короткий путь `/auth/login` благодаря `vercel.json`).
-- Для запросов к `whoami` фронтенд стучится на `/api/whoami`.
-- Токен и refresh‑токен сохраняются в `localStorage` на странице `/api/auth/callback`. Если после логина ключ `shikiToken` не появился — проверьте Redirect URI.
-- Все обращения к API Shikimori должны содержать заголовок `User-Agent`. Значение задаётся через переменную окружения `SHIKI_USER_AGENT`.
+## Установка
+1. Убедитесь, что установлен Node.js версии ≥18.
+2. Установите зависимости:
+   ```bash
+   npm install
+   ```
+3. Скопируйте файл `.env.example` в `.env` и заполните переменные окружения.
 
-## Деплой
+## Переменные окружения
+Файл `.env` должен содержать параметры OAuth‑авторизации в Shikimori:
 
-Проект готов к размещению на [Vercel](https://vercel.com). Конфигурация находится в файле `vercel.json` и включает проксиирование запросов к API Shikimori:
-
-```json
-{
-  "routes": [
-    { "src": "/auth/(.*)", "dest": "/api/auth/$1" },
-    { "src": "/shiki/(.*)", "dest": "https://shikimori.one/$1" },
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/" }
-  ]
-}
+```dotenv
+SHIKI_CLIENT_ID=
+SHIKI_CLIENT_SECRET=
+SHIKI_REDIRECT_URI=http://localhost:3000/api/auth/callback
+SHIKI_USER_AGENT=
 ```
 
-Благодаря этой настройке запрос `fetch('/shiki/api/graphql')` автоматически отправляется на `https://shikimori.one/api/graphql`.
+- `SHIKI_REDIRECT_URI` должен совпадать с адресом, указанным в настройках приложения на Shikimori.
+- `SHIKI_USER_AGENT` отправляется в заголовке `User-Agent` при запросах к API.
 
-Для подготовки приложения выполните production-сборку:
+## Режим разработки
+Запуск фронтенда без серверных функций:
+```bash
+npm run dev
+```
 
+Для проверки OAuth и серверных функций используйте локальный сервер Vercel (порт 3000):
+```bash
+npm run dev:vercel
+```
+
+## Сборка и предпросмотр
+```bash
+npm run build   # production‑сборка в каталог dist
+npm run preview # локальный предпросмотр собранного приложения
+```
+
+## Структура проекта
+```
+.
+├─ api/          # серверные функции (OAuth, whoami, user-rates)
+├─ public/       # статические файлы
+├─ src/
+│  ├─ components/  # Vue‑компоненты интерфейса
+│  ├─ routers/     # маршруты приложения
+│  ├─ stores/      # Pinia‑сторы
+│  └─ scripts/     # утилиты для работы с API Shikimori
+├─ index.html
+└─ vercel.json     # настройки прокси и маршрутов для Vercel
+```
+
+## Деплой
+Проект ориентирован на платформу [Vercel](https://vercel.com/). Файл `vercel.json` содержит прокси для запросов к Shikimori и перенаправление путей `/auth/*` на соответствующие функции в `api/`. Для публикации выполните:
 ```bash
 npm run build
 ```
+и загрузите содержимое каталога `dist` или настройте автоматический деплой через Vercel.
 
-Полученные файлы из каталога `dist` будут использованы при деплое.
-
-## Авторизация
-
-Для входа через Shikimori должны быть определены переменные окружения `SHIKI_CLIENT_ID`, `SHIKI_CLIENT_SECRET`, `SHIKI_REDIRECT_URI` и `SHIKI_USER_AGENT`. Пример файла с настройками находится в `.env.example`. Скопируйте его в `.env` и при необходимости измените значения.
-
-На Vercel доступны следующие серверные функции:
-
-- `/api/auth/login` – перенаправляет пользователя на страницу авторизации;
-- `/api/auth/callback` – обрабатывает редирект OAuth и сохраняет токен в `localStorage`;
-- `/api/auth/logout` – очищает токен и возвращает на главную страницу.
-
-Авторизация доступна как в продакшн-среде Vercel, так и локально через `vercel dev`. Запуск `npm run dev` без `vercel dev` не обрабатывает серверные функции `/auth/*`.
-
-После авторизации в навигации отображается кнопка выхода.
+## Лицензия
+Проект распространяется по лицензии [MIT](./LICENSE).
