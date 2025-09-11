@@ -140,13 +140,6 @@ function rateId(rate) {
   )
 }
 
-// быстрая попытка из rate
-function posterFromRate(rate) {
-  const a = rate?.anime || rate?.target
-  const cands = collectCandidates(a)
-  return cands[0] || ''
-}
-
 // из полного объекта anime
 function posterFromAnime(a) {
   const cands = [
@@ -176,14 +169,6 @@ async function ensurePosterForRate(rate) {
   // если уже знаем ответ (даже null) — выходим
   if (id in posterCache) return
 
-  // 1) моментально попробовать из rate
-  const quick = posterFromRate(rate)
-  if (quick && await imageOk(quick)) {
-    posterCache[id] = quick
-    return
-  }
-
-  // 2) аккуратно добираем из API
   if (inFlight.has(id)) return
   inFlight.add(id)
   try {
@@ -210,7 +195,7 @@ function cardBg(rate) {
 const bgStyle = cardBg
 const posterStyle = cardBg
 
-// Prefill: как только списки приехали — проставим то, что точно валидно из rate (без API)
+// Prefill: как только списки приехали — мягко подгружаем первые постеры через API
 watch(
   () => [
     groupedLists.value.planned.length,
@@ -229,12 +214,10 @@ watch(
       ...groupedLists.value.on_hold,
       ...groupedLists.value.dropped,
     ]
-    // мягко валидируем первые 30, чтобы шапки секций сразу ожили
     for (const r of all.slice(0, 30)) {
       const id = rateId(r)
       if (id in posterCache) continue
-      const quick = posterFromRate(r)
-      if (quick && await imageOk(quick)) posterCache[id] = quick
+      ensurePosterForRate(r)
     }
   },
   { immediate: true }
