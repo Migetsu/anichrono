@@ -35,24 +35,32 @@
                     <p class="features__content-desc">Первыми смотрите новые серии сразу после выхода в Японии</p>
                 </div>
                 <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-closed-captioning" class="features-icon" /></div>
+                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-closed-captioning"
+                            class="features-icon" /></div>
                     <h4 class="features__content-title">Профессиональные субтитры</h4>
                     <p class="features__content-desc">Качественный перевод на русский язык от ведущих студий</p>
                 </div>
                 <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-heart" class="features-icon" /></div>
+                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-heart"
+                            class="features-icon" /></div>
                     <h4 class="features__content-title">Персональные рекомендации</h4>
                     <p class="features__content-desc">Индивидуальные подборки на основе ваших предпочтений</p>
                 </div>
             </div>
         </div>
     </section>
+    <section class="seasonal">
+        <h3 class="seasonal__title">Новинки сезона</h3>
+        <TitleCard />
+    </section>
+    <Footer />
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import CanvasBackground from '@/components/CanvasBackground.vue'
 import TitleCard from '@/components/TitleCard.vue'
+import Footer from '@/components/Footer.vue'
 </script>
 
 <style scoped lang="scss">
@@ -242,6 +250,22 @@ import TitleCard from '@/components/TitleCard.vue'
             color: $text-secondary;
             display: flex;
         }
+    }
+}
+
+.seasonal {
+    padding: 80px 0;
+
+    &__title {
+        font-family: "Exo2";
+        font-weight: 700;
+        margin-bottom: 48px;
+        font-size: 40px;
+        background: linear-gradient(45deg, $accent-coral, $accent-turquoise);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center;
     }
 }
 </style>

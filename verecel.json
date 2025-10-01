@@ -1,0 +1,26 @@
+{
+    "routes": [{
+            "src": "/auth/login",
+            "dest": "/api/auth/login"
+        },
+        {
+            "src": "/auth/logout",
+            "dest": "/api/auth/logout"
+        },
+        {
+            "src": "/auth/(.*)",
+            "dest": "/api/auth/$1"
+        },
+        {
+            "src": "/shiki/(.*)",
+            "dest": "https://shikimori.one/$1"
+        },
+        {
+            "handle": "filesystem"
+        },
+        {
+            "src": "/.*",
+            "dest": "/"
+        }
+    ]
+}
