@@ -4,7 +4,8 @@
         <div class="canvas-overlay"></div>
     </div>
     <main ref="intro" class="intro">
-        <h1 class="intro__title">AniChrono</h1>
+        <!-- <h1 class="intro__title">AniChrono</h1> -->
+        <TypedTitle />
         <p class="intro__desc">Погрузитесь в мир аниме с передовыми технологиями потокового вещания</p>
         <form action="" class="intro__form">
             <input type="text" class="intro__form-inp" placeholder="Поиск аниме, жанров, персонажей...">
@@ -61,6 +62,7 @@ import { ref } from 'vue'
 import CanvasBackground from '@/components/CanvasBackground.vue'
 import TitleCard from '@/components/TitleCard.vue'
 import Footer from '@/components/Footer.vue'
+import TypedTitle from '@/components/TypedTitle.vue'
 </script>
 
 <style scoped lang="scss">
