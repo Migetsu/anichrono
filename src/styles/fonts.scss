@@ -1,0 +1,40 @@
+$Comfortaa:
+('Regular', 400),
+('Bold', 700);
+
+@each $name,
+$weight in $Comfortaa {
+    @font-face {
+        font-family: 'Comfortaa';
+        src: url('@/assets/fonts/Comfortaa/Comfortaa-#{$name}.ttf');
+        font-weight: $weight;
+    }
+}
+
+$Orbitron: ('Orbitron', 400),
+('Bold', 700),
+('BoldItalic', 701),
+('Light', 300),
+('Black', 900);
+
+@each $name,
+$weight in $Orbitron {
+    @font-face {
+        font-family: 'Orbitron';
+        src: url('@/assets/fonts/Orbitron/Orbitron-#{$name}.ttf');
+        font-weight: $weight;
+    }
+}
+
+$Exo2: ('Regular', 400),
+('Bold', 700),
+('Medium', 500);
+
+@each $name,
+$weight in $Exo2 {
+    @font-face {
+        font-family: 'Exo2';
+        src: url('@/assets/fonts/Exo2/Exo2-#{$name}.ttf');
+        font-weight: $weight;
+    }
+}
