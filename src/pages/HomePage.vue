@@ -14,8 +14,38 @@
         </form>
     </main>
     <section class="popular">
-        <div class="popular__title">Популярное сейчас</div>
+        <h3 class="popular__title">Популярное сейчас</h3>
         <TitleCard />
+    </section>
+    <section class="features">
+        <h3 class="features__title">Почему выбирают AniChrono</h3>
+        <div class="features-container">
+            <div class="features__content">
+                <div class="features__content-item">
+                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-circle-play"
+                            class="features-icon" /></div>
+                    <h4 class="features__content-title">HD & 4K качество</h4>
+                    <p class="features__content-desc">Наслаждайтесь любимыми аниме в высочайшем качестве с поддержкой 4K
+                        разрешения</p>
+                </div>
+                <div class="features__content-item">
+                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-clock"
+                            class="features-icon" /></div>
+                    <h4 class="features__content-title">Эксклюзивные релизы</h4>
+                    <p class="features__content-desc">Первыми смотрите новые серии сразу после выхода в Японии</p>
+                </div>
+                <div class="features__content-item">
+                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-closed-captioning" class="features-icon" /></div>
+                    <h4 class="features__content-title">Профессиональные субтитры</h4>
+                    <p class="features__content-desc">Качественный перевод на русский язык от ведущих студий</p>
+                </div>
+                <div class="features__content-item">
+                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-heart" class="features-icon" /></div>
+                    <h4 class="features__content-title">Персональные рекомендации</h4>
+                    <p class="features__content-desc">Индивидуальные подборки на основе ваших предпочтений</p>
+                </div>
+            </div>
+        </div>
     </section>
 </template>
 
@@ -132,7 +162,7 @@ import TitleCard from '@/components/TitleCard.vue'
     padding: 80px 0;
 
     &__title {
-        font-family: "Orbitron";
+        font-family: "Exo2";
         font-weight: 700;
         margin-bottom: 48px;
         font-size: 40px;
@@ -141,6 +171,77 @@ import TitleCard from '@/components/TitleCard.vue'
         -webkit-text-fill-color: transparent;
         background-clip: text;
         text-align: center;
+    }
+}
+
+.features {
+    padding: 80px 0;
+
+    &__title {
+        font-family: "Exo2";
+        font-weight: 700;
+        margin-bottom: 48px;
+        background: linear-gradient(45deg, $accent-coral, $accent-turquoise);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center;
+        font-size: 40px;
+    }
+
+    &-container {
+        max-width: 1525px;
+        padding: 0 15px;
+        margin: 0 auto;
+        overflow: hidden;
+        position: relative;
+    }
+
+    &__content {
+        display: grid;
+        gap: 32px;
+        grid-template-columns: repeat(4, 1fr);
+
+        &-item {
+            background: rgba(26, 26, 46, 0.6);
+            padding: 32px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            backdrop-filter: blur(10px);
+
+            &:hover {
+                box-shadow: 0 15px 30px rgba(255, 107, 107, 0.2);
+            }
+
+            &:hover .features-icon {
+                transform: scale(1.1);
+                text-shadow: 0 0 20px $accent-coral;
+                transition: all .3s ease;
+            }
+        }
+
+        &-icon {
+            font-size: 48px;
+            color: $accent-coral;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        &-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: $text-primary;
+        }
+
+        &-desc {
+            font-family: "Comfortaa";
+            font-weight: 400;
+            color: $text-secondary;
+            display: flex;
+        }
     }
 }
 </style>
