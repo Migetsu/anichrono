@@ -8,7 +8,7 @@ export async function shikiGQL(query, variables = {}) {
   if (cached && Date.now() - cached.time < TTL) {
     return cached.data;
   }
-  const res = await fetch('/api/shiki/graphql', {
+  const res = await fetch('/shiki/api/graphql', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables })
