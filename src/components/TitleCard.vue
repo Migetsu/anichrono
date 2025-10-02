@@ -6,21 +6,23 @@
                 :autoplay="{ delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }" :speed="600"
                 :navigation="true" :pagination="{ clickable: true }" :loop="true" class="TitleCard__swiper">
 
-                <SwiperSlide v-for="(slide, index) in slides" :key="index" class="TitleCard__swiper-item">
-                    <RouterLink :to="`/animes/${slide.id}`" class="card">
+                <SwiperSlide v-for="(anime, id) in latest" :key="id" class="TitleCard__swiper-item">
+                    <RouterLink :to="`/animes/${anime.id}`" class="card">
                         <div class="card-content">
                             <div class="card-image-wrapper">
-                                <img :src="slide.image" :alt="slide.title" class="card-image">
+                                <img :src="anime.poster?.originalUrl" :alt="image" class="card-image">
                             </div>
                             <div class="card-info">
-                                <h3 class="card-title" :title="slide.title">{{ slide.title }}</h3>
+                                <h3 class="card-title" :title="anime.russian || anime.name">{{ anime.russian || anime.name }}</h3>
                                 <div class="card-meta">
-                                    <div class="card-rating"><font-awesome-icon icon="fa-solid fa-star"
-                                            class="card-rating-icon" /> {{ slide.rating }}</div>
-                                    <div class="card-year">{{ slide.year }}</div>
+                                    <div class="card-rating">
+                                        <font-awesome-icon icon="fa-solid fa-star" class="card-rating-icon" /> 
+                                        {{ anime.score }}
+                                    </div>
+                                    <!-- <div class="card-year">{{ anime.year }}</div> -->
                                 </div>
                                 <div class="card-genres">
-                                    <span v-for="(genre, index) in slide.genres" :key="index">{{ genre }}</span>
+                                    <!-- <span v-for="(genre, index) in anime.genres" :key="index">{{ genre }}</span> -->
                                 </div>
                                 <button class="card-btn">
                                     <font-awesome-icon icon="fa-solid fa-play" />
@@ -36,7 +38,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
@@ -50,6 +52,13 @@ const breakpoints = {
     1280: { slidesPerView: 4 },
     1440: { slidesPerView: 4 }
 }
+
+const props = defineProps({
+    latest: {
+        type: Array,
+        default: () => []
+    }
+})
 
 const slides = ref([
     {
@@ -161,8 +170,13 @@ const slides = ref([
     display: inline-block;
 }
 
-:deep(.swiper-button-prev) { left: 16px; }
-:deep(.swiper-button-next) { right: 16px; }
+:deep(.swiper-button-prev) {
+    left: 16px;
+}
+
+:deep(.swiper-button-next) {
+    right: 16px;
+}
 
 :deep(.swiper-button-prev):hover,
 :deep(.swiper-button-next):hover,

@@ -16,7 +16,7 @@
     </main>
     <section class="popular">
         <h3 class="popular__title">Популярное сейчас</h3>
-        <TitleCard />
+        <TitleCard v-if="latestStore.latest.length" :latest="latestStore.latest" />
     </section>
     <section class="features">
         <h3 class="features__title">Почему выбирают AniChrono</h3>
@@ -52,17 +52,25 @@
     </section>
     <section class="seasonal">
         <h3 class="seasonal__title">Новинки сезона</h3>
-        <TitleCard />
+        <TitleCard v-if="latestStore.latest.length" :latest="latestStore.latest" />
     </section>
     <Footer />
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted } from 'vue'
 import CanvasBackground from '@/components/CanvasBackground.vue'
 import TitleCard from '@/components/TitleCard.vue'
 import Footer from '@/components/Footer.vue'
 import TypedTitle from '@/components/TypedTitle.vue'
+import { useLatestStore } from '@/stores/latestStore'
+
+const latestStore = useLatestStore()
+
+onMounted(async () => {
+    await latestStore.loadLatest()
+})
+
 </script>
 
 <style scoped lang="scss">
