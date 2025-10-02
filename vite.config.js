@@ -11,17 +11,13 @@ export default defineConfig({
       }
     },
     server: {
-      proxy: {
-        '/api': 'http://localhost:3000', // vercel dev
-        '/shiki': {
-          target: 'https://shikimori.one',
-          changeOrigin: true,
-          secure: true,
-          rewrite: (path) => path.replace(/^\/shiki/, ''),
-          headers: {
-            'User-Agent': 'anichrono'
-          }
-        }
+    proxy: {
+      '^/shiki/.*': {
+        target: 'https://shikimori.one',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/shiki/, '')
       }
     }
+  }
   })
