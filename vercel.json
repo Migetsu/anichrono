@@ -1,13 +1,4 @@
 {
-    "routes": [
-        {
-            "handle": "filesystem"
-        },
-        {
-            "src": "/.*",
-            "dest": "/"
-        }
-    ],
     "rewrites": [
         {
             "source": "/shiki/api/graphql",
@@ -16,6 +7,10 @@
         {
             "source": "/auth/callback",
             "destination": "/api/auth/callback"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
         }
     ]
 }
