@@ -1,16 +1,16 @@
 <template>
-    <div class="TitleCard">
+    <div class="TitleCard" v-if="items && items.length">
         <div class="TitleCard-container">
             <Swiper :modules="[Navigation, Autoplay]" :slides-per-view="4" :space-between="16"
                 :breakpoints="breakpoints"
                 :autoplay="{ delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }" :speed="600"
                 :navigation="true" :pagination="{ clickable: true }" :loop="true" class="TitleCard__swiper">
 
-                <SwiperSlide v-for="(anime, id) in latest" :key="id" class="TitleCard__swiper-item">
+                <SwiperSlide v-for="(anime, id) in items" :key="id" class="TitleCard__swiper-item">
                     <RouterLink :to="`/animes/${anime.id}`" class="card">
                         <div class="card-content">
                             <div class="card-image-wrapper">
-                                <img :src="anime.poster?.originalUrl" :alt="image" class="card-image">
+                                <img :src="anime.poster.originalUrl" alt="" class="card-image">
                             </div>
                             <div class="card-info">
                                 <h3 class="card-title" :title="anime.russian || anime.name">{{ anime.russian || anime.name }}</h3>
@@ -21,8 +21,8 @@
                                     </div>
                                     <!-- <div class="card-year">{{ anime.year }}</div> -->
                                 </div>
-                                <div class="card-genres">
-                                    <!-- <span v-for="(genre, index) in anime.genres" :key="index">{{ genre }}</span> -->
+                                <div class="card-genres" v-if="anime.genres?.length">
+                                    <span v-for="genre in anime.genres.slice(0, 3)" :key="genre.id">{{ genre.russian || genre.name }}</span>
                                 </div>
                                 <button class="card-btn">
                                     <font-awesome-icon icon="fa-solid fa-play" />
@@ -54,86 +54,11 @@ const breakpoints = {
 }
 
 const props = defineProps({
-    latest: {
+    items: {
         type: Array,
         default: () => []
     }
 })
-
-const slides = ref([
-    {
-        title: 'Attack on Titan Attack on Titan',
-        id: 1,
-        image: 'src/assets/images/anime-attack-titan.png',
-        rating: 9,
-        year: 2006,
-        genres: [
-            'Action',
-            'Comedy',
-            'Adventure'
-        ]
-    },
-    {
-        title: 'Attack on Titan Attack on Titan',
-        id: 1,
-        image: 'src/assets/images/anime-attack-titan.png',
-        rating: 9,
-        year: 2006,
-        genres: [
-            'Action',
-            'Comedy',
-            'Adventure'
-        ]
-    },
-    {
-        title: 'Attack on Titan Attack on Titan',
-        id: 1,
-        image: 'src/assets/images/anime-attack-titan.png',
-        rating: 9,
-        year: 2006,
-        genres: [
-            'Action',
-            'Comedy',
-            'Adventure'
-        ]
-    },
-    {
-        title: 'Attack on Titan Attack on Titan',
-        id: 1,
-        image: 'src/assets/images/anime-attack-titan.png',
-        rating: 9,
-        year: 2006,
-        genres: [
-            'Action',
-            'Comedy',
-            'Adventure'
-        ]
-    },
-    {
-        title: 'Attack on Titan Attack on Titan',
-        id: 1,
-        image: 'src/assets/images/anime-attack-titan.png',
-        rating: 9,
-        year: 2006,
-        genres: [
-            'Action',
-            'Comedy',
-            'Adventure'
-        ]
-    },
-    {
-        title: 'Attack on Titan Attack on Titan',
-        id: 1,
-        image: 'src/assets/images/anime-attack-titan.png',
-        rating: 9,
-        year: 2006,
-        genres: [
-            'Action',
-            'Comedy',
-            'Adventure'
-        ]
-    },
-])
 </script>
 
 <style lang="scss" scoped>

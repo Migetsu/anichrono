@@ -11,7 +11,7 @@
                 <li class="header__nav-item"><router-link class="header__nav-link" to="/">Главная</router-link></li>
                 <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Каталог</router-link>
                 </li>
-                <li class="header__nav-item"><router-link class="header__nav-link" to="/watch">Случайный тайтл</router-link>
+                <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Случайный тайтл</router-link>
                 </li>
             </ul>
         </nav>

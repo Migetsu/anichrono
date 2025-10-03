@@ -8,7 +8,6 @@ const QUERY = `
       russian
       score
       poster { originalUrl }
-      releasedOn { year month day date }
       genres { id name russian }
     }
   }
