@@ -8,9 +8,13 @@ export async function shikiGQL(query, variables = {}) {
   if (cached && Date.now() - cached.time < TTL) {
     return cached.data;
   }
-  const res = await fetch('/shiki/api/graphql', {
+  // Прямой запрос к Shikimori API (поддерживает CORS)
+  const res = await fetch('https://shikimori.one/api/graphql', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'User-Agent': 'AniChrono/1.0'
+    },
     body: JSON.stringify({ query, variables })
   });
   const json = await res.json();

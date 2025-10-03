@@ -1,4 +1,4 @@
-import { shikiGQL } from "@/scripts/shikiClient.js";
+import { shikiGQL } from "@/api/shikiClient.js";
 
 const QUERY = `
   query ($search: String!, $limit: Int) {

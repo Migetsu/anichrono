@@ -1,10 +1,6 @@
 {
     "rewrites": [
         {
-            "source": "/shiki/api/graphql",
-            "destination": "/api/shiki/graphql"
-        },
-        {
             "source": "/auth/callback",
             "destination": "/api/auth/callback"
         },
