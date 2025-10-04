@@ -9,6 +9,7 @@ const QUERY = `
       score
       poster { originalUrl }
       genres { id name russian }
+      airedOn { year }
     }
   }
 `;

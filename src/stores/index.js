@@ -1,3 +1,2 @@
-export * from './catalog'
-export * from './user'
 export * from './latestStore'
+export * from './popularStore'

@@ -19,7 +19,7 @@
                                         <font-awesome-icon icon="fa-solid fa-star" class="card-rating-icon" /> 
                                         {{ anime.score }}
                                     </div>
-                                    <!-- <div class="card-year">{{ anime.year }}</div> -->
+                                    <div class="card-year">{{ anime.airedOn.year }}</div>
                                 </div>
                                 <div class="card-genres" v-if="anime.genres?.length">
                                     <span v-for="genre in anime.genres.slice(0, 3)" :key="genre.id">{{ genre.russian || genre.name }}</span>

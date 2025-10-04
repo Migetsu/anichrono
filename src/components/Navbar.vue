@@ -39,8 +39,11 @@
     right: 0;
     padding: 16px 0;
     align-items: center;
+    border-bottom: 1px solid rgba(255, 107, 107, 0.2);
 
     &__logo {
+        padding: 8px 0;
+
         & span {
             color: #fff;
             font-size: 24px;
