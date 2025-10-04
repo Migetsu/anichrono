@@ -66,15 +66,6 @@
                     </div>
                 </div>
             </section>
-            <section class="anime__episodes">
-                <h2 class="anime__episodes-title"><font-awesome-icon icon="fa-solid fa-list" /> Эпизоды</h2>
-                <div class="anime__episodes-content">
-                    <div class="anime__episodes-item" v-for="episode in episodesCount" :key="episode">
-                        <div class="episode-number">Эпизод {{ episode }}</div>
-                        <div class="episode-duration">24 мин.</div>
-                    </div>
-                </div>
-            </section>
         </div>
     </main>
     <Footer />

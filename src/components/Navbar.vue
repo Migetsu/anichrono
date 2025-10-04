@@ -11,18 +11,94 @@
                 <li class="header__nav-item"><router-link class="header__nav-link" to="/">Главная</router-link></li>
                 <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Каталог</router-link>
                 </li>
-                <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Случайный тайтл</router-link>
+                <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Случайный
+                        тайтл</router-link>
                 </li>
             </ul>
         </nav>
-        <div class="header__profile">
-            <button class="header__nav-link login">Войти</button>
+        <div class="header__profile profile">
+            <button v-if="!auth.isLoggedIn" @click="auth.login" class="header__nav-link profile__login">Войти</button>
+            <div v-else class="profile_info">
+                <router-link to="/profile"><img v-if="auth.user?.image && auth.user.image.x160"
+                        :src="auth.user.image.x160" alt="avatar" class="profile__avatar" /></router-link>
+            </div>
         </div>
     </header>
 </template>
 
-<script>
+ <script setup>
+import { reactive, ref, onMounted, onUnmounted } from "vue";
+import { searchAnimes } from "@/api/searchAnimes";
+import { useAuthStore } from "@/stores/auth";
 
+const links = reactive([
+  { title: "Релизы", url: "/releases" },
+  { title: "Онгоинги", url: "/ongoings" },
+  { title: "Популярное", url: "/populars" },
+]);
+
+const isTransparent = ref(false);
+const query = ref("");
+const results = ref([]);
+let scrollTimeout;
+let searchTimeout;
+const auth = useAuthStore();
+
+const clearSearch = () => {
+  query.value = "";
+  results.value = [];
+};
+
+const isMenuOpen = ref(false);
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value;
+};
+
+const closeMenu = () => {
+  isMenuOpen.value = false;
+  clearSearch();
+};
+
+const handleScroll = () => {
+  isTransparent.value = true;
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    isTransparent.value = false;
+  }, 200);
+};
+
+const handleInteraction = () => {
+  isTransparent.value = false;
+  closeMenu();
+};
+
+const handleSearch = () => {
+  clearTimeout(searchTimeout);
+  if (!query.value.trim()) {
+    results.value = [];
+    return;
+  }
+  searchTimeout = setTimeout(async () => {
+    try {
+      results.value = await searchAnimes(query.value.trim());
+    } catch (e) {
+      results.value = [];
+    }
+  }, 300);
+};
+
+onMounted(() => {
+  auth.loadToken();
+  window.addEventListener("scroll", handleScroll);
+  window.addEventListener("storage", auth.loadToken);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener("storage", auth.loadToken);
+  clearTimeout(scrollTimeout);
+  clearTimeout(searchTimeout);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -111,4 +187,25 @@
 .login {
     background: transparent;
 }
+
+.profile {
+        color: rgba(255, 255, 255, 0.6);
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+
+        &__login {
+            padding: 8px 12px;
+            font-weight: 700;
+            color: #fff;
+            background: transparent;
+            border-radius: 8px;
+        }
+
+        &__avatar {
+            width: 32px;
+            height: 32px;
+        }
+    }
 </style>

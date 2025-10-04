@@ -17,16 +17,66 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     setToken(t) {
       this.token = t
-      try { localStorage.setItem(TOKEN_KEY, t) } catch {}
+      try { sessionStorage.setItem(TOKEN_KEY, t) } catch {}
     },
+    
+    getCookieToken() {
+      // Получаем токен из cookie (не HttpOnly версия для клиента)
+      if (typeof document === 'undefined') return null
+      const cookies = document.cookie.split(';')
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=')
+        if (name === 'shiki_token_client') {
+          return value
+        }
+      }
+      return null
+    },
+    
     loadToken() {
-      try { this.token = localStorage.getItem(TOKEN_KEY) || null } catch {}
+      // Сначала пытаемся получить из sessionStorage
+      try { 
+        this.token = sessionStorage.getItem(TOKEN_KEY) || null 
+      } catch {}
+      
+      // Если нет в sessionStorage, пытаемся получить из cookie
+      if (!this.token) {
+        const cookieToken = this.getCookieToken()
+        if (cookieToken) {
+          this.token = cookieToken
+          try { sessionStorage.setItem(TOKEN_KEY, cookieToken) } catch {}
+        }
+      }
+      
+      // Проверяем URL параметры (после OAuth callback)
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auth') === 'success') {
+          // Убираем параметр из URL
+          const newUrl = new URL(window.location);
+          newUrl.searchParams.delete('auth');
+          window.history.replaceState({}, '', newUrl);
+          // Загружаем токен из cookie и информацию о пользователе
+          const token = this.getCookieToken()
+          if (token) {
+            this.setToken(token)
+            this.fetchMe();
+          }
+        }
+      }
+      
       return this.token
     },
     clearToken() {
       this.token = null
       this.user = null
-      try { localStorage.removeItem(TOKEN_KEY) } catch {}
+      try { sessionStorage.removeItem(TOKEN_KEY) } catch {}
+      try { localStorage.removeItem(TOKEN_KEY) } catch {} // очистка старых данных
+      // Очищаем cookie
+      if (typeof document !== 'undefined') {
+        document.cookie = 'shiki_token_client=; Path=/; Max-Age=0'
+        document.cookie = 'shiki_token=; Path=/; Max-Age=0'
+      }
       try { useListsStore().$reset() } catch {}
     },
 
@@ -47,13 +97,13 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.loading = false
         this.loggingIn = false
-        try { localStorage.removeItem('oauth_in_progress') } catch {}
+        try { sessionStorage.removeItem('oauth_in_progress') } catch {}
       }
     },
 
     login() {
       this.loggingIn = true
-      try { localStorage.setItem('oauth_in_progress', '1') } catch {}
+      try { sessionStorage.setItem('oauth_in_progress', '1') } catch {}
       location.href = '/api/auth/login'
     },
 

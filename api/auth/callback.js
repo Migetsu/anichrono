@@ -4,8 +4,11 @@
 export default async function handler(req, res) {
   try {
     const { code } = req.query;
-    if (!code) return res.status(400).send('Missing code');
+    if (!code) {
+      return res.status(400).send('Missing authorization code');
+    }
 
+    // Обмениваем code на access_token
     const tokenRes = await fetch('https://shikimori.one/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -20,21 +23,31 @@ export default async function handler(req, res) {
 
     if (!tokenRes.ok) {
       const txt = await tokenRes.text();
+      console.error('Token exchange failed:', txt);
       return res.status(502).send('Token exchange failed: ' + txt);
     }
 
     const tokenJson = await tokenRes.json();
-    // tokenJson.access_token, refresh_token, expires_in
+    const accessToken = tokenJson.access_token;
+    const expiresIn = tokenJson.expires_in || 86400; // По умолчанию 24 часа
 
-    // Сохраняем токен в httpOnly cookie (безопасно для браузера)
-    const maxAge = tokenJson.expires_in || 3600;
-    res.setHeader('Set-Cookie', `shiki_token=${tokenJson.access_token}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Lax`);
-    // Можно сохранить refresh_token в другой cookie с httpOnly или в базу.
+    if (!accessToken) {
+      return res.status(502).send('No access token received');
+    }
 
-    // Редирект на фронт (например, /)
-    res.redirect('/');
+    // Сохраняем токен в HttpOnly cookie для безопасности
+    res.setHeader('Set-Cookie', [
+      `shiki_token=${accessToken}; Path=/; Max-Age=${expiresIn}; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`,
+      `shiki_token_client=${accessToken}; Path=/; Max-Age=${expiresIn}; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`
+    ]);
+
+    // Получаем URL фронтенда для редиректа
+    const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+    
+    // Редиректим на фронтенд БЕЗ токена в URL
+    res.redirect(frontendOrigin + '/?auth=success');
   } catch (err) {
-    console.error(err);
+    console.error('Callback error:', err);
     res.status(500).send('Server error');
   }
 }

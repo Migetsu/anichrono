@@ -3,8 +3,8 @@
         <div class="TitleCard-container">
             <Swiper :modules="[Navigation, Autoplay]" :slides-per-view="4" :space-between="16"
                 :breakpoints="breakpoints"
-                :autoplay="{ delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }" :speed="600"
-                :navigation="true" :pagination="{ clickable: true }" :loop="true" class="TitleCard__swiper">
+                :autoplay="{ delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }" :speed="600"
+                :navigation="true" :pagination="false" :loop="true" :lazy="true" class="TitleCard__swiper">
 
                 <SwiperSlide v-for="(anime, id) in items" :key="id" class="TitleCard__swiper-item">
                     <RouterLink :to="`/animes/${anime.id}`" class="card">
@@ -151,8 +151,9 @@ const props = defineProps({
     position: relative;
     transform: translateY(0);
     transition: transform 320ms cubic-bezier(.22, .9, .37, 1), box-shadow 320ms ease;
-    will-change: transform, box-shadow;
     z-index: 0;
+    
+    /* will-change убран для экономии памяти GPU */
 }
 
 .card-content {
@@ -178,7 +179,8 @@ const props = defineProps({
     transform-origin: center top;
     transition: transform 420ms cubic-bezier(.22, .9, .37, 1);
     backface-visibility: hidden;
-    will-change: transform;
+    
+    /* will-change убран, используется только при hover */
 }
 
 .card-info {
@@ -262,6 +264,7 @@ const props = defineProps({
     z-index: 5;
     border-color: $accent-coral;
     box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+    will-change: transform;  /* Добавляем will-change только при hover */
 }
 
 :deep(.swiper-slide):hover>.card .card-image,
@@ -269,31 +272,10 @@ const props = defineProps({
 .TitleCard__swiper-item:hover .card-image,
 .TitleCard__swiper-item:focus-within .card-image {
     transform: scale(1.05);
+    will-change: transform;  /* Добавляем will-change только при hover */
 }
 
-:deep(.swiper-slide):hover>.card .card-title,
-:deep(.swiper-slide):focus-within>.card .card-title,
-.TitleCard__swiper-item:hover .card-title,
-.TitleCard__swiper-item:focus-within .card-title {
-    transform: translateY(-6px);
-    transition: transform .5s ease;
-}
-
-:deep(.swiper-slide):hover>.card .card-meta,
-:deep(.swiper-slide):focus-within>.card .card-meta,
-.TitleCard__swiper-item:hover .card-meta,
-.TitleCard__swiper-item:focus-within .card-meta {
-    transform: translateY(-6px);
-    transition: transform .5s ease;
-}
-
-:deep(.swiper-slide):hover>.card .card-genres,
-:deep(.swiper-slide):focus-within>.card .card-genres,
-.TitleCard__swiper-item:hover .card-genres,
-.TitleCard__swiper-item:focus-within .card-genres {
-    transform: translateY(-6px);
-    transition: transform .5s ease;
-}
+/* Убраны избыточные анимации title, meta, genres для улучшения производительности */
 
 @media (max-width: 480px) {
 
