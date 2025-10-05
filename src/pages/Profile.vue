@@ -25,6 +25,10 @@
               <font-awesome-icon icon="fa-solid fa-gear" />
               Настройки
             </button>
+            <button class="btn btn-shikimori" @click="openShikimoriProfile">
+              <font-awesome-icon icon="fa-solid fa-external-link-alt" />
+              Профиль шикимори
+            </button>
             <button class="btn btn-logout" @click="logout">
               <font-awesome-icon icon="fa-solid fa-right-from-bracket" />
               Выйти
@@ -256,13 +260,38 @@ function collectCandidates(src) {
 
 const avatarUrl = computed(() => {
   const u = auth?.user ?? {}
+  
+  // Приоритизируем изображения высокого качества
   const cand = [
-    u.avatar, u.avatar_url,
-    u.image?.x160, u.image?.x148, u.image?.x80, u.image?.x48,
-    u.profile?.avatar
+    u.image?.x160,  // 160x160 - самое качественное
+    u.image?.x148,  // 148x148 - хорошее качество
+    u.avatar,       // оригинальный аватар
+    u.avatar_url,   // URL аватара
+    u.image?.x80,   // 80x80 - среднее качество
+    u.profile?.avatar, // аватар из профиля
+    u.image?.x48    // 48x48 - низкое качество (последний вариант)
   ]
   
-  for (const x of cand) if (x) return toAbs(x)
+  // Отладочная информация
+  console.log('🔍 Доступные аватары:', {
+    x160: u.image?.x160,
+    x148: u.image?.x148,
+    avatar: u.avatar,
+    avatar_url: u.avatar_url,
+    x80: u.image?.x80,
+    profile_avatar: u.profile?.avatar,
+    x48: u.image?.x48
+  })
+  
+  for (const x of cand) {
+    if (x) {
+      const finalUrl = toAbs(x)
+      console.log('✅ Выбран аватар:', finalUrl)
+      return finalUrl
+    }
+  }
+  
+  console.log('❌ Аватар не найден, используем дефолтный')
   return '/avatar.svg'
 })
 
@@ -277,6 +306,12 @@ function logout() {
 function openSettings() {
   // TODO: Реализовать страницу настроек
   alert('Настройки профиля в разработке')
+}
+
+function openShikimoriProfile() {
+  if (auth?.user?.id) {
+    window.open(`https://shikimori.one/${auth.user.nickname}`, '_blank')
+  }
 }
 
 // Дата регистрации
@@ -876,9 +911,16 @@ const vInview = {
     width: 120px;
     height: 120px;
     border-radius: 20px;
-  object-fit: cover;
+    object-fit: cover;
+    object-position: center;
     border: 3px solid $accent-coral;
     box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: auto;
+    filter: none;
+    -webkit-filter: none;
   }
   
   &__status {
@@ -952,6 +994,16 @@ const vInview = {
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
+    }
+  }
+  
+  &-shikimori {
+    background: linear-gradient(135deg, $accent-gold, #e6b800);
+    color: white;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(255, 230, 109, 0.4);
     }
   }
   
@@ -1444,9 +1496,11 @@ const vInview = {
     &__actions {
       justify-content: center;
       width: 100%;
+      flex-direction: column;
+      gap: 10px;
       
       button {
-        flex: 1;
+        width: 100%;
       }
     }
   }
