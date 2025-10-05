@@ -1,5 +1,5 @@
-// api/user-history.js
-// Serverless функция для получения истории пользователя
+
+
 
 export default async function handler(req, res) {
   try {
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
     const userAgent = process.env.SHIKI_USER_AGENT || 'AniChrono';
     
-    // Запрос к API Shikimori для получения истории с пагинацией
+    
     const url = `https://shikimori.one/api/users/${user_id}/history?limit=${limit}&page=${page}&target_type=Anime`;
     
     const response = await fetch(url, {

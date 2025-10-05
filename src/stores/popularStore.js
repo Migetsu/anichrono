@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { searchPopular } from '@/api/searchPopular'
 
-const TTL = 1000 * 60 * 10 // 10 минут
+const TTL = 1000 * 60 * 10 
 
 export const usePopularStore = defineStore('popular', {
   state: () => ({
@@ -14,7 +14,7 @@ export const usePopularStore = defineStore('popular', {
     async loadPopular(force = false, limit = 10) {
       const now = Date.now()
       if (!force && this.popular.length && (now - this.popularFetchedAt) < TTL) {
-        return // кеш актуален
+        return 
       }
       this.loadingPopular = true
       this.errorPopular = null

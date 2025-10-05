@@ -1,18 +1,18 @@
-// api/user-rates.js
-// Serverless функция для работы со списками пользователя (user rates)
+
+
 
 export default async function handler(req, res) {
   try {
-    // Получаем токен из заголовка Authorization
+    
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const token = authHeader.substring(7); // Убираем "Bearer "
+    const token = authHeader.substring(7); 
     const userAgent = process.env.SHIKI_USER_AGENT || 'AniChrono';
 
-    // Обрабатываем разные HTTP методы
+    
     switch (req.method) {
       case 'GET':
         return await handleGet(req, res, token, userAgent);
@@ -31,11 +31,11 @@ export default async function handler(req, res) {
   }
 }
 
-// GET - получение списков пользователя
+
 async function handleGet(req, res, token, userAgent) {
   const { user_id, target_type, target_id, page, limit } = req.query;
 
-  // Формируем URL с параметрами
+  
   const url = new URL('https://shikimori.one/api/v2/user_rates');
   if (user_id) url.searchParams.set('user_id', user_id);
   if (target_type) url.searchParams.set('target_type', target_type);
@@ -64,7 +64,7 @@ async function handleGet(req, res, token, userAgent) {
   res.json(data);
 }
 
-// POST - создание нового рейта
+
 async function handlePost(req, res, token, userAgent) {
   const { user_id, target_id, target_type, status } = req.body;
 
@@ -104,7 +104,7 @@ async function handlePost(req, res, token, userAgent) {
   res.json(data);
 }
 
-// PUT - обновление существующего рейта
+
 async function handlePut(req, res, token, userAgent) {
   const { id } = req.query;
   const { status, episodes, score, text, rewatches } = req.body;
@@ -113,7 +113,7 @@ async function handlePut(req, res, token, userAgent) {
     return res.status(400).json({ error: 'Missing rate id' });
   }
 
-  // Формируем объект обновления (только переданные поля)
+  
   const updateData = {};
   if (status !== undefined) updateData.status = status;
   if (episodes !== undefined) updateData.episodes = episodes;
@@ -122,7 +122,7 @@ async function handlePut(req, res, token, userAgent) {
   if (rewatches !== undefined) updateData.rewatches = rewatches;
 
   const response = await fetch(`https://shikimori.one/api/v2/user_rates/${id}`, {
-    method: 'PATCH', // Shikimori использует PATCH для обновления
+    method: 'PATCH', 
     headers: {
       'Authorization': `Bearer ${token}`,
       'User-Agent': userAgent,
@@ -146,7 +146,7 @@ async function handlePut(req, res, token, userAgent) {
   res.json(data);
 }
 
-// DELETE - удаление рейта
+
 async function handleDelete(req, res, token, userAgent) {
   const { id } = req.query;
 
@@ -171,7 +171,7 @@ async function handleDelete(req, res, token, userAgent) {
     });
   }
 
-  // DELETE обычно возвращает 204 No Content или пустой объект
+  
   if (response.status === 204) {
     return res.status(204).end();
   }

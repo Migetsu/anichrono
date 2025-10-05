@@ -1,5 +1,5 @@
-// api/auth/callback.js
-// Serverless функция для OAuth callback от Shikimori
+
+
 
 export default async function handler(req, res) {
   try {
@@ -8,7 +8,7 @@ export default async function handler(req, res) {
       return res.status(400).send('Missing authorization code');
     }
 
-    // Обмениваем code на access_token
+    
     const tokenRes = await fetch('https://shikimori.one/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -29,22 +29,22 @@ export default async function handler(req, res) {
 
     const tokenJson = await tokenRes.json();
     const accessToken = tokenJson.access_token;
-    const expiresIn = tokenJson.expires_in || 86400; // По умолчанию 24 часа
+    const expiresIn = tokenJson.expires_in || 86400; 
 
     if (!accessToken) {
       return res.status(502).send('No access token received');
     }
 
-    // Сохраняем токен в HttpOnly cookie для безопасности
+    
     res.setHeader('Set-Cookie', [
       `shiki_token=${accessToken}; Path=/; Max-Age=${expiresIn}; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`,
       `shiki_token_client=${accessToken}; Path=/; Max-Age=${expiresIn}; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`
     ]);
 
-    // Получаем URL фронтенда для редиректа
+    
     const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
     
-    // Редиректим на фронтенд БЕЗ токена в URL
+    
     res.redirect(frontendOrigin + '/?auth=success');
   } catch (err) {
     console.error('Callback error:', err);

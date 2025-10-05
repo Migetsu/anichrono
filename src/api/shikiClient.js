@@ -1,5 +1,5 @@
-// src/api/shikiClient.js
-// лёгкая обёртка над GraphQL
+
+
 const cache = new Map();
 const TTL = 5 * 60 * 1000;
 export async function shikiGQL(query, variables = {}) {
@@ -8,7 +8,7 @@ export async function shikiGQL(query, variables = {}) {
   if (cached && Date.now() - cached.time < TTL) {
     return cached.data;
   }
-  // Прямой запрос к Shikimori API (поддерживает CORS)
+  
   const res = await fetch('https://shikimori.one/api/graphql', {
     method: 'POST',
     headers: { 

@@ -81,7 +81,7 @@ const props = defineProps({
     transition: background .22s ease, box-shadow .22s ease, transform .18s ease, opacity .22s ease;
     opacity: 0.95;
     border: none;
-    /* чуть увеличим область клика */
+    
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
@@ -153,7 +153,7 @@ const props = defineProps({
     transition: transform 320ms cubic-bezier(.22, .9, .37, 1), box-shadow 320ms ease;
     z-index: 0;
     
-    /* will-change убран для экономии памяти GPU */
+    
 }
 
 .card-content {
@@ -180,7 +180,7 @@ const props = defineProps({
     transition: transform 420ms cubic-bezier(.22, .9, .37, 1);
     backface-visibility: hidden;
     
-    /* will-change убран, используется только при hover */
+    
 }
 
 .card-info {
@@ -264,7 +264,7 @@ const props = defineProps({
     z-index: 5;
     border-color: $accent-coral;
     box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
-    will-change: transform;  /* Добавляем will-change только при hover */
+    will-change: transform;  
 }
 
 :deep(.swiper-slide):hover>.card .card-image,
@@ -272,10 +272,10 @@ const props = defineProps({
 .TitleCard__swiper-item:hover .card-image,
 .TitleCard__swiper-item:focus-within .card-image {
     transform: scale(1.05);
-    will-change: transform;  /* Добавляем will-change только при hover */
+    will-change: transform;  
 }
 
-/* Убраны избыточные анимации title, meta, genres для улучшения производительности */
+
 
 @media (max-width: 480px) {
 

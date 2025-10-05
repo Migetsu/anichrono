@@ -1,4 +1,4 @@
-// /src/stores/auth.js
+
 import { defineStore } from 'pinia'
 import { useListsStore } from './lists'
 const TOKEN_KEY = 'shiki_access_token'
@@ -21,7 +21,7 @@ export const useAuthStore = defineStore('auth', {
     },
     
     getCookieToken() {
-      // Получаем токен из cookie (не HttpOnly версия для клиента)
+      
       if (typeof document === 'undefined') return null
       const cookies = document.cookie.split(';')
       for (let cookie of cookies) {
@@ -34,12 +34,12 @@ export const useAuthStore = defineStore('auth', {
     },
     
     loadToken() {
-      // Сначала пытаемся получить из sessionStorage
+      
       try { 
         this.token = sessionStorage.getItem(TOKEN_KEY) || null 
       } catch {}
       
-      // Если нет в sessionStorage, пытаемся получить из cookie
+      
       if (!this.token) {
         const cookieToken = this.getCookieToken()
         if (cookieToken) {
@@ -48,11 +48,11 @@ export const useAuthStore = defineStore('auth', {
         }
       }
       
-      // Проверяем URL параметры (после OAuth callback)
+      
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('auth') === 'success') {
-          // Убираем параметр из URL
+          
           const newUrl = new URL(window.location);
           newUrl.searchParams.delete('auth');
           window.history.replaceState({}, '', newUrl);

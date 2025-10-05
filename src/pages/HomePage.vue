@@ -4,19 +4,32 @@
         <div class="canvas-overlay"></div>
     </div>
     <main ref="intro" class="intro">
-        <!-- <h1 class="intro__title">AniChrono</h1> -->
+        
         <TypedTitle />
         <p class="intro__desc">Погрузитесь в мир аниме с передовыми технологиями потокового вещания</p>
-        <form action="" class="intro__form">
-            <input type="text" class="intro__form-inp" placeholder="Поиск аниме, жанров, персонажей...">
+        <form action="" class="intro__form" @submit.prevent>
+            <input v-model="query" @input="handleSearch" type="text" class="intro__form-inp" placeholder="Поиск аниме, жанров, персонажей...">
             <button class="intro__form-btn">
                 <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
             </button>
+
+            <ul v-if="results.length" class="search-results">
+                <li v-for="a in results" :key="a.id" class="search-item">
+                    <router-link class="search-result" :to="`/animes/${a.id}`" @click="closeMenu">
+                        <span class="search-result__title">{{ a.russian || a.name }}</span>
+                        <span v-if="a.russian && a.name && a.russian !== a.name" class="search-result__subtitle">{{ a.name }}</span>
+                    </router-link>
+                </li>
+            </ul>
         </form>
     </main>
     <section class="seasonal">
         <h3 class="seasonal__title">Новинки сезона</h3>
         <TitleCard v-if="latestStore.latest.length" :items="latestStore.latest" />
+    </section>
+    <section class="popular">
+        <h3 class="popular__title">Популярное сейчас</h3>
+        <TitleCard v-if="popularStore.popular.length" :items="popularStore.popular" />
     </section>
     <section class="features">
         <h3 class="features__title">Почему выбирают AniChrono</h3>
@@ -50,24 +63,49 @@
             </div>
         </div>
     </section>
-    <section class="popular">
-        <h3 class="popular__title">Популярное сейчас</h3>
-        <TitleCard v-if="popularStore.popular.length" :items="popularStore.popular" />
-    </section>
     <Footer />
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import CanvasBackground from '@/components/CanvasBackground.vue'
 import TitleCard from '@/components/TitleCard.vue'
 import Footer from '@/components/Footer.vue'
 import TypedTitle from '@/components/TypedTitle.vue'
 import { useLatestStore } from '@/stores/latestStore'
 import { usePopularStore } from '@/stores/popularStore'
+import { searchAnimes } from "@/api/searchAnimes";
 
 const latestStore = useLatestStore()
 const popularStore = usePopularStore()
+const query = ref('')
+const results = ref([])
+let searchTimeout
+
+const handleSearch = () => {
+    if (!query.value.trim()) {
+        results.value = []
+        return;
+    }
+    searchTimeout = setTimeout(async () => {
+        try {
+            results.value = await searchAnimes(query.value.trim())
+        }
+        catch (e) {
+            results.value = []
+        }
+    }, 300)
+}
+
+const isMenuOpen = ref(false);
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value;
+};
+
+const closeMenu = () => {
+  isMenuOpen.value = false;
+  clearSearch();
+};
 
 onMounted(async () => {
     await latestStore.loadLatest()
@@ -103,6 +141,77 @@ onMounted(async () => {
         align-items: center;
         justify-content: center;
         transition: all 0.3s ease;
+        position: relative;
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            margin: 0;
+            padding: 8px;
+            background: rgba(26, 26, 46, 0.6);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            border-radius: 12px;
+            overflow-y: auto;
+            z-index: 150;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            max-height: 320px;
+
+            &::before {
+                content: '';
+                position: absolute;
+                top: -8px;
+                left: 20px;
+                width: 14px;
+                height: 14px;
+                background: rgba(26, 26, 46, 0.6);
+                border-left: 1px solid rgba(255, 107, 107, 0.2);
+                border-top: 1px solid rgba(255, 107, 107, 0.2);
+                transform: rotate(45deg);
+                backdrop-filter: blur(10px);
+            }
+
+            .search-item {
+                list-style: none;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            .search-result {
+                display: block;
+                padding: 12px 14px;
+                text-decoration: none;
+                background: linear-gradient(135deg, rgba(255, 107, 107, 0) 0%, rgba(78, 205, 196, 0) 100%);
+                transition: all 0.25s ease;
+                color: $text-primary;
+
+                &:hover {
+                    background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(78, 205, 196, 0.15) 100%);
+                    transform: translateX(4px);
+                }
+
+                &__title {
+                    display: block;
+                    font-weight: 700;
+                    font-size: 16px;
+                    color: $text-primary;
+                }
+
+                &__subtitle {
+                    display: block;
+                    margin-top: 2px;
+                    font-size: 13px;
+                    color: $text-secondary;
+                }
+            }
+
+            /* Scrollbar styling */
+            &::-webkit-scrollbar { width: 8px; }
+            &::-webkit-scrollbar-thumb { background: rgba(255, 107, 107, 0.35); border-radius: 8px; }
+            &::-webkit-scrollbar-track { background: transparent; }
+        }
 
         &:focus-within {
             border-color: $accent-coral;

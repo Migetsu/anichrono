@@ -1,5 +1,5 @@
-// api/auth/login.js
-// Serverless функция для инициации OAuth flow с Shikimori
+
+
 
 export default async function handler(req, res) {
   try {
@@ -10,7 +10,7 @@ export default async function handler(req, res) {
       return res.status(500).send('Missing OAuth configuration');
     }
 
-    // Формируем URL для авторизации на Shikimori
+    
     const authUrl = new URL('https://shikimori.one/oauth/authorize');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);

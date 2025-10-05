@@ -43,7 +43,7 @@ class Particle {
     this.x += this.vx
     this.y += this.vy
 
-    // Отскок от границ
+    
     if (this.x < 0 || this.x > canvas.width) {
       this.vx = -this.vx
     }
@@ -51,7 +51,7 @@ class Particle {
       this.vy = -this.vy
     }
 
-    // Держим частицы в пределах canvas
+    
     this.x = Math.max(0, Math.min(canvas.width, this.x))
     this.y = Math.max(0, Math.min(canvas.height, this.y))
   }
@@ -106,17 +106,17 @@ function animate() {
 
   const canvas = canvasRef.value
   
-  // Очистка с fade эффектом
+  
   ctx.fillStyle = 'rgba(10, 10, 20, 0.1)'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-  // Обновляем и рисуем частицы
+  
   particles.forEach(particle => {
     particle.update(canvas)
     particle.draw(ctx)
   })
 
-  // Рисуем линии между близкими частицами
+  
   drawLines()
 
   animationId = requestAnimationFrame(animate)
@@ -141,7 +141,7 @@ onMounted(() => {
 
   resizeCanvas()
 
-  // Intersection Observer для паузы анимации когда не видно
+  
   const observer = new IntersectionObserver(
     (entries) => {
       isVisible = entries[0].isIntersecting
@@ -150,10 +150,10 @@ onMounted(() => {
   )
   observer.observe(canvas)
 
-  // Обработчик изменения размера окна
+  
   window.addEventListener('resize', resizeCanvas)
 
-  // Запуск анимации
+  
   animate()
 
   onBeforeUnmount(() => {

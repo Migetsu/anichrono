@@ -1,7 +1,7 @@
 <template>
   <main class="profile">
     <div class="profile-container">
-    <!-- Шапка профиля -->
+    
       <header class="profile-header">
         <div class="profile-header__avatar-section">
           <img class="profile-header__avatar" :src="avatarUrl" alt="avatar" />
@@ -37,7 +37,7 @@
       </div>
     </header>
 
-      <!-- Статистика -->
+      
       <div class="profile-stats">
         <div class="stat-card">
           <div class="stat-card__value">{{ totalAnime }}</div>
@@ -57,7 +57,7 @@
         </div>
       </div>
 
-      <!-- История изменений -->
+      
       <section class="profile-section history-section" v-if="userHistory.length">
         <RouterLink to="/history" class="section-title section-title--link">
           <font-awesome-icon icon="fa-solid fa-clock-rotate-left" />
@@ -89,7 +89,7 @@
         </div>
       </section>
 
-      <!-- Активность -->
+      
       <section class="profile-section activity-section">
         <h2 class="section-title">
           <font-awesome-icon icon="fa-solid fa-chart-line" />
@@ -113,7 +113,7 @@
         </div>
       </section>
 
-      <!-- Списки с табами -->
+      
       <section class="profile-section lists-section">
         <div class="lists-header">
           <h2 class="section-title">
@@ -175,10 +175,10 @@
                   <div class="anime-card__meta" v-if="rate.score">
                     <font-awesome-icon icon="fa-solid fa-star" />
                     {{ rate.score }}
-                  </div>
                 </div>
-              </RouterLink>
-            </template>
+              </div>
+            </RouterLink>
+      </template>
             
             <div v-else class="empty-state">
               <font-awesome-icon :icon="searchQuery ? 'fa-solid fa-search' : 'fa-regular fa-folder-open'" />
@@ -238,7 +238,8 @@ onUnmounted(() => {
 
 function toAbs(url) {
   if (!url) return ''
-  if (url.startsWith('//')) return 'https:' + url
+  // Handle protocol-relative URLs like //shikimori.one/path
+  if (url.startsWith('//')) return `https:${url}`
   if (/^https?:\/\//i.test(url)) return url
   return `https://shikimori.one${url}`
 }
@@ -261,18 +262,18 @@ function collectCandidates(src) {
 const avatarUrl = computed(() => {
   const u = auth?.user ?? {}
   
-  // Приоритизируем изображения высокого качества
+  
   const cand = [
-    u.image?.x160,  // 160x160 - самое качественное
-    u.image?.x148,  // 148x148 - хорошее качество
-    u.avatar,       // оригинальный аватар
-    u.avatar_url,   // URL аватара
-    u.image?.x80,   // 80x80 - среднее качество
-    u.profile?.avatar, // аватар из профиля
-    u.image?.x48    // 48x48 - низкое качество (последний вариант)
+    u.image?.x160,  
+    u.image?.x148,  
+    u.avatar,       
+    u.avatar_url,   
+    u.image?.x80,   
+    u.profile?.avatar, 
+    u.image?.x48    
   ]
   
-  // Отладочная информация
+  
   console.log('🔍 Доступные аватары:', {
     x160: u.image?.x160,
     x148: u.image?.x148,
@@ -304,7 +305,7 @@ function logout() {
 }
 
 function openSettings() {
-  // TODO: Реализовать страницу настроек
+  
   alert('Настройки профиля в разработке')
 }
 
@@ -314,7 +315,7 @@ function openShikimoriProfile() {
   }
 }
 
-// Дата регистрации
+
 const registrationDate = computed(() => {
   const user = auth?.user
   if (!user) return '—'
@@ -328,13 +329,13 @@ const registrationDate = computed(() => {
   console.log('user.stats:', user.stats)
   console.log('===================================')
   
-  // Проверяем common_info - там обычно хранится информация о регистрации
+  
   if (user.common_info && Array.isArray(user.common_info)) {
-    // Ищем поле с текстом о регистрации
+    
     for (const info of user.common_info) {
       console.log('Проверяем common_info элемент:', info)
       if (info && info[0] && typeof info[0] === 'string') {
-        // Shikimori возвращает массив вида: ["на сайте с", "марта 2025 г."]
+        
         if (info[0].toLowerCase().includes('сайте')) {
           const value = info[1] || info[0]
           console.log('Найдена дата регистрации в common_info:', value)
@@ -344,12 +345,12 @@ const registrationDate = computed(() => {
     }
   }
   
-  // Альтернативный способ - через stats
+  
   if (user.stats && user.stats.full_statuses) {
     console.log('stats.full_statuses:', user.stats.full_statuses)
   }
   
-  // Если есть created_at - используем его как запасной вариант
+  
   if (user.created_at) {
     const date = new Date(user.created_at)
     if (!isNaN(date.getTime())) {
@@ -359,7 +360,7 @@ const registrationDate = computed(() => {
     }
   }
   
-  // Проверяем website (обычно URL, но на всякий случай)
+  
   if (user.website && typeof user.website === 'string' && user.website.includes('сайте')) {
     return user.website
   }
@@ -368,18 +369,18 @@ const registrationDate = computed(() => {
   return 'неизвестно'
 })
 
-// Последняя активность
+
 const userLastOnline = computed(() => {
   const user = auth?.user
   if (!user) return '—'
   
-  // Проверяем разные поля для последней активности
+  
   const lastOnline = user.last_online_at || user.last_online || user.stats?.time_online
   
   if (!lastOnline) {
-    // Если нет данных о последней активности, но есть common_info
+    
     if (user.common_info && Array.isArray(user.common_info)) {
-      // Ищем поле "Время за аниме" или подобное
+      
       const timeInfo = user.common_info.find(info => 
         info.name && (info.name.includes('Время') || info.name.includes('время'))
       )
@@ -390,30 +391,30 @@ const userLastOnline = computed(() => {
     return '—'
   }
   
-  // Если это число (секунды или часы)
+  
   if (typeof lastOnline === 'number') {
-    // Предполагаем что это часы
+    
     if (lastOnline < 1000) {
       return `${lastOnline} ч`
     }
-    // Или это timestamp
+    
     const date = new Date(lastOnline)
     const now = new Date()
-    const diff = Math.floor((now - date) / 1000 / 60 / 60) // в часах
+    const diff = Math.floor((now - date) / 1000 / 60 / 60) 
     if (diff < 1) return 'менее часа назад'
     if (diff < 24) return `${diff} ч назад`
     const days = Math.floor(diff / 24)
     return `${days} дн назад`
   }
   
-  // Если это строка с датой
+  
   if (typeof lastOnline === 'string') {
-    // Если уже отформатированная строка (например "21 час")
+    
     if (lastOnline.match(/\d+\s*(час|ч|дн|день|день|минут)/i)) {
       return lastOnline
     }
     
-    // Пробуем распарсить как дату
+    
     const date = new Date(lastOnline)
     if (!isNaN(date.getTime())) {
       const now = new Date()
@@ -428,15 +429,15 @@ const userLastOnline = computed(() => {
   return '—'
 })
 
-// Общее количество аниме
+
 const totalAnime = computed(() => {
   return lists.rates.length || 0
 })
 
-// История изменений (получаем из API Shikimori)
+
 const userHistory = ref([])
 
-// Загрузка истории пользователя
+
 async function loadUserHistory() {
   if (!auth?.user?.id) return
   
@@ -445,7 +446,7 @@ async function loadUserHistory() {
     
     if (response.ok) {
       const data = await response.json()
-      console.log('История пользователя:', data) // Отладка
+      console.log('История пользователя:', data) 
       userHistory.value = data.map(item => ({
         anime_id: item.target?.id || 0,
         anime_title: item.target?.russian || item.target?.name || `Аниме #${item.target?.id}`,
@@ -478,7 +479,7 @@ function extractStatus(description) {
   return description
 }
 
-// Получаем иконку для действия
+
 function getHistoryIcon(action) {
   if (action.includes('Добавлено') || action.includes('добавлен')) {
     return 'fa-solid fa-plus'
@@ -492,7 +493,7 @@ function getHistoryIcon(action) {
   return 'fa-solid fa-clock'
 }
 
-// Получаем класс для иконки действия
+
 function getHistoryActionClass(action) {
   if (action.includes('Добавлено') || action.includes('добавлен')) {
     return 'action-add'
@@ -503,12 +504,12 @@ function getHistoryActionClass(action) {
   return 'action-change'
 }
 
-// Форматируем текст действия
+
 function getHistoryActionText(action, status) {
   return action || status || 'Изменение в списке'
 }
 
-// Форматируем дату
+
 function formatHistoryDate(dateString) {
   if (!dateString) return ''
   
@@ -527,12 +528,12 @@ function formatHistoryDate(dateString) {
   })
 }
 
-// Общее время просмотра (приблизительно)
+
 const totalWatchTime = computed(() => {
   const total = lists.rates.length
   if (total === 0) return '0 часов'
   
-  // Примерно 24 минуты на серию, 12 серий на аниме
+  
   const hours = Math.round((total * 12 * 24) / 60)
   
   if (hours < 24) return `${hours} ч`
@@ -554,13 +555,13 @@ const groupedLists = computed(() => ({
   dropped: lists.grouped?.dropped ?? [],
 }))
 
-// Название текущей вкладки
+
 const currentTabTitle = computed(() => {
   const tab = statuses.find(s => s.key === activeTab.value)
   return tab ? tab.title : 'списке'
 })
 
-// Фильтрация списка по поисковому запросу
+
 const filteredAnimeList = computed(() => {
   const currentList = groupedLists.value[activeTab.value] || []
   
@@ -591,7 +592,7 @@ const statuses = [
 const posterCache = reactive({})
 const animeDataCache = reactive({})
 const inFlight = reactive(new Set())
-const failedAttempts = reactive({}) // Счетчик неудачных попыток
+const failedAttempts = reactive({}) 
 
 function rateId(rate) {
   return Number(
@@ -628,7 +629,7 @@ async function ensurePosterForRate(rate, retryCount = 0) {
   if (animeDataCache[id] && (animeDataCache[id].russian || animeDataCache[id].name)) {
     return
   }
-  
+
   // Если уже загружается - не дублируем запрос
   if (inFlight.has(id)) return
   
@@ -651,12 +652,12 @@ async function ensurePosterForRate(rate, retryCount = 0) {
       animeDataCache[id] = full
       failedAttempts[id] = 0 // Сбрасываем счетчик ошибок
       
-      const fromApi = posterFromAnime(full)
+    const fromApi = posterFromAnime(full)
       if (fromApi) {
-        posterCache[id] = fromApi
-      } else {
-        posterCache[id] = null
-      }
+      posterCache[id] = fromApi
+    } else {
+      posterCache[id] = null
+    }
     } else {
       // Данные пришли, но без названия - повторяем
       throw new Error('No title data')
@@ -666,7 +667,7 @@ async function ensurePosterForRate(rate, retryCount = 0) {
     
     failedAttempts[id] = (failedAttempts[id] || 0) + 1
     
-    // Повторяем попытку с экспоненциальной задержкой
+    
     if (failedAttempts[id] < maxRetries) {
       const delay = Math.min(1000 * Math.pow(2, failedAttempts[id]), 5000)
       setTimeout(() => {
@@ -674,8 +675,8 @@ async function ensurePosterForRate(rate, retryCount = 0) {
         ensurePosterForRate(rate, retryCount + 1)
       }, delay)
     } else {
-      // Все попытки исчерпаны - сохраняем заглушку
-      posterCache[id] = null
+      
+    posterCache[id] = null
       if (!animeDataCache[id]) {
         animeDataCache[id] = { id, name: `Аниме #${id}`, russian: null }
       }
@@ -683,12 +684,12 @@ async function ensurePosterForRate(rate, retryCount = 0) {
     }
   } finally {
     if ((failedAttempts[id] || 0) >= maxRetries || animeDataCache[id]) {
-      inFlight.delete(id)
+    inFlight.delete(id)
     }
   }
 }
 
-// Батч-загрузка для множества элементов
+
 async function loadAnimeDataBatch(rates, maxConcurrent = 5) {
   const ids = rates
     .map(r => rateId(r))
@@ -696,7 +697,7 @@ async function loadAnimeDataBatch(rates, maxConcurrent = 5) {
   
   if (ids.length === 0) return
   
-  // Загружаем порциями для избежания перегрузки
+  
   for (let i = 0; i < ids.length; i += maxConcurrent) {
     const batch = ids.slice(i, i + maxConcurrent)
     const batchRates = rates.filter(r => batch.includes(rateId(r)))
@@ -717,7 +718,7 @@ function cardBg(rate) {
     }
   }
   
-  // Если постера нет - используем градиентный фон
+  
   return {
     background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
     backgroundColor: '#1a1a2e'
@@ -727,33 +728,33 @@ function cardBg(rate) {
 function getAnimeName(rate) {
   const id = rateId(rate)
   
-  // Сначала проверяем данные в самом rate (они приходят от API)
+  
   if (rate.anime?.russian) return rate.anime.russian
   if (rate.anime?.name) return rate.anime.name
   if (rate.target?.russian) return rate.target.russian
   if (rate.target?.name) return rate.target.name
   
-  // Затем проверяем кэш с полными данными (загруженными дополнительно)
+  
   if (animeDataCache[id]) {
     const cached = animeDataCache[id]
     if (cached?.russian) return cached.russian
     if (cached?.name) return cached.name
   }
   
-  // Если ID валидный, но данных нет
+  
   if (Number.isFinite(id) && id > 0) {
-    // Проверяем, не загружается ли уже
+    
     if (!inFlight.has(id) && !animeDataCache[id]) {
-      // Запускаем загрузку немедленно
+      
       ensurePosterForRate(rate)
     }
     
-    // Проверяем статус загрузки
+    
     if (inFlight.has(id)) {
       return 'Загрузка...'
     }
     
-    // Если были неудачные попытки
+    
     if ((failedAttempts[id] || 0) >= 3) {
       return `Аниме #${id}`
     }
@@ -767,11 +768,11 @@ function getAnimeName(rate) {
 const bgStyle = cardBg
 const posterStyle = cardBg
 
-// Отслеживаем изменения активной вкладки и загружаем данные
+
 watch(
   () => activeTab.value,
   async (newTab) => {
-    // Очищаем поиск при смене вкладки
+    
     searchQuery.value = ''
     
     if (groupedLists.value[newTab] && groupedLists.value[newTab].length > 0) {
@@ -829,7 +830,7 @@ const io = new IntersectionObserver(
       if (rate) {
         visibleRatesBatch.add(rate)
       io.unobserve(e.target)
-      }
+    }
     }
     
     // Дебаунс для батч-загрузки
@@ -911,7 +912,7 @@ const vInview = {
     width: 120px;
     height: 120px;
     border-radius: 20px;
-    object-fit: cover;
+  object-fit: cover;
     object-position: center;
     border: 3px solid $accent-coral;
     box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
@@ -1234,7 +1235,7 @@ const vInview = {
   
   &__title {
     color: $text-primary;
-    font-weight: 600;
+  font-weight: 600;
     font-size: 15px;
     margin-bottom: 5px;
     display: block;
@@ -1395,14 +1396,14 @@ const vInview = {
     width: 100%;
     height: 100%;
     background: #1a1a2e;
-    background-size: cover;
-    background-position: center;
+  background-size: cover;
+  background-position: center;
     background-repeat: no-repeat;
     transition: transform 0.5s ease;
-  }
-  
+}
+
   &__overlay {
-    position: absolute;
+  position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -1418,10 +1419,10 @@ const vInview = {
   }
   
   &__content {
-    position: absolute;
+  position: absolute;
     bottom: 0;
-    left: 0;
-    right: 0;
+  left: 0;
+  right: 0;
     padding: 16px;
     z-index: 2;
   }

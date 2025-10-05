@@ -1,4 +1,4 @@
-// stores/lists.js
+
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
 
@@ -21,8 +21,8 @@ function normalizeRate(raw) {
 
 export const useListsStore = defineStore('lists', {
   state: () => ({
-    rates: /** @type {Array<any>} */ ([]),
-    ratesMap: /** @type {Map<number, any>} */ (new Map()),
+    rates:  ([]),
+    ratesMap:  (new Map()),
     loading: false,
     error: null,
   }),
@@ -87,12 +87,12 @@ export const useListsStore = defineStore('lists', {
           const data = await res.json()
           if (!Array.isArray(data) || data.length === 0) break
           
-          // Обогащаем данные информацией об аниме
+          
           const enriched = data.map(rate => {
             if (rate.anime) {
               return rate
             }
-            // Если anime отсутствует, создаем заглушку с target_id
+            
             return {
               ...rate,
               anime: rate.target || { id: rate.target_id }

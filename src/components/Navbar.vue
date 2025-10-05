@@ -204,8 +204,8 @@ onUnmounted(() => {
         }
 
         &__avatar {
-            width: 32px;
-            height: 32px;
+            width: 42px;
+            height: 42px;
         }
     }
 </style>

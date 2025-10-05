@@ -14,7 +14,7 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
-// 1) создаём приложение и подключаем Pinia/роутер/плагины
+
 const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)

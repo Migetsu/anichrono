@@ -1,7 +1,7 @@
 <template>
   <main class="history-page">
     <div class="history-container">
-      <!-- Заголовок страницы -->
+      
       <header class="history-header">
         <RouterLink to="/profile" class="back-btn">
           <font-awesome-icon icon="fa-solid fa-arrow-left" />
@@ -13,7 +13,7 @@
         </h1>
       </header>
 
-      <!-- Фильтр по типам действий -->
+      
       <div class="history-filters">
         <button 
           class="filter-btn"
@@ -53,7 +53,7 @@
         </button>
       </div>
 
-      <!-- Список истории -->
+      
       <div class="history-content">
         <div v-if="loading" class="loading-state">
           <font-awesome-icon icon="fa-solid fa-spinner" spin />
@@ -96,7 +96,7 @@
           </div>
         </div>
 
-        <!-- Кнопка загрузить еще -->
+        
         <button 
           v-if="!loading && hasMore && filteredHistory.length > 0"
           @click="loadMore"
@@ -125,7 +125,7 @@ const filterType = ref('all')
 const currentPage = ref(1)
 const hasMore = ref(true)
 
-// Загрузка истории
+
 async function loadHistory(page = 1) {
   if (!auth?.user?.id) return
   
@@ -194,7 +194,7 @@ function extractStatus(description) {
   return description
 }
 
-// Фильтрация истории
+
 const filteredHistory = computed(() => {
   if (filterType.value === 'all') {
     return allHistory.value
@@ -218,7 +218,7 @@ const filteredHistory = computed(() => {
   })
 })
 
-// Счетчики
+
 const addedCount = computed(() => {
   return allHistory.value.filter(item => 
     item.action.toLowerCase().includes('добавлен') || 
@@ -241,7 +241,7 @@ const changedCount = computed(() => {
   }).length
 })
 
-// Получаем иконку для действия
+
 function getHistoryIcon(action) {
   if (action.includes('Добавлено') || action.includes('добавлен')) {
     return 'fa-solid fa-plus'
@@ -255,7 +255,7 @@ function getHistoryIcon(action) {
   return 'fa-solid fa-clock'
 }
 
-// Получаем класс для иконки действия
+
 function getHistoryActionClass(action) {
   if (action.includes('Добавлено') || action.includes('добавлен')) {
     return 'action-add'
@@ -266,7 +266,7 @@ function getHistoryActionClass(action) {
   return 'action-change'
 }
 
-// Форматируем дату
+
 function formatHistoryDate(dateString) {
   if (!dateString) return ''
   

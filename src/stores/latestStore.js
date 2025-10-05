@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { searchLatest } from '@/api/searchLatest'
 
-const TTL = 1000 * 60 * 10 // 10 минут
+const TTL = 1000 * 60 * 10 
 
 export const useLatestStore = defineStore('latest', {
   state: () => ({
@@ -14,7 +14,7 @@ export const useLatestStore = defineStore('latest', {
     async loadLatest(force = false, limit = 10) {
       const now = Date.now()
       if (!force && this.latest.length && (now - this.latestFetchedAt) < TTL) {
-        return // кеш актуален
+        return 
       }
       this.loadingLatest = true
       this.errorLatest = null
