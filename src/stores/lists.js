@@ -86,7 +86,20 @@ export const useListsStore = defineStore('lists', {
           if (!res.ok) throw new Error(`fetchRates ${res.status}`)
           const data = await res.json()
           if (!Array.isArray(data) || data.length === 0) break
-          all.push(...data)
+          
+          // Обогащаем данные информацией об аниме
+          const enriched = data.map(rate => {
+            if (rate.anime) {
+              return rate
+            }
+            // Если anime отсутствует, создаем заглушку с target_id
+            return {
+              ...rate,
+              anime: rate.target || { id: rate.target_id }
+            }
+          })
+          
+          all.push(...enriched)
           if (data.length < LIMIT) break
           page++
         }

@@ -65,6 +65,11 @@ export const useAuthStore = defineStore('auth', {
         }
       }
       
+      // Если токен есть, но данных пользователя нет - загружаем их
+      if (this.token && !this.user) {
+        this.fetchMe()
+      }
+      
       return this.token
     },
     clearToken() {

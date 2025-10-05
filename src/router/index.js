@@ -6,6 +6,7 @@ const routes = [
     { path: '/catalog', name: 'Catalog', component: () => import('@/pages/CatalogPage.vue'), props: true },
     { path: '/animes/:id', name: 'animes', component: () => import('@/pages/AnimeTitle.vue'), props: true },
     { path: '/profile', name: 'profile', component: () => import('@/pages/Profile.vue') },
+    { path: '/history', name: 'history', component: () => import('@/pages/HistoryPage.vue') },
     { path: '/watch/:id', name: 'watch', component: () => import('@/pages/Watch.vue'), props: true }
 ]
 

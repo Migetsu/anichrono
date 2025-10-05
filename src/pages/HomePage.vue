@@ -211,10 +211,9 @@ onMounted(async () => {
     }
 
     &-container {
-        max-width: 1525px;
+        max-width: 1530px;
         padding: 0 15px;
         margin: 0 auto;
-        overflow: hidden;
         position: relative;
     }
 
@@ -234,6 +233,7 @@ onMounted(async () => {
 
             &:hover {
                 box-shadow: 0 15px 30px rgba(255, 107, 107, 0.2);
+                transform: scale(1.02);
             }
 
             &:hover .features-icon {

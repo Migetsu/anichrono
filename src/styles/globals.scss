@@ -20,6 +20,10 @@ input {
     outline: none;
 }
 
+img {
+    max-width: 100%;
+}
+
 button {
     border: none;
     outline: none;
@@ -27,9 +31,15 @@ button {
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Comfortaa', 'Inter', sans-serif;
     background: var(--primary-bg);
     color: var(--text-primary);
     overflow-x: hidden;
     line-height: 1.6;
+}
+
+.container {
+    max-width: 1530px;
+    padding: 0 15px;
+    margin: 0 auto;
 }
