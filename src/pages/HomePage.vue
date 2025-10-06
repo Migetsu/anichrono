@@ -87,7 +87,6 @@ const typedTitleRef = ref(null)
 let searchTimeout
 
 const handleSearch = () => {
-    // Очищаем предыдущий таймаут
     if (searchTimeout) {
         clearTimeout(searchTimeout)
         searchTimeout = null
@@ -95,14 +94,12 @@ const handleSearch = () => {
     
     if (!query.value.trim()) {
         results.value = []
-        // Возобновляем анимацию заголовка когда поиск пустой
         if (typedTitleRef.value) {
             typedTitleRef.value.resumeAnimation()
         }
         return;
     }
     
-    // Приостанавливаем анимацию заголовка во время поиска
     if (typedTitleRef.value) {
         typedTitleRef.value.pauseAnimation()
     }
@@ -124,7 +121,6 @@ const clearSearch = () => {
         clearTimeout(searchTimeout)
         searchTimeout = null
     }
-    // Возобновляем анимацию заголовка при очистке поиска
     if (typedTitleRef.value) {
         typedTitleRef.value.resumeAnimation()
     }

@@ -15,9 +15,8 @@ export default async function handler(req, res) {
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
     authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('scope', ''); // Можно добавить скопы, если нужны дополнительные права
+    authUrl.searchParams.set('scope', '');
 
-    // Редиректим пользователя на страницу авторизации Shikimori
     res.redirect(authUrl.toString());
   } catch (err) {
     console.error('Login error:', err);

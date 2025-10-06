@@ -8,21 +8,26 @@
                         <div class="anime__info-status">{{ anime.status }}</div>
                     </div>
                     <div class="dropdown" v-if="auth.isLoggedIn">
-                        <button class="button anime__list" @click="showStatus = !showStatus">
-                            {{ buttonLabel }}
+                        <button class="anime__list-btn" @click="showStatus = !showStatus" :class="{ active: showStatus }">
+                            <font-awesome-icon icon="fa-solid fa-list-check" class="btn-icon" />
+                            <span class="btn-text">{{ buttonLabel }}</span>
+                            <font-awesome-icon icon="fa-solid fa-chevron-down" class="btn-arrow" :class="{ rotated: showStatus }" />
                         </button>
 
-                        <ul v-if="showStatus" class="dropdown__menu">
-                            <li v-if="rate" class="dropdown__item dropdown__item--remove" @click="removeStatus">
-                                Удалить из списка
-                            </li>
-                            <li v-if="rate" class="dropdown__sep" aria-hidden="true"></li>
+                        <div v-if="showStatus" class="dropdown__menu" @click.stop>
+                            <div v-if="rate" class="dropdown__item dropdown__item--remove" @click="removeStatus">
+                                <font-awesome-icon icon="fa-solid fa-trash" class="item-icon" />
+                                <span>Удалить из списка</span>
+                            </div>
+                            <div v-if="rate" class="dropdown__separator"></div>
 
-                            <li v-for="opt in statusOptions" :key="opt.value" class="dropdown__item"
-                                @click="selectStatus(opt.value)">
-                                {{ opt.label }}
-                            </li>
-                        </ul>
+                            <div v-for="opt in statusOptions" :key="opt.value" class="dropdown__item"
+                                @click="selectStatus(opt.value)" :class="{ active: rate?.status === opt.value }">
+                                <font-awesome-icon :icon="getStatusIcon(opt.value)" class="item-icon" />
+                                <span>{{ opt.label }}</span>
+                                <font-awesome-icon v-if="rate?.status === opt.value" icon="fa-solid fa-check" class="item-check" />
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="anime__info-content">
@@ -72,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import DOMPurify from 'dompurify'
 import { fetchAnimeById } from '@/api/searchAnimeById'
@@ -180,11 +185,37 @@ watch(
 )
 onUnmounted(() => clearTimeout(syncTimer))
 
+const handleClickOutside = (event) => {
+    if (showStatus.value && !event.target.closest('.dropdown')) {
+        showStatus.value = false
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
+
 const buttonLabel = computed(() => {
     if (!auth.isLoggedIn) return 'Добавить в список'
     if (ratePending.value || lists.loading) return 'Загрузка…'
     return rate.value ? (STATUS_LABELS[rate.value.status] ?? 'В списке') : 'Добавить в список'
 })
+
+const getStatusIcon = (status) => {
+    const icons = {
+        planned: 'fa-solid fa-clock',
+        watching: 'fa-solid fa-play',
+        rewatching: 'fa-solid fa-rotate-right',
+        completed: 'fa-solid fa-check-circle',
+        on_hold: 'fa-solid fa-pause',
+        dropped: 'fa-solid fa-xmark-circle'
+    }
+    return icons[status] || 'fa-solid fa-list'
+}
 
 async function selectStatus(code) {
     if (!anime.value) return
@@ -229,7 +260,7 @@ const episodesCount = computed(() => {
         max-width: 1525px;
         padding: 0 15px;
         margin: 0 auto;
-        overflow: hidden;
+        overflow: visible;
         position: relative;
     }
 
@@ -243,6 +274,11 @@ const episodesCount = computed(() => {
         display: grid;
         grid-template-columns: 300px 1fr;
         gap: 32px;
+        overflow: visible;
+
+        &-left {
+            overflow: visible;
+        }
 
         &-poster {
             width: 300px;
@@ -388,63 +424,232 @@ const episodesCount = computed(() => {
 .dropdown {
     position: relative;
     width: 100%;
+    margin-top: 16px;
+}
+
+.anime__list-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(22, 33, 62, 0.9) 100%);
+    border: 2px solid rgba(255, 107, 107, 0.3);
+    border-radius: 12px;
+    color: $text-primary;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+        border-color: $accent-coral;
+        box-shadow: 0 12px 35px rgba(255, 107, 107, 0.2);
+        transform: translateY(-2px);
+    }
+
+    &.active {
+        border-color: $accent-coral;
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+    }
+
+    .btn-icon {
+        color: $accent-coral;
+        font-size: 18px;
+        margin-right: 12px;
+    }
+
+    .btn-text {
+        flex: 1;
+        text-align: left;
+    }
+
+    .btn-arrow {
+        color: $text-secondary;
+        font-size: 14px;
+        transition: transform 0.3s ease;
+
+        &.rotated {
+            transform: rotate(180deg);
+        }
+    }
 }
 
 .dropdown__menu {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 8px);
     left: 0;
-    width: 100%;
-    margin-top: 4px;
-    list-style: none;
-    padding: 0;
-    background-color: rgba(20, 20, 20, .9);
-    border-radius: 8px;
-    overflow: hidden;
-    z-index: 50;
-    border: 1px solid var(--c-border);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, .35);
+    right: 0;
+    background: rgba(26, 26, 46, 0.95);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1000;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    animation: dropdownFadeIn 0.3s ease-out;
+    max-height: 400px;
+    min-height: auto;
+
+    /* Стилизация скроллбара */
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 107, 107, 0.3);
+        border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 107, 107, 0.5);
+    }
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: 20px;
+        width: 14px;
+        height: 14px;
+        background: rgba(26, 26, 46, 0.95);
+        border-left: 1px solid rgba(255, 107, 107, 0.3);
+        border-top: 1px solid rgba(255, 107, 107, 0.3);
+        transform: rotate(45deg);
+        backdrop-filter: blur(15px);
+        z-index: 1;
+    }
 }
 
 .dropdown__item {
-    padding: 10px 18px;
-    color: #fff;
-    cursor: pointer;
-    transition: background-color .2s;
-}
-
-.dropdown__item:hover {
-    background-color: rgba(20, 20, 20, 1);
-}
-
-.dropdown__item--remove {
-    color: #ffb5b5;
-}
-
-.dropdown__sep {
-    height: 1px;
-    background: rgba(255, 255, 255, .08);
-    margin: 4px 0;
-}
-
-.button {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 10px 18px;
-    margin-top: 15px;
-    background-color: rgba(20, 20, 20, 0.7);
-    color: #fff;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: background-color .2s;
-    box-shadow: 0 4px 12px rgba(122, 162, 255, .35);
+    padding: 14px 18px;
+    color: $text-primary;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border-bottom: 1px solid rgba(255, 107, 107, 0.1);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(78, 205, 196, 0.15) 100%);
+        transform: translateX(4px);
+    }
+
+    &.active {
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(78, 205, 196, 0.2) 100%);
+        color: $accent-coral;
+    }
+
+    .item-icon {
+        margin-right: 12px;
+        font-size: 16px;
+        color: $accent-turquoise;
+        width: 20px;
+        text-align: center;
+    }
+
+    span {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .item-check {
+        color: $accent-coral;
+        font-size: 14px;
+        margin-left: 8px;
+    }
+
+    &.dropdown__item--remove {
+        color: #ff6b6b;
+
+        .item-icon {
+            color: #ff6b6b;
+        }
+
+        &:hover {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%);
+        }
+    }
 }
 
-.button:hover {
-    background-color: rgba(20, 20, 20, 1);
+.dropdown__separator {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 107, 107, 0.3) 50%, transparent 100%);
+    margin: 8px 0;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .anime__list-btn {
+        padding: 14px 16px;
+        font-size: 15px;
+
+        .btn-icon {
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .btn-arrow {
+            font-size: 12px;
+        }
+    }
+
+    .dropdown__item {
+        padding: 12px 16px;
+
+        .item-icon {
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        span {
+            font-size: 14px;
+        }
+    }
+
+    .dropdown__menu {
+        max-height: 300px;
+        
+        &::before {
+            left: 16px;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .anime__list-btn {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    .dropdown__item {
+        padding: 10px 14px;
+    }
+
+    .dropdown__menu {
+        max-height: 250px;
+    }
 }
 
 .anime__episodes {

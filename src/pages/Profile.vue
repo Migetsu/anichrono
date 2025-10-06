@@ -216,7 +216,6 @@ async function pullRates(force = false) {
 }
 
 onMounted(() => {
-  // Временная отладка для проверки данных пользователя
   console.log('=== ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ===')
   console.log('Полный объект user:', JSON.parse(JSON.stringify(auth.user || {})))
   console.log('========================')
@@ -230,7 +229,6 @@ watch(() => [auth?.token, auth?.user?.id], () => {
 })
 
 onUnmounted(() => {
-  // Очищаем таймеры при размонтировании
   if (visibleBatchTimeout) {
     clearTimeout(visibleBatchTimeout)
   }
@@ -238,7 +236,6 @@ onUnmounted(() => {
 
 function toAbs(url) {
   if (!url) return ''
-  // Handle protocol-relative URLs like //shikimori.one/path
   if (url.startsWith('//')) return `https:${url}`
   if (/^https?:\/\//i.test(url)) return url
   return `https://shikimori.one${url}`

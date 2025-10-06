@@ -169,13 +169,11 @@ async function loadHistory(page = 1) {
   }
 }
 
-// Загрузить больше
 function loadMore() {
   currentPage.value++
   loadHistory(currentPage.value)
 }
 
-// Извлекаем статус из описания
 function extractStatus(description) {
   if (!description) return ''
   const statusMap = {

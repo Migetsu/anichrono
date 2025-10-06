@@ -56,7 +56,6 @@ export const useAuthStore = defineStore('auth', {
           const newUrl = new URL(window.location);
           newUrl.searchParams.delete('auth');
           window.history.replaceState({}, '', newUrl);
-          // Загружаем токен из cookie и информацию о пользователе
           const token = this.getCookieToken()
           if (token) {
             this.setToken(token)
@@ -65,7 +64,6 @@ export const useAuthStore = defineStore('auth', {
         }
       }
       
-      // Если токен есть, но данных пользователя нет - загружаем их
       if (this.token && !this.user) {
         this.fetchMe()
       }
@@ -77,7 +75,6 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       try { sessionStorage.removeItem(TOKEN_KEY) } catch {}
       try { localStorage.removeItem(TOKEN_KEY) } catch {} // очистка старых данных
-      // Очищаем cookie
       if (typeof document !== 'undefined') {
         document.cookie = 'shiki_token_client=; Path=/; Max-Age=0'
         document.cookie = 'shiki_token=; Path=/; Max-Age=0'

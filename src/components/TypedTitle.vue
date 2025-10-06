@@ -1,7 +1,7 @@
 <template>
     <h1 class="typed-title orbitron" :aria-live="ariaLive">
         <span class="typed-text">{{ displayText }}</span>
-        <span class="typed-caret" :class="{ blink: !isPaused }">|</span>
+        <span class="typed-caret" :class="{ visible: showCaret, blink: showCaret && !isPaused }">|</span>
     </h1>
 </template>
 
@@ -16,11 +16,12 @@ const strings = [
 const typeSpeed = 80 
 const deleteSpeed = 40 
 const holdAfterTyped = 3000 
-const holdAfterDeleted = 500 
+const holdAfterDeleted = 1000 
 const loop = true
 
 const displayText = ref('')
 const isPaused = ref(false)
+const showCaret = ref(true)
 const ariaLive = 'polite'
 
 let stopped = false
@@ -39,42 +40,49 @@ function sleep(ms) {
 }
 
 async function runTyped() {
-    // Небольшая задержка перед началом печати
     await sleep(1000)
     let index = 0
     while (!stopped) {
         const full = strings[index % strings.length]
-        // Печатаем текст
+        
+        if (index > 0) {
+            showCaret.value = true
+        }
+        
         for (let i = 1; i <= full.length; i++) {
             if (stopped) return
             displayText.value = full.slice(0, i)
             await sleep(typeSpeed)
         }
-        // Держим текст некоторое время
+        
+        showCaret.value = false
         await sleep(holdAfterTyped)
-        // Стираем текст
+        
+        showCaret.value = true
+        
         for (let i = full.length; i >= 0; i--) {
             if (stopped) return
             displayText.value = full.slice(0, i)
             await sleep(deleteSpeed)
         }
-        // Пауза перед следующим текстом
+        
         await sleep(holdAfterDeleted)
+        
         index++
         if (!loop && index >= strings.length) break
     }
 }
 
-// Функции для управления анимацией
 const pauseAnimation = () => {
     isPaused.value = true
+    showCaret.value = false
 }
 
 const resumeAnimation = () => {
     isPaused.value = false
+    showCaret.value = true
 }
 
-// Экспортируем функции для использования в родительском компоненте
 defineExpose({
     pauseAnimation,
     resumeAnimation
@@ -82,12 +90,8 @@ defineExpose({
 
 onMounted(() => {
     stopped = false
+    showCaret.value = true // Показываем курсор в начале
     runTyped().catch(() => { })
-    
-    // Запускаем мигание курсора
-    blinkInterval = setInterval(() => {
-        // Мигание управляется через CSS класс blink
-    }, 530) // Частота мигания
     
     onBeforeUnmount(() => {
         stopped = true
@@ -135,11 +139,16 @@ onMounted(() => {
 
 .typed-caret {
     color: $accent-coral;
-    opacity: 1;
+    opacity: 0;
     animation: blink 1s infinite;
     font-weight: 300;
     margin-left: 2px;
     text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+    transition: opacity 0.2s ease;
+
+    &.visible {
+        opacity: 1;
+    }
 
     &.blink {
         animation-play-state: running;
@@ -147,18 +156,8 @@ onMounted(() => {
 
     &:not(.blink) {
         animation-play-state: paused;
-        opacity: 1;
     }
 }
-
-// @keyframes blink {
-//     0%, 50% {
-//         opacity: 1;
-//     }
-//     51%, 100% {
-//         opacity: 0;
-//     }
-// }
 
 @media (max-width: 768px) {
     .typed-title {
