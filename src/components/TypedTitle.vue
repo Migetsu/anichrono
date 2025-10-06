@@ -1,7 +1,7 @@
 <template>
     <h1 class="typed-title orbitron" :aria-live="ariaLive">
         <span class="typed-text">{{ displayText }}</span>
-        <span class="typed-caret" :class="{ blink: blinkCaret }">|</span>
+        <span class="typed-caret" :class="{ blink: !isPaused }">|</span>
     </h1>
 </template>
 
@@ -20,14 +20,16 @@ const holdAfterDeleted = 500
 const loop = true
 
 const displayText = ref('')
-const blinkCaret = ref(true)
+const isPaused = ref(false)
 const ariaLive = 'polite'
 
 let stopped = false
 let timeoutId = null
+let blinkInterval = null
 
 function clearTimers() {
     if (timeoutId) { clearTimeout(timeoutId); timeoutId = null }
+    if (blinkInterval) { clearInterval(blinkInterval); blinkInterval = null }
 }
 
 function sleep(ms) {
@@ -37,37 +39,58 @@ function sleep(ms) {
 }
 
 async function runTyped() {
-    await sleep(300)
+    // Небольшая задержка перед началом печати
+    await sleep(1000)
     let index = 0
     while (!stopped) {
         const full = strings[index % strings.length]
+        // Печатаем текст
         for (let i = 1; i <= full.length; i++) {
             if (stopped) return
             displayText.value = full.slice(0, i)
             await sleep(typeSpeed)
         }
+        // Держим текст некоторое время
         await sleep(holdAfterTyped)
+        // Стираем текст
         for (let i = full.length; i >= 0; i--) {
             if (stopped) return
             displayText.value = full.slice(0, i)
             await sleep(deleteSpeed)
         }
+        // Пауза перед следующим текстом
         await sleep(holdAfterDeleted)
         index++
         if (!loop && index >= strings.length) break
     }
 }
 
+// Функции для управления анимацией
+const pauseAnimation = () => {
+    isPaused.value = true
+}
+
+const resumeAnimation = () => {
+    isPaused.value = false
+}
+
+// Экспортируем функции для использования в родительском компоненте
+defineExpose({
+    pauseAnimation,
+    resumeAnimation
+})
+
 onMounted(() => {
     stopped = false
     runTyped().catch(() => { })
-    const blinkInterval = setInterval(() => {
-        blinkCaret.value = !blinkCaret.value
-    }, 3000)
-    timeoutId = timeoutId 
+    
+    // Запускаем мигание курсора
+    blinkInterval = setInterval(() => {
+        // Мигание управляется через CSS класс blink
+    }, 530) // Частота мигания
+    
     onBeforeUnmount(() => {
         stopped = true
-        clearInterval(blinkInterval)
         clearTimers()
     })
 })
@@ -94,18 +117,48 @@ onMounted(() => {
     white-space: nowrap;
     max-width: 100%;
     overflow: hidden;
+    border-right: 2px solid transparent;
+    animation: typing-border 0.1s ease-in-out;
+}
+
+@keyframes typing-border {
+    0% {
+        border-right-color: transparent;
+    }
+    50% {
+        border-right-color: rgba(255, 107, 107, 0.3);
+    }
+    100% {
+        border-right-color: transparent;
+    }
 }
 
 .typed-caret {
-    color: $text-primary;
+    color: $accent-coral;
     opacity: 1;
-    transition: opacity 120ms linear, transform 120ms ease;
+    animation: blink 1s infinite;
+    font-weight: 300;
+    margin-left: 2px;
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
 
     &.blink {
-        opacity: 0.14;
+        animation-play-state: running;
     }
 
+    &:not(.blink) {
+        animation-play-state: paused;
+        opacity: 1;
+    }
 }
+
+// @keyframes blink {
+//     0%, 50% {
+//         opacity: 1;
+//     }
+//     51%, 100% {
+//         opacity: 0;
+//     }
+// }
 
 @media (max-width: 768px) {
     .typed-title {

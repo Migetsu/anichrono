@@ -5,15 +5,18 @@
     </div>
     <main ref="intro" class="intro">
         
-        <TypedTitle />
+        <TypedTitle ref="typedTitleRef" />
         <p class="intro__desc">Погрузитесь в мир аниме с передовыми технологиями потокового вещания</p>
         <form action="" class="intro__form" @submit.prevent>
             <input v-model="query" @input="handleSearch" type="text" class="intro__form-inp" placeholder="Поиск аниме, жанров, персонажей...">
-            <button class="intro__form-btn">
+            <button v-if="query" @click="clearSearch" type="button" class="intro__form-clear" title="Очистить поиск">
+                <font-awesome-icon icon="fa-solid fa-xmark" />
+            </button>
+            <button class="intro__form-btn" type="submit">
                 <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
             </button>
 
-            <ul v-if="results.length" class="search-results">
+            <ul v-if="results.length > 0 && query.trim().length > 0" class="search-results">
                 <li v-for="a in results" :key="a.id" class="search-item">
                     <router-link class="search-result" :to="`/animes/${a.id}`" @click="closeMenu">
                         <span class="search-result__title">{{ a.russian || a.name }}</span>
@@ -80,13 +83,30 @@ const latestStore = useLatestStore()
 const popularStore = usePopularStore()
 const query = ref('')
 const results = ref([])
+const typedTitleRef = ref(null)
 let searchTimeout
 
 const handleSearch = () => {
+    // Очищаем предыдущий таймаут
+    if (searchTimeout) {
+        clearTimeout(searchTimeout)
+        searchTimeout = null
+    }
+    
     if (!query.value.trim()) {
         results.value = []
+        // Возобновляем анимацию заголовка когда поиск пустой
+        if (typedTitleRef.value) {
+            typedTitleRef.value.resumeAnimation()
+        }
         return;
     }
+    
+    // Приостанавливаем анимацию заголовка во время поиска
+    if (typedTitleRef.value) {
+        typedTitleRef.value.pauseAnimation()
+    }
+    
     searchTimeout = setTimeout(async () => {
         try {
             results.value = await searchAnimes(query.value.trim())
@@ -95,6 +115,19 @@ const handleSearch = () => {
             results.value = []
         }
     }, 300)
+}
+
+const clearSearch = () => {
+    query.value = ''
+    results.value = []
+    if (searchTimeout) {
+        clearTimeout(searchTimeout)
+        searchTimeout = null
+    }
+    // Возобновляем анимацию заголовка при очистке поиска
+    if (typedTitleRef.value) {
+        typedTitleRef.value.resumeAnimation()
+    }
 }
 
 const isMenuOpen = ref(false);
@@ -227,6 +260,35 @@ onMounted(async () => {
             width: 40px;
             height: 40px;
             color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+
+            &:hover {
+                background: darken($accent-coral, 10%);
+                transform: scale(1.05);
+            }
+        }
+
+        &-clear {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 107, 107, 0.2);
+            border-radius: 100%;
+            width: 32px;
+            height: 32px;
+            color: $text-secondary;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 8px;
+
+            &:hover {
+                background: rgba(255, 107, 107, 0.4);
+                color: $text-primary;
+                transform: scale(1.1);
+            }
         }
 
         &-inp {
