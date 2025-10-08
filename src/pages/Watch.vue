@@ -15,7 +15,7 @@
                                @timeupdate="onTimeUpdate"
                                @ended="onEnded"
                                playsinline
-                               preload="metadata"
+                               preload="auto"
                                style="width:100%;height:100%;object-fit:contain;display:block"></video>
 
                         <transition name="overlay-fade">
@@ -175,7 +175,6 @@
 <script setup>
 import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import demoVideo from '@/assets/videos/RickRoll.mp4'
 import DOMPurify from 'dompurify'
 import { fetchAnimeById } from '@/api/searchAnimeById'
 import { useAuthStore } from '@/stores/auth'
@@ -346,7 +345,8 @@ const episodesCount = computed(() => {
 const videoEl = ref(null)
 const playerContainer = ref(null)
 const selectedEpisode = ref(null)
-const currentSrc = computed(() => selectedEpisode.value ? resolveEpisodeSrc(selectedEpisode.value) : demoVideo)
+const DEFAULT_VIDEO_SRC = '/videos/RickRoll.mp4'
+const currentSrc = computed(() => selectedEpisode.value ? resolveEpisodeSrc(selectedEpisode.value) : DEFAULT_VIDEO_SRC)
 const hasSource = computed(() => !!currentSrc.value)
 
 const isPlaying = ref(false)
@@ -552,11 +552,11 @@ function selectQuality(q) {
     selectedQuality.value = q
     // Пример маппинга качества на источник
     const qualityMap = {
-        '1080p': demoVideo,
-        '720p': demoVideo,
-        '480p': demoVideo,
+        '1080p': DEFAULT_VIDEO_SRC,
+        '720p': DEFAULT_VIDEO_SRC,
+        '480p': DEFAULT_VIDEO_SRC,
     }
-    const newSrc = qualityMap[q] || demoVideo
+    const newSrc = qualityMap[q] || DEFAULT_VIDEO_SRC
     // Переключаем источник с сохранением позиции
     videoEl.value.src = newSrc
     videoEl.value.currentTime = time
