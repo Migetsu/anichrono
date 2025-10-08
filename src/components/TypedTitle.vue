@@ -101,8 +101,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/_variables.scss';
-
 .typed-title {
     font-family: 'Orbitron', sans-serif;
     font-weight: 900;

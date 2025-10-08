@@ -17,8 +17,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/_variables.scss';
-
 .footer {
     background: rgba(10, 10, 10, 0.95);
     padding: 32px 0;

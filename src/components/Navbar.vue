@@ -9,11 +9,7 @@
         <nav class="header__nav">
             <ul class="header__nav-list">
                 <li class="header__nav-item"><router-link class="header__nav-link" to="/">Главная</router-link></li>
-                <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Каталог</router-link>
-                </li>
-                <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Случайный
-                        тайтл</router-link>
-                </li>
+                <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Каталог</router-link></li>
             </ul>
         </nav>
         <div class="header__profile profile">
@@ -102,8 +98,6 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/_variables.scss';
-
 .header {
     display: flex;
     justify-content: space-around;

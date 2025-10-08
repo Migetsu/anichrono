@@ -13,21 +13,25 @@
                                 <img :src="anime.poster.originalUrl" alt="" class="card-image">
                             </div>
                             <div class="card-info">
-                                <h3 class="card-title" :title="anime.russian || anime.name">{{ anime.russian || anime.name }}</h3>
+                                <h3 class="card-title" :title="anime.russian || anime.name">{{ anime.russian ||
+                                    anime.name }}</h3>
                                 <div class="card-meta">
                                     <div class="card-rating">
-                                        <font-awesome-icon icon="fa-solid fa-star" class="card-rating-icon" /> 
+                                        <font-awesome-icon icon="fa-solid fa-star" class="card-rating-icon" />
                                         {{ anime.score }}
                                     </div>
                                     <div class="card-year">{{ anime.airedOn.year }}</div>
                                 </div>
                                 <div class="card-genres" v-if="anime.genres?.length">
-                                    <span v-for="genre in anime.genres.slice(0, 3)" :key="genre.id">{{ genre.russian || genre.name }}</span>
+                                    <span v-for="genre in anime.genres.slice(0, 3)" :key="genre.id">{{ genre.russian ||
+                                        genre.name }}</span>
                                 </div>
-                                <button class="card-btn">
-                                    <font-awesome-icon icon="fa-solid fa-play" />
-                                    <span>Смотреть</span>
-                                </button>
+                                <router-link :to="`/watch/${anime.id}`">
+                                    <button class="card-btn">
+                                        <font-awesome-icon icon="fa-solid fa-play" />
+                                        <span>Смотреть</span>
+                                    </button>
+                                </router-link>
                             </div>
                         </div>
                     </RouterLink>
@@ -62,8 +66,6 @@ const props = defineProps({
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/_variables.scss';
-
 :deep(.swiper-button-prev),
 :deep(.swiper-button-next) {
     position: absolute;
@@ -81,7 +83,7 @@ const props = defineProps({
     transition: background .22s ease, box-shadow .22s ease, transform .18s ease, opacity .22s ease;
     opacity: 0.95;
     border: none;
-    
+
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
@@ -152,8 +154,8 @@ const props = defineProps({
     transform: translateY(0);
     transition: transform 320ms cubic-bezier(.22, .9, .37, 1), box-shadow 320ms ease;
     z-index: 0;
-    
-    
+
+
 }
 
 .card-content {
@@ -179,8 +181,8 @@ const props = defineProps({
     transform-origin: center top;
     transition: transform 420ms cubic-bezier(.22, .9, .37, 1);
     backface-visibility: hidden;
-    
-    
+
+
 }
 
 .card-info {
@@ -264,7 +266,7 @@ const props = defineProps({
     z-index: 5;
     border-color: $accent-coral;
     box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
-    will-change: transform;  
+    will-change: transform;
 }
 
 :deep(.swiper-slide):hover>.card .card-image,
@@ -272,7 +274,7 @@ const props = defineProps({
 .TitleCard__swiper-item:hover .card-image,
 .TitleCard__swiper-item:focus-within .card-image {
     transform: scale(1.05);
-    will-change: transform;  
+    will-change: transform;
 }
 
 

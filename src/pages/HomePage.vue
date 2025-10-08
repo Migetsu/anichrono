@@ -144,8 +144,6 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/_variables.scss';
-
 .intro {
     min-height: 100vh;
     display: flex;

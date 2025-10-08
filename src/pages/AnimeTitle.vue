@@ -8,10 +8,12 @@
                         <div class="anime__info-status">{{ anime.status }}</div>
                     </div>
                     <div class="dropdown" v-if="auth.isLoggedIn">
-                        <button class="anime__list-btn" @click="showStatus = !showStatus" :class="{ active: showStatus }">
+                        <button class="anime__list-btn" @click="showStatus = !showStatus"
+                            :class="{ active: showStatus }">
                             <font-awesome-icon icon="fa-solid fa-list-check" class="btn-icon" />
                             <span class="btn-text">{{ buttonLabel }}</span>
-                            <font-awesome-icon icon="fa-solid fa-chevron-down" class="btn-arrow" :class="{ rotated: showStatus }" />
+                            <font-awesome-icon icon="fa-solid fa-chevron-down" class="btn-arrow"
+                                :class="{ rotated: showStatus }" />
                         </button>
 
                         <div v-if="showStatus" class="dropdown__menu" @click.stop>
@@ -25,7 +27,8 @@
                                 @click="selectStatus(opt.value)" :class="{ active: rate?.status === opt.value }">
                                 <font-awesome-icon :icon="getStatusIcon(opt.value)" class="item-icon" />
                                 <span>{{ opt.label }}</span>
-                                <font-awesome-icon v-if="rate?.status === opt.value" icon="fa-solid fa-check" class="item-check" />
+                                <font-awesome-icon v-if="rate?.status === opt.value" icon="fa-solid fa-check"
+                                    class="item-check" />
                             </div>
                         </div>
                     </div>
@@ -58,15 +61,18 @@
                         </div>
                         <div class="anime__info-genres">
                             <span v-for="(genre, index) in anime.genres" :key="index">{{ genre.russian || genre.name
-                            }}</span>
+                                }}</span>
                         </div>
                         <div class="anime__info-desc" v-html="safeDesc"></div>
                         <div class="anime__info-btns">
-                            <router-link class="anime__info-btn primary-btn"
-                                :to="`/watch/${anime.id}`"><font-awesome-icon icon="fa-solid fa-play" /> Смотреть
-                                сейчас</router-link>
-                            <button class="anime__info-btn secondary-btn"><font-awesome-icon icon="fa-solid fa-share" />
-                                Поделиться</button>
+                            <router-link class="anime__info-btn primary-btn" :to="`/watch/${anime.id}`">
+                                <font-awesome-icon icon="fa-solid fa-play" />
+                                Смотреть сейчас
+                            </router-link>
+                            <button class="anime__info-btn secondary-btn">
+                                <font-awesome-icon icon="fa-solid fa-share" />
+                                Поделиться
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -248,8 +254,6 @@ const episodesCount = computed(() => {
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/_variables.scss';
-
 .anime {
     background: linear-gradient(45deg, $primary-bg, $secondary-bg);
     margin-top: 80px;
@@ -367,6 +371,11 @@ const episodesCount = computed(() => {
                 font-size: 14px;
                 border: 1px solid rgba(78, 205, 196, 0.3);
                 transition: all 0.3s ease;
+
+                &:hover {
+                    background: rgba #4ecdc44d (78, 205, 196, 0.3);
+                    transform: scale(1.05);
+                }
             }
         }
 
@@ -402,11 +411,21 @@ const episodesCount = computed(() => {
     background: rgba(78, 205, 196, 0.2);
     color: $accent-turquoise;
     border: 1px solid $accent-turquoise;
+
+    &:hover {
+        background: rgba(78, 205, 196, 0.3);
+        transform: scale(1.05);
+    }
 }
 
 .primary-btn {
     background: linear-gradient(45deg, $accent-coral, $hot-pink);
     color: white;
+
+    &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+    }
 }
 
 :deep(.anime__info-desc a) {
@@ -594,6 +613,7 @@ const episodesCount = computed(() => {
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -630,7 +650,7 @@ const episodesCount = computed(() => {
 
     .dropdown__menu {
         max-height: 300px;
-        
+
         &::before {
             left: 16px;
         }

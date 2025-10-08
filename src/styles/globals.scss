@@ -32,8 +32,8 @@ button {
 
 body {
     font-family: 'Comfortaa', 'Inter', sans-serif;
-    background: var(--primary-bg);
-    color: var(--text-primary);
+    background: $primary-bg;
+    color: $text-primary;
     overflow-x: hidden;
     line-height: 1.6;
 }
