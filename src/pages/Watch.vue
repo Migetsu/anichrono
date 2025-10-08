@@ -152,16 +152,15 @@
                         </div>
                     </div>
                     
-                    <div class="sidebar-section sidebar-ad">
+                    <div class="sidebar-section sidebar-promo">
                         <h3 class="sidebar-title">
                             <font-awesome-icon icon="fa-solid fa-bullhorn" class="sidebar-title-icon" />
-                            Реклама
+                            Рекламный блок
                         </h3>
-                        <div class="ad-content">
-                            <div class="ad-placeholder">
-                                <font-awesome-icon icon="fa-solid fa-ad" class="ad-icon" />
-                                <p>Рекламный блок</p>
-                                <small>300x250</small>
+                        <div class="promo-content">
+                            <div class="promo-placeholder">
+                                <p>Промо-слот</p>
+                                <small>300×250</small>
                             </div>
                         </div>
                     </div>
@@ -775,35 +774,29 @@ function selectQuality(q) {
                     overflow: hidden;
                 }
                 
-                &.sidebar-ad {
+                &.sidebar-promo {
                     flex: 1;
                     min-height: 300px;
                 }
             }
             
-            & .ad-content {
+            & .promo-content {
                 flex: 1;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 
-                .ad-placeholder {
+                .promo-placeholder {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
                     width: 100%;
                     height: 150px;
-                    background: rgba(255, 107, 107, 0.1);
-                    border: 2px dashed rgba(255, 107, 107, 0.3);
+                    background: rgba(120, 120, 255, 0.08);
+                    border: 2px dashed rgba(120, 120, 255, 0.3);
                     border-radius: 10px;
                     color: $text-secondary;
-                    
-                    .ad-icon {
-                        font-size: 32px;
-                        margin-bottom: 8px;
-                        opacity: 0.6;
-                    }
                     
                     p {
                         margin: 0 0 4px 0;
