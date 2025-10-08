@@ -147,7 +147,7 @@
                         <div class="episode__list">
                             <div class="episode__list-item">
                                 <span class="episode__list-number">1.</span>
-                                <span class="episode__list-title">Видео и эпизодов тут пока нет, дайте пожалуйста API</span>
+                                <span class="episode__list-title">Видео и эпизодов тут пока нет, дайте пожалуйста API, пишите мне на почту danilser2005@gmail.com</span>
                             </div>
                         </div>
                     </div>

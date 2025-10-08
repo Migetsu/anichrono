@@ -8,7 +8,7 @@
         <TypedTitle ref="typedTitleRef" />
         <p class="intro__desc">Погрузитесь в мир аниме с передовыми технологиями потокового вещания</p>
         <form action="" class="intro__form" @submit.prevent>
-            <input v-model="query" @input="handleSearch" type="text" class="intro__form-inp" placeholder="Поиск аниме, жанров, персонажей...">
+            <input v-model="query" @input="handleSearch" type="text" class="intro__form-inp" placeholder="Поиск аниме...">
             <button v-if="query" @click="clearSearch" type="button" class="intro__form-clear" title="Очистить поиск">
                 <font-awesome-icon icon="fa-solid fa-xmark" />
             </button>
