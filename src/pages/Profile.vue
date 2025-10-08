@@ -21,10 +21,6 @@
             </div>
           </div>
           <div class="profile-header__actions">
-            <button class="btn btn-settings" @click="openSettings">
-              <font-awesome-icon icon="fa-solid fa-gear" />
-              Настройки
-            </button>
             <button class="btn btn-shikimori" @click="openShikimoriProfile">
               <font-awesome-icon icon="fa-solid fa-external-link-alt" />
               Профиль шикимори
@@ -301,10 +297,7 @@ function logout() {
   auth.logout()
 }
 
-function openSettings() {
-  
-  alert('Настройки профиля в разработке')
-}
+ 
 
 function openShikimoriProfile() {
   if (auth?.user?.id) {
@@ -589,7 +582,8 @@ const statuses = [
 const posterCache = reactive({})
 const animeDataCache = reactive({})
 const inFlight = reactive(new Set())
-const failedAttempts = reactive({}) 
+const failedAttempts = reactive({})
+const lastAttemptAt = reactive({})
 
 function rateId(rate) {
   return Number(
@@ -622,16 +616,13 @@ async function ensurePosterForRate(rate, retryCount = 0) {
   const id = rateId(rate)
   if (!Number.isFinite(id) || id <= 0) return
 
-  // Если уже есть успешные данные - не загружаем
   if (animeDataCache[id] && (animeDataCache[id].russian || animeDataCache[id].name)) {
     return
   }
-
-  // Если уже загружается - не дублируем запрос
+  
   if (inFlight.has(id)) return
   
-  // Ограничиваем количество попыток до 3
-  const maxRetries = 3
+  const maxRetries = 4
   if ((failedAttempts[id] || 0) >= maxRetries) {
     if (!animeDataCache[id]) {
       animeDataCache[id] = { id, name: `Аниме #${id}`, russian: null }
@@ -640,14 +631,14 @@ async function ensurePosterForRate(rate, retryCount = 0) {
   }
   
   inFlight.add(id)
+  lastAttemptAt[id] = Date.now()
   
   try {
     const full = await fetchAnimeById(id)
     
     if (full && (full.russian || full.name)) {
-      // Успешно загрузили - сохраняем данные
       animeDataCache[id] = full
-      failedAttempts[id] = 0 // Сбрасываем счетчик ошибок
+      failedAttempts[id] = 0 
       
     const fromApi = posterFromAnime(full)
       if (fromApi) {
@@ -656,7 +647,6 @@ async function ensurePosterForRate(rate, retryCount = 0) {
       posterCache[id] = null
     }
     } else {
-      // Данные пришли, но без названия - повторяем
       throw new Error('No title data')
     }
   } catch (error) {
@@ -687,7 +677,7 @@ async function ensurePosterForRate(rate, retryCount = 0) {
 }
 
 
-async function loadAnimeDataBatch(rates, maxConcurrent = 5) {
+async function loadAnimeDataBatch(rates, maxConcurrent = 12) {
   const ids = rates
     .map(r => rateId(r))
     .filter(id => Number.isFinite(id) && id > 0 && !animeDataCache[id] && !inFlight.has(id))
@@ -815,6 +805,30 @@ watch(
   { immediate: true }
 )
 
+// Periodic retry loop to re-attempt failed items automatically
+let retryTimer = null
+onMounted(() => {
+  retryTimer = setInterval(() => {
+    const ids = Object.keys(failedAttempts)
+    for (const k of ids) {
+      const id = Number(k)
+      if (!Number.isFinite(id)) continue
+      if (animeDataCache[id]) continue
+      if (inFlight.has(id)) continue
+      const attempts = failedAttempts[id] || 0
+      if (attempts >= 8) continue
+      const last = lastAttemptAt[id] || 0
+      const wait = Math.min(5000 * (attempts + 1), 20000)
+      if (Date.now() - last >= wait) {
+        ensurePosterForRate({ anime: { id } })
+      }
+    }
+  }, 4000)
+})
+onUnmounted(() => {
+  if (retryTimer) clearInterval(retryTimer)
+})
+
 // Батч для IntersectionObserver
 const visibleRatesBatch = reactive(new Set())
 let visibleBatchTimeout = null
@@ -830,7 +844,6 @@ const io = new IntersectionObserver(
     }
     }
     
-    // Дебаунс для батч-загрузки
     if (visibleBatchTimeout) clearTimeout(visibleBatchTimeout)
     visibleBatchTimeout = setTimeout(() => {
       if (visibleRatesBatch.size > 0) {
@@ -983,15 +996,7 @@ const vInview = {
   gap: 8px;
   font-size: 14px;
   
-  &-settings {
-    background: linear-gradient(135deg, $accent-turquoise, #44a3a0);
-    color: white;
-    
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
-    }
-  }
+  
   
   &-shikimori {
     background: linear-gradient(135deg, $accent-gold, #e6b800);

@@ -234,7 +234,6 @@ onMounted(async () => {
                 }
             }
 
-            /* Scrollbar styling */
             &::-webkit-scrollbar { width: 8px; }
             &::-webkit-scrollbar-thumb { background: rgba(255, 107, 107, 0.35); border-radius: 8px; }
             &::-webkit-scrollbar-track { background: transparent; }

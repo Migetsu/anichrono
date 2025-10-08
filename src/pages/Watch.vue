@@ -340,7 +340,6 @@ const episodesCount = computed(() => {
     return Array.from({ length: n }, (_, i) => i + 1)
 })
 
-// ===== Player state =====
 const videoEl = ref(null)
 const playerContainer = ref(null)
 const selectedEpisode = ref(null)
@@ -362,7 +361,6 @@ const showControls = ref(true)
 let inactivityTimer = null
 
 function resolveEpisodeSrc(ep) {
-    // TODO: заменить на реальный источник эпизода
     return ''
 }
 
@@ -386,7 +384,6 @@ function togglePlay() {
         videoEl.value.pause()
         isPlaying.value = false
     } else {
-        // ensure volume/mute applied before starting
         videoEl.value.volume = volume.value
         videoEl.value.muted = muted.value
         videoEl.value.play()
@@ -414,7 +411,6 @@ function onUserActivity() {
 function onLoadedMetadata() {
     if (!videoEl.value) return
     duration.value = Number(videoEl.value.duration) || 0
-    // re-apply persisted volume/mute upon metadata load
     videoEl.value.volume = volume.value
     videoEl.value.muted = muted.value
 }
@@ -428,7 +424,7 @@ function onEnded() {
     isPlaying.value = false
 }
 
-// Seeking
+ 
 function getBarMetrics(event) {
     const bar = event.currentTarget
     const rect = bar.getBoundingClientRect()
@@ -457,7 +453,7 @@ function onSeekEnd(event) {
     seeking.value = false
 }
 
-// Volume
+ 
 function volMetrics(event) {
     const bar = event.currentTarget
     const rect = bar.getBoundingClientRect()
@@ -473,7 +469,7 @@ function onVolumeMove(event) {
     const v = volMetrics(event)
     setVolume(v)
 }
-function onVolumeEnd() { /* no-op */ }
+function onVolumeEnd() { }
 
 function setVolume(v) {
     volume.value = v
@@ -486,13 +482,11 @@ function setVolume(v) {
 function toggleMute() {
     if (!videoEl.value) return
     if (!muted.value) {
-        // сохранить текущую громкость и заглушить
         lastVolume.value = volume.value > 0 ? volume.value : (lastVolume.value || 1)
         setVolume(0)
         muted.value = true
         videoEl.value.muted = true
     } else {
-        // вернуть последнюю ненулевую громкость
         const restore = lastVolume.value > 0 ? lastVolume.value : 1
         muted.value = false
         videoEl.value.muted = false
@@ -500,7 +494,7 @@ function toggleMute() {
     }
 }
 
-// Fullscreen
+ 
 async function toggleFullscreen() {
     const el = playerContainer.value
     if (!el) return
@@ -513,7 +507,6 @@ async function toggleFullscreen() {
 }
 
 onMounted(() => {
-    // restore persisted volume/mute
     try {
         const savedVol = localStorage.getItem(VOLUME_STORAGE_KEY)
         if (savedVol !== null) {
@@ -540,7 +533,7 @@ watch(muted, (m) => {
     try { localStorage.setItem(MUTED_STORAGE_KEY, String(m)) } catch {}
 })
 
-// ===== Settings state (качество) =====
+ 
 const showSettings = ref(false)
 const qualityOptions = ['1080p', '720p', '480p']
 const selectedQuality = ref('720p')
@@ -549,17 +542,14 @@ function selectQuality(q) {
     const wasPlaying = isPlaying.value
     const time = currentTime.value
     selectedQuality.value = q
-    // Пример маппинга качества на источник
     const qualityMap = {
         '1080p': DEFAULT_VIDEO_SRC,
         '720p': DEFAULT_VIDEO_SRC,
         '480p': DEFAULT_VIDEO_SRC,
     }
     const newSrc = qualityMap[q] || DEFAULT_VIDEO_SRC
-    // Переключаем источник с сохранением позиции
     videoEl.value.src = newSrc
     videoEl.value.currentTime = time
-    // re-apply volume before potential autoplay
     videoEl.value.volume = volume.value
     videoEl.value.muted = muted.value
     if (wasPlaying) {
@@ -824,7 +814,7 @@ function selectQuality(q) {
 
             & .episode__list {
                 flex: 1 1 auto;
-                min-height: 0; // позволяет элементу с flex расти/сжиматься для корректной прокрутки
+                min-height: 0;
                 overflow-y: auto;
                 overflow-x: hidden;
                 padding-right: 8px;

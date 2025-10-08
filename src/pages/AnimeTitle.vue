@@ -513,7 +513,6 @@ const episodesCount = computed(() => {
     max-height: 400px;
     min-height: auto;
 
-    /* Стилизация скроллбара */
     &::-webkit-scrollbar {
         width: 6px;
     }

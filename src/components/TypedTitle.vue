@@ -90,7 +90,7 @@ defineExpose({
 
 onMounted(() => {
     stopped = false
-    showCaret.value = true // Показываем курсор в начале
+    showCaret.value = true
     runTyped().catch(() => { })
     
     onBeforeUnmount(() => {
