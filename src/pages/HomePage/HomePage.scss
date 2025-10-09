@@ -1,149 +1,3 @@
-<template>
-    <div class="canvas-wrapper">
-        <CanvasBackground />
-        <div class="canvas-overlay"></div>
-    </div>
-    <main ref="intro" class="intro">
-        
-        <TypedTitle ref="typedTitleRef" />
-        <p class="intro__desc">Погрузитесь в мир аниме с передовыми технологиями потокового вещания</p>
-        <form action="" class="intro__form" @submit.prevent>
-            <input v-model="query" @input="handleSearch" type="text" class="intro__form-inp" placeholder="Поиск аниме...">
-            <button v-if="query" @click="clearSearch" type="button" class="intro__form-clear" title="Очистить поиск">
-                <font-awesome-icon icon="fa-solid fa-xmark" />
-            </button>
-            <button class="intro__form-btn" type="submit">
-                <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
-            </button>
-
-            <ul v-if="results.length > 0 && query.trim().length > 0" class="search-results">
-                <li v-for="a in results" :key="a.id" class="search-item">
-                    <router-link class="search-result" :to="`/animes/${a.id}`" @click="closeMenu">
-                        <span class="search-result__title">{{ a.russian || a.name }}</span>
-                        <span v-if="a.russian && a.name && a.russian !== a.name" class="search-result__subtitle">{{ a.name }}</span>
-                    </router-link>
-                </li>
-            </ul>
-        </form>
-    </main>
-    <section class="seasonal">
-        <h3 class="seasonal__title">Новинки сезона</h3>
-        <TitleCard v-if="latestStore.latest.length" :items="latestStore.latest" />
-    </section>
-    <section class="popular">
-        <h3 class="popular__title">Популярное сейчас</h3>
-        <TitleCard v-if="popularStore.popular.length" :items="popularStore.popular" />
-    </section>
-    <section class="features">
-        <h3 class="features__title">Почему выбирают AniChrono</h3>
-        <div class="features-container">
-            <div class="features__content">
-                <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-circle-play"
-                            class="features-icon" /></div>
-                    <h4 class="features__content-title">HD & 4K качество</h4>
-                    <p class="features__content-desc">Наслаждайтесь любимыми аниме в высочайшем качестве с поддержкой 4K
-                        разрешения</p>
-                </div>
-                <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-clock"
-                            class="features-icon" /></div>
-                    <h4 class="features__content-title">Эксклюзивные релизы</h4>
-                    <p class="features__content-desc">Первыми смотрите новые серии сразу после выхода в Японии</p>
-                </div>
-                <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-closed-captioning"
-                            class="features-icon" /></div>
-                    <h4 class="features__content-title">Профессиональные субтитры</h4>
-                    <p class="features__content-desc">Качественный перевод на русский язык от ведущих студий</p>
-                </div>
-                <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-heart"
-                            class="features-icon" /></div>
-                    <h4 class="features__content-title">Персональные рекомендации</h4>
-                    <p class="features__content-desc">Индивидуальные подборки на основе ваших предпочтений</p>
-                </div>
-            </div>
-        </div>
-    </section>
-    <Footer />
-</template>
-
-<script setup>
-import { onMounted, ref } from 'vue'
-import CanvasBackground from '@/components/CanvasBackground.vue'
-import TitleCard from '@/components/TitleCard.vue'
-import Footer from '@/components/Footer.vue'
-import TypedTitle from '@/components/TypedTitle.vue'
-import { useLatestStore } from '@/stores/latestStore'
-import { usePopularStore } from '@/stores/popularStore'
-import { searchAnimes } from "@/api/searchAnimes";
-
-const latestStore = useLatestStore()
-const popularStore = usePopularStore()
-const query = ref('')
-const results = ref([])
-const typedTitleRef = ref(null)
-let searchTimeout
-
-const handleSearch = () => {
-    if (searchTimeout) {
-        clearTimeout(searchTimeout)
-        searchTimeout = null
-    }
-    
-    if (!query.value.trim()) {
-        results.value = []
-        if (typedTitleRef.value) {
-            typedTitleRef.value.resumeAnimation()
-        }
-        return;
-    }
-    
-    if (typedTitleRef.value) {
-        typedTitleRef.value.pauseAnimation()
-    }
-    
-    searchTimeout = setTimeout(async () => {
-        try {
-            results.value = await searchAnimes(query.value.trim())
-        }
-        catch (e) {
-            results.value = []
-        }
-    }, 300)
-}
-
-const clearSearch = () => {
-    query.value = ''
-    results.value = []
-    if (searchTimeout) {
-        clearTimeout(searchTimeout)
-        searchTimeout = null
-    }
-    if (typedTitleRef.value) {
-        typedTitleRef.value.resumeAnimation()
-    }
-}
-
-const isMenuOpen = ref(false);
-const toggleMenu = () => {
-  isMenuOpen.value = !isMenuOpen.value;
-};
-
-const closeMenu = () => {
-  isMenuOpen.value = false;
-  clearSearch();
-};
-
-onMounted(async () => {
-    await latestStore.loadLatest()
-    await popularStore.loadPopular()
-})
-
-</script>
-
-<style scoped lang="scss">
 .intro {
     min-height: 100vh;
     display: flex;
@@ -156,6 +10,12 @@ onMounted(async () => {
     background-position: center center;
     background-repeat: no-repeat;
     background-attachment: fixed;
+    padding: 0 15px;
+
+    @include respond(md) {
+        background-attachment: scroll;
+        padding: 40px 15px;
+    }
 
     &__form {
         border-radius: 50px;
@@ -164,11 +24,19 @@ onMounted(async () => {
         background: rgba(26, 26, 46, 0.8);
         display: flex;
         border: 2px solid rgba(255, 107, 107, 0.3);
-        display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.3s ease;
         position: relative;
+
+        @include respond(md) {
+            max-width: 100%;
+            border-radius: 30px;
+        }
+
+        @include respond(sm) {
+            border-radius: 25px;
+        }
 
         .search-results {
             position: absolute;
@@ -186,6 +54,15 @@ onMounted(async () => {
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             max-height: 320px;
 
+            @include respond(md) {
+                max-height: 260px;
+            }
+
+            @include respond(sm) {
+                max-height: 200px;
+                padding: 6px;
+            }
+
             &::before {
                 content: '';
                 position: absolute;
@@ -198,6 +75,12 @@ onMounted(async () => {
                 border-top: 1px solid rgba(255, 107, 107, 0.2);
                 transform: rotate(45deg);
                 backdrop-filter: blur(10px);
+
+                @include respond(sm) {
+                    left: 15px;
+                    width: 12px;
+                    height: 12px;
+                }
             }
 
             .search-item {
@@ -214,6 +97,10 @@ onMounted(async () => {
                 transition: all 0.25s ease;
                 color: $text-primary;
 
+                @include respond(sm) {
+                    padding: 10px 12px;
+                }
+
                 &:hover {
                     background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(78, 205, 196, 0.15) 100%);
                     transform: translateX(4px);
@@ -224,6 +111,10 @@ onMounted(async () => {
                     font-weight: 700;
                     font-size: 16px;
                     color: $text-primary;
+
+                    @include respond(sm) {
+                        font-size: 14px;
+                    }
                 }
 
                 &__subtitle {
@@ -231,12 +122,25 @@ onMounted(async () => {
                     margin-top: 2px;
                     font-size: 13px;
                     color: $text-secondary;
+
+                    @include respond(sm) {
+                        font-size: 12px;
+                    }
                 }
             }
 
-            &::-webkit-scrollbar { width: 8px; }
-            &::-webkit-scrollbar-thumb { background: rgba(255, 107, 107, 0.35); border-radius: 8px; }
-            &::-webkit-scrollbar-track { background: transparent; }
+            &::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: rgba(255, 107, 107, 0.35);
+                border-radius: 8px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: transparent;
+            }
         }
 
         &:focus-within {
@@ -256,6 +160,12 @@ onMounted(async () => {
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
+            flex-shrink: 0;
+
+            @include respond(sm) {
+                width: 36px;
+                height: 36px;
+            }
 
             &:hover {
                 background: darken($accent-coral, 10%);
@@ -276,6 +186,13 @@ onMounted(async () => {
             cursor: pointer;
             transition: all 0.3s ease;
             margin-right: 8px;
+            flex-shrink: 0;
+
+            @include respond(sm) {
+                width: 28px;
+                height: 28px;
+                margin-right: 6px;
+            }
 
             &:hover {
                 background: rgba(255, 107, 107, 0.4);
@@ -293,6 +210,16 @@ onMounted(async () => {
             font-family: "Comfortaa";
             font-weight: 400;
 
+            @include respond(md) {
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+
+            @include respond(sm) {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
             &::placeholder {
                 color: $text-primary;
             }
@@ -307,6 +234,23 @@ onMounted(async () => {
         -webkit-text-fill-color: transparent;
         background-clip: text;
         margin-bottom: 16px;
+
+        @include respond(lg) {
+            font-size: 52px;
+        }
+
+        @include respond(md) {
+            font-size: 42px;
+        }
+
+        @include respond(sm) {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        @include respond(xs) {
+            font-size: 28px;
+        }
     }
 
     &__desc {
@@ -317,6 +261,27 @@ onMounted(async () => {
         max-width: 730px;
         text-align: center;
         margin-bottom: 32px;
+
+        @include respond(lg) {
+            font-size: 20px;
+            max-width: 600px;
+        }
+
+        @include respond(md) {
+            font-size: 18px;
+            max-width: 500px;
+            margin-bottom: 28px;
+        }
+
+        @include respond(sm) {
+            font-size: 16px;
+            max-width: 90%;
+            margin-bottom: 24px;
+        }
+
+        @include respond(xs) {
+            font-size: 14px;
+        }
     }
 }
 
@@ -341,10 +306,26 @@ onMounted(async () => {
     background: rgba(0, 0, 0, 0.6);
     z-index: 2;
     pointer-events: none;
+
+    @include respond(md) {
+        background: rgba(0, 0, 0, 0.7);
+    }
 }
 
 .popular {
     padding: 80px 0;
+
+    @include respond(lg) {
+        padding: 60px 0;
+    }
+
+    @include respond(md) {
+        padding: 50px 0;
+    }
+
+    @include respond(sm) {
+        padding: 40px 0;
+    }
 
     &__title {
         font-family: "Exo2";
@@ -356,12 +337,43 @@ onMounted(async () => {
         -webkit-text-fill-color: transparent;
         background-clip: text;
         text-align: center;
+
+        @include respond(lg) {
+            font-size: 36px;
+            margin-bottom: 40px;
+        }
+
+        @include respond(md) {
+            font-size: 32px;
+            margin-bottom: 36px;
+        }
+
+        @include respond(sm) {
+            font-size: 28px;
+            margin-bottom: 32px;
+        }
+
+        @include respond(xs) {
+            font-size: 24px;
+        }
     }
 }
 
 .features {
     padding: 80px 0;
 
+    @include respond(lg) {
+        padding: 60px 0;
+    }
+
+    @include respond(md) {
+        padding: 50px 0;
+    }
+
+    @include respond(sm) {
+        padding: 40px 0;
+    }
+
     &__title {
         font-family: "Exo2";
         font-weight: 700;
@@ -372,19 +384,57 @@ onMounted(async () => {
         background-clip: text;
         text-align: center;
         font-size: 40px;
+
+        @include respond(lg) {
+            font-size: 36px;
+            margin-bottom: 40px;
+        }
+
+        @include respond(md) {
+            font-size: 32px;
+            margin-bottom: 36px;
+        }
+
+        @include respond(sm) {
+            font-size: 28px;
+            margin-bottom: 32px;
+        }
+
+        @include respond(xs) {
+            font-size: 24px;
+        }
     }
 
     &-container {
         max-width: 1530px;
         padding: 0 15px;
         margin: 0 auto;
-        position: relative;
     }
 
     &__content {
         display: grid;
         gap: 32px;
         grid-template-columns: repeat(4, 1fr);
+
+        @include respond(xl) {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 24px;
+        }
+
+        @include respond(lg) {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @include respond(md) {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        @include respond(sm) {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
 
         &-item {
             background: rgba(26, 26, 46, 0.6);
@@ -394,6 +444,14 @@ onMounted(async () => {
             transition: all 0.3s ease;
             border: 1px solid rgba(255, 107, 107, 0.2);
             backdrop-filter: blur(10px);
+
+            @include respond(md) {
+                padding: 24px;
+            }
+
+            @include respond(sm) {
+                padding: 20px;
+            }
 
             &:hover {
                 box-shadow: 0 15px 30px rgba(255, 107, 107, 0.2);
@@ -412,6 +470,19 @@ onMounted(async () => {
             color: $accent-coral;
             margin-bottom: 16px;
             transition: all 0.3s ease;
+
+            @include respond(xl) {
+                font-size: 42px;
+            }
+
+            @include respond(md) {
+                font-size: 38px;
+                margin-bottom: 12px;
+            }
+
+            @include respond(sm) {
+                font-size: 36px;
+            }
         }
 
         &-title {
@@ -419,19 +490,52 @@ onMounted(async () => {
             font-weight: 600;
             margin-bottom: 16px;
             color: $text-primary;
+
+            @include respond(xl) {
+                font-size: 18px;
+            }
+
+            @include respond(md) {
+                font-size: 20px;
+                margin-bottom: 12px;
+            }
+
+            @include respond(sm) {
+                font-size: 18px;
+            }
         }
 
         &-desc {
             font-family: "Comfortaa";
             font-weight: 400;
             color: $text-secondary;
-            display: flex;
+            font-size: 16px;
+
+            @include respond(md) {
+                font-size: 15px;
+            }
+
+            @include respond(sm) {
+                font-size: 14px;
+            }
         }
     }
 }
 
 .seasonal {
     padding: 80px 0;
+
+    @include respond(lg) {
+        padding: 60px 0;
+    }
+
+    @include respond(md) {
+        padding: 50px 0;
+    }
+
+    @include respond(sm) {
+        padding: 40px 0;
+    }
 
     &__title {
         font-family: "Exo2";
@@ -443,6 +547,24 @@ onMounted(async () => {
         -webkit-text-fill-color: transparent;
         background-clip: text;
         text-align: center;
+
+        @include respond(lg) {
+            font-size: 36px;
+            margin-bottom: 40px;
+        }
+
+        @include respond(md) {
+            font-size: 32px;
+            margin-bottom: 36px;
+        }
+
+        @include respond(sm) {
+            font-size: 28px;
+            margin-bottom: 32px;
+        }
+
+        @include respond(xs) {
+            font-size: 24px;
+        }
     }
 }
-</style>

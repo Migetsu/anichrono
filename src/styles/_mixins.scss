@@ -1,13 +1,12 @@
 // _mixins.scss
 
 // --------- Настраиваемые брейкпоинты (можно поменять) ----------
-$breakpoints: (
-  xs: 320px,    // мобильные маленькие
-  sm: 480px,    // мобильные
-  md: 768px,    // планшет
-  lg: 1024px,   // ноутбук
-  xl: 1280px,   // десктоп
-  xxl: 1600px   // большие экраны
+$breakpoints: (xs: 320px, // мобильные маленькие
+  sm: 480px, // мобильные
+  md: 768px, // планшет
+  lg: 1024px, // ноутбук
+  xl: 1280px, // десктоп
+  xxl: 1600px // большие экраны
 ) !default;
 
 // --------- Миксин для медиазапросов ---------
@@ -16,61 +15,14 @@ $breakpoints: (
   $val: map-get($breakpoints, $point);
 
   @if $val {
+
     // Используем max-width для "mobile-first" адаптации
     @media (max-width: $val) {
       @content;
     }
-  } @else {
+  }
+
+  @else {
     @warn "respond: брейкпоинт `#{$point}` не найден в $breakpoints.";
   }
-}
-
-// --------- Плавные (fluid) размеры ---------
-// Возвращает clamp(min, fluid, max)
-// Параметры:
-// $min - минимальное значение (например 14px)
-// $max - максимальное значение (например 20px)
-// $min-vw - ширина окна (в px) при которой $min применяется (например 320px)
-// $max-vw - ширина окна (в px) при которой $max применяется (например 1440px)
-//
-// Пример: font-size: fluid(14px, 20px);
-@function _to-number($val) {
-  @if type-of($val) == "number" {
-    @return $val;
-  }
-  @return null;
-}
-
-@function _strip-unit($num) {
-  @if unit($num) == "" {
-    @return $num;
-  }
-  @return $num / (1 * (1#{unit($num)})); // убирает юнит
-}
-
-@function _calc-slope($min, $max, $min-vw, $max-vw) {
-  $slope: (_strip-unit($max) - _strip-unit($min)) / (_strip-unit($max-vw) - _strip-unit($min-vw));
-  @return $slope;
-}
-
-@function _calc-intercept($min, $slope, $min-vw) {
-  $intercept: _strip-unit($min) - ($slope * _strip-unit($min-vw));
-  @return $intercept;
-}
-
-@function fluid($min, $max, $min-vw: 320px, $max-vw: 1440px) {
-  // Проверка
-  @if not unit($min) or not unit($max) {
-    @warn "fluid: $min или $max должны иметь единицу (px, rem, etc).";
-  }
-
-  // slope и intercept для выражения в vw
-  $slope: _calc-slope($min, $max, $min-vw, $max-vw); // (px per px)
-  $intercept: _calc-intercept($min, $slope, $min-vw);
-
-  // slope в %vw: умножаем на 100 чтобы получить value * vw
-  $slope-vw: $slope * 100;
-
-  // Создаём выражение clamp(min, calc(intercept px + slope * vw), max)
-  @return clamp(#{$min}, calc(#{$intercept}px + #{$slope-vw}vw), #{$max});
 }

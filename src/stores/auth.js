@@ -52,7 +52,6 @@ export const useAuthStore = defineStore('auth', {
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('auth') === 'success') {
-          
           const newUrl = new URL(window.location);
           newUrl.searchParams.delete('auth');
           window.history.replaceState({}, '', newUrl);
@@ -60,6 +59,17 @@ export const useAuthStore = defineStore('auth', {
           if (token) {
             this.setToken(token)
             this.fetchMe();
+            // Пост-редирект после успешной авторизации
+            try {
+              const target = sessionStorage.getItem('post_login_redirect')
+              if (target) {
+                sessionStorage.removeItem('post_login_redirect')
+                // Если уже на нужной странице, не редиректим
+                if (window.location.pathname + window.location.search !== target) {
+                  setTimeout(() => { window.location.replace(target) }, 50)
+                }
+              }
+            } catch {}
           }
         }
       }
@@ -103,10 +113,30 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    login() {
+    login(redirectTo = null) {
       this.loggingIn = true
-      try { sessionStorage.setItem('oauth_in_progress', '1') } catch {}
-      location.href = '/api/auth/login'
+      try {
+        sessionStorage.setItem('oauth_in_progress', '1')
+        if (typeof redirectTo === 'string' && redirectTo) {
+          sessionStorage.setItem('post_login_redirect', redirectTo)
+        }
+      } catch {}
+
+      // Строим state = текущая/целевая страница (base64url)
+      let state = ''
+      try {
+        const target = (typeof redirectTo === 'string' && redirectTo)
+          ? redirectTo
+          : (typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/')
+        // Используем btoa для браузера
+        const b64 = typeof btoa === 'function'
+          ? btoa(unescape(encodeURIComponent(target)))
+          : (Buffer ? Buffer.from(target, 'utf8').toString('base64') : '')
+        state = b64 ? b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '') : ''
+      } catch {}
+
+      const url = state ? `/api/auth/login?state=${state}` : '/api/auth/login'
+      location.href = url
     },
 
     logout() {

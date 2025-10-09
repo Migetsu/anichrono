@@ -3,7 +3,7 @@
 
 export default async function handler(req, res) {
   try {
-    const { code } = req.query;
+    const { code, state } = req.query;
     if (!code) {
       return res.status(400).send('Missing authorization code');
     }
@@ -43,9 +43,29 @@ export default async function handler(req, res) {
 
     
     const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
-    
-    
-    res.redirect(frontendOrigin + '/?auth=success');
+
+    // Если был передан state — это base64url путь/URL для возврата
+    let target = '/?auth=success'
+    try {
+      if (typeof state === 'string' && state.length > 0) {
+        // base64url -> base64
+        const b64 = state.replace(/-/g, '+').replace(/_/g, '/');
+        const decoded = Buffer.from(b64, 'base64').toString('utf8');
+        if (decoded.startsWith('http://') || decoded.startsWith('https://')) {
+          // Безопасность: разрешаем только свой origin
+          const url = new URL(decoded);
+          const allowed = new URL(frontendOrigin);
+          if (url.origin === allowed.origin) {
+            target = url.pathname + url.search + (url.search ? '&' : '?') + 'auth=success'
+          }
+        } else {
+          // Относительный путь
+          target = decoded + (decoded.includes('?') ? '&' : '?') + 'auth=success'
+        }
+      }
+    } catch {}
+
+    res.redirect(frontendOrigin + target);
   } catch (err) {
     console.error('Callback error:', err);
     res.status(500).send('Server error');
