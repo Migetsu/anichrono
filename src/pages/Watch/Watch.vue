@@ -10,12 +10,19 @@
                             frameborder="0" 
                             allowfullscreen
                             class="trailer-iframe"
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            @error="handleVideoError"
+                            @load="handleVideoLoad"
                         ></iframe>
-                            </div>
+                    </div>
                     <div v-else class="watch__video-placeholder">
                         <font-awesome-icon icon="fa-solid fa-video" class="placeholder-icon" />
                         <h3>Трейлеры недоступны</h3>
-                        <p>Для этого аниме нет доступных трейлеров</p>
+                        <p v-if="anime?.videos?.length === 0">Для этого аниме нет доступных трейлеров</p>
+                        <p v-else-if="anime?.videos?.length > 0">Найдено {{ anime.videos.length }} видео, но нет PV трейлеров</p>
+                        <p v-else>Загрузка информации о трейлерах...</p>
                     </div>
                 </div>
             </section>
@@ -75,10 +82,6 @@
                                 </div>
                             </div>
                         </div>
-                        <button v-if="auth.isLoggedIn" class="action-btn primary-btn">
-                            <font-awesome-icon icon="fa-solid fa-list-check" class="action-btn-icon" />
-                            Добавить в список
-                        </button>
                         <button class="action-btn secondary-btn">
                             <font-awesome-icon icon="fa-solid fa-share" class="action-btn-icon" />
                             Поделиться
@@ -116,11 +119,13 @@
                                 <div class="trailer__info">
                                     <span class="trailer__number">{{ index + 1 }}.</span>
                                     <span class="trailer__title">{{ trailer.name || `Трейлер ${index + 1}` }}</span>
+                                    <span class="trailer__kind">{{ trailer.kind?.toUpperCase() }}</span>
                                 </div>
                             </div>
                             <div v-if="pvTrailers.length === 0" class="trailer__list-empty">
                                 <font-awesome-icon icon="fa-solid fa-video-slash" />
-                                <span>Трейлеры недоступны</span>
+                                <span v-if="anime?.videos?.length === 0">Трейлеры недоступны</span>
+                                <span v-else>Нет PV трейлеров (найдено {{ anime?.videos?.length || 0 }} других видео)</span>
                             </div>
                         </div>
                     </div>
@@ -249,8 +254,14 @@ async function load(id) {
     anime.value = null
     try {
         anime.value = await fetchAnimeById(id)
+        console.log('Загружено аниме:', anime.value?.name, 'ID:', anime.value?.id)
+        console.log('Видео в аниме:', anime.value?.videos?.length || 0)
+        if (anime.value?.videos) {
+            console.log('Типы видео:', anime.value.videos.map(v => v.kind))
+        }
     } catch (e) {
         error.value = String(e?.message || e)
+        console.error('Ошибка загрузки аниме:', e)
     } finally {
         loading.value = false
     }
@@ -373,8 +384,14 @@ function fmtDate(isoLike) {
 
 // Фильтруем только PV трейлеры
 const pvTrailers = computed(() => {
-    if (!anime.value?.videos) return []
-    return anime.value.videos.filter(video => video.kind === 'pv')
+    if (!anime.value?.videos) {
+        console.log('Нет данных о видео для аниме:', anime.value?.id)
+        return []
+    }
+    const trailers = anime.value.videos.filter(video => video.kind === 'pv')
+    console.log('Найдено трейлеров:', trailers.length, 'для аниме:', anime.value.id)
+    console.log('Все видео:', anime.value.videos)
+    return trailers
 })
 
 // Текущий выбранный трейлер
@@ -388,6 +405,15 @@ const currentTrailer = computed(() => {
 function selectTrailer(index) {
     if (index >= 0 && index < pvTrailers.value.length) {
         currentTrailerIndex.value = index
+        // Принудительно обновляем iframe для мобильных устройств
+        const iframe = document.querySelector('.trailer-iframe')
+        if (iframe) {
+            const currentSrc = iframe.src
+            iframe.src = ''
+            setTimeout(() => {
+                iframe.src = currentSrc
+            }, 100)
+        }
     }
 }
 
@@ -428,6 +454,16 @@ function selectSpeed(speed) {
 
 function toggleSubtitlesFromSidebar(event) {
     subtitlesEnabled.value = event.target.checked
+}
+
+// Обработка ошибок загрузки видео
+function handleVideoError() {
+    console.warn('Ошибка загрузки видео трейлера')
+    // Можно добавить fallback или показать сообщение об ошибке
+}
+
+function handleVideoLoad() {
+    console.log('Видео трейлер успешно загружен')
 }
 </script>
 
