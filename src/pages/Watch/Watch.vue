@@ -5,7 +5,9 @@
             <section class="watch__video">
                 <div class="watch__video-container">
                     <div v-if="currentTrailer" class="watch__video-player">
+                        <!-- Основной iframe плеер -->
                         <iframe 
+                            v-if="!videoError && !showFallback"
                             :src="currentTrailer.playerUrl" 
                             frameborder="0" 
                             allowfullscreen
@@ -16,6 +18,48 @@
                             @error="handleVideoError"
                             @load="handleVideoLoad"
                         ></iframe>
+                        
+                        <!-- Fallback плеер при блокировке iframe -->
+                        <div v-if="videoError || showFallback" class="trailer-fallback">
+                            <div class="fallback-content">
+                                <div class="fallback-thumbnail">
+                                    <img 
+                                        v-if="currentTrailer.imageUrl" 
+                                        :src="currentTrailer.imageUrl" 
+                                        :alt="currentTrailer.name"
+                                        class="fallback-image"
+                                    />
+                                    <div v-else class="fallback-placeholder">
+                                        <font-awesome-icon icon="fa-solid fa-play" />
+                                    </div>
+                                    <div class="fallback-overlay">
+                                        <font-awesome-icon icon="fa-solid fa-play" class="play-icon" />
+                                    </div>
+                                </div>
+                                <div class="fallback-info">
+                                    <h4>{{ currentTrailer.name || 'Трейлер' }}</h4>
+                                    <p>Видео заблокировано браузером или расширениями</p>
+                                    <div class="fallback-actions">
+                                        <a 
+                                            :href="currentTrailer.url" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            class="fallback-btn primary"
+                                        >
+                                            <font-awesome-icon icon="fa-solid fa-external-link-alt" />
+                                            Открыть на YouTube
+                                        </a>
+                                        <button 
+                                            @click="retryVideo" 
+                                            class="fallback-btn secondary"
+                                        >
+                                            <font-awesome-icon icon="fa-solid fa-redo" />
+                                            Попробовать снова
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div v-else class="watch__video-placeholder">
                         <font-awesome-icon icon="fa-solid fa-video" class="placeholder-icon" />
@@ -120,6 +164,17 @@
                                     <span class="trailer__number">{{ index + 1 }}.</span>
                                     <span class="trailer__title">{{ trailer.name || `Трейлер ${index + 1}` }}</span>
                                     <span class="trailer__kind">{{ trailer.kind?.toUpperCase() }}</span>
+                                    <a 
+                                        v-if="trailer.url" 
+                                        :href="trailer.url" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        class="trailer__direct-link"
+                                        @click.stop
+                                    >
+                                        <font-awesome-icon icon="fa-solid fa-external-link-alt" />
+                                        YouTube
+                                    </a>
                                 </div>
                             </div>
                             <div v-if="pvTrailers.length === 0" class="trailer__list-empty">
@@ -405,6 +460,10 @@ const currentTrailer = computed(() => {
 function selectTrailer(index) {
     if (index >= 0 && index < pvTrailers.value.length) {
         currentTrailerIndex.value = index
+        // Сбрасываем состояние ошибки при смене трейлера
+        videoError.value = false
+        showFallback.value = false
+        
         // Принудительно обновляем iframe для мобильных устройств
         const iframe = document.querySelector('.trailer-iframe')
         if (iframe) {
@@ -421,8 +480,38 @@ function selectTrailer(index) {
 watch(() => anime.value?.videos, () => {
     if (pvTrailers.value.length > 0) {
         currentTrailerIndex.value = 0
+        // Сбрасываем состояние ошибки при загрузке нового аниме
+        videoError.value = false
+        showFallback.value = false
     }
 }, { immediate: true })
+
+// Автоматическое определение блокировки iframe через таймаут
+watch(() => currentTrailer.value, (newTrailer) => {
+    if (newTrailer) {
+        // Даем iframe 3 секунды на загрузку, если не загрузился - показываем fallback
+        const timeout = setTimeout(() => {
+            const iframe = document.querySelector('.trailer-iframe')
+            if (iframe && !videoError.value) {
+                // Проверяем, загрузился ли iframe
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+                    if (!iframeDoc || iframeDoc.readyState !== 'complete') {
+                        console.warn('Iframe не загрузился в течение 3 секунд - показываем fallback')
+                        showFallback.value = true
+                    }
+                } catch (e) {
+                    // Если не можем получить доступ к iframe (CORS), считаем что он заблокирован
+                    console.warn('Iframe заблокирован CORS политикой - показываем fallback')
+                    showFallback.value = true
+                }
+            }
+        }, 3000)
+        
+        // Очищаем таймаут при смене трейлера
+        return () => clearTimeout(timeout)
+    }
+})
 
 // Настройки видео (для совместимости с существующими стилями)
 const qualityOptions = ['1080p', '720p', '480p']
@@ -442,6 +531,10 @@ const selectedSpeed = ref(1)
 
 const subtitlesEnabled = ref(false)
 
+// Состояние для fallback плеера
+const videoError = ref(false)
+const showFallback = ref(false)
+
 
 // Функции настроек (заглушки для совместимости)
 function selectQuality(q) {
@@ -458,12 +551,32 @@ function toggleSubtitlesFromSidebar(event) {
 
 // Обработка ошибок загрузки видео
 function handleVideoError() {
-    console.warn('Ошибка загрузки видео трейлера')
-    // Можно добавить fallback или показать сообщение об ошибке
+    console.warn('Ошибка загрузки видео трейлера - переключаемся на fallback')
+    videoError.value = true
+    showFallback.value = true
 }
 
 function handleVideoLoad() {
     console.log('Видео трейлер успешно загружен')
+    videoError.value = false
+    showFallback.value = false
+}
+
+// Функция повторной попытки загрузки
+function retryVideo() {
+    console.log('Повторная попытка загрузки видео')
+    videoError.value = false
+    showFallback.value = false
+    
+    // Принудительно обновляем iframe
+    const iframe = document.querySelector('.trailer-iframe')
+    if (iframe && currentTrailer.value) {
+        const currentSrc = iframe.src
+        iframe.src = ''
+        setTimeout(() => {
+            iframe.src = currentSrc
+        }, 100)
+    }
 }
 </script>
 

@@ -1488,6 +1488,397 @@
     }
 }
 
+// Fallback плеер для заблокированных видео
+.trailer-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.9));
+    border-radius: 8px;
+    border: 2px solid rgba(255, 107, 107, 0.3);
+
+    @include respond(xxl) {
+        border-radius: 10px;
+    }
+
+    @include respond(xl) {
+        border-radius: 9px;
+    }
+
+    @include respond(lg) {
+        border-radius: 8px;
+    }
+
+    @include respond(md) {
+        border-radius: 6px;
+    }
+
+    @include respond(sm) {
+        border-radius: 4px;
+    }
+
+    @include respond(xs) {
+        border-radius: 0;
+    }
+}
+
+.fallback-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px;
+    max-width: 500px;
+    width: 100%;
+
+    @include respond(xxl) {
+        padding: 32px;
+        max-width: 600px;
+    }
+
+    @include respond(xl) {
+        padding: 28px;
+        max-width: 550px;
+    }
+
+    @include respond(lg) {
+        padding: 24px;
+        max-width: 500px;
+    }
+
+    @include respond(md) {
+        padding: 20px;
+        max-width: 450px;
+    }
+
+    @include respond(sm) {
+        padding: 16px;
+        max-width: 400px;
+    }
+
+    @include respond(xs) {
+        padding: 12px;
+        max-width: 350px;
+    }
+}
+
+.fallback-thumbnail {
+    position: relative;
+    width: 200px;
+    height: 112px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: #000;
+
+    @include respond(xxl) {
+        width: 240px;
+        height: 135px;
+        margin-bottom: 24px;
+    }
+
+    @include respond(xl) {
+        width: 220px;
+        height: 124px;
+        margin-bottom: 22px;
+    }
+
+    @include respond(lg) {
+        width: 200px;
+        height: 112px;
+        margin-bottom: 20px;
+    }
+
+    @include respond(md) {
+        width: 180px;
+        height: 101px;
+        margin-bottom: 18px;
+    }
+
+    @include respond(sm) {
+        width: 160px;
+        height: 90px;
+        margin-bottom: 16px;
+    }
+
+    @include respond(xs) {
+        width: 140px;
+        height: 79px;
+        margin-bottom: 14px;
+    }
+}
+
+.fallback-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fallback-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 107, 0.1);
+    color: $accent-coral;
+    font-size: 2rem;
+
+    @include respond(xxl) {
+        font-size: 2.5rem;
+    }
+
+    @include respond(xl) {
+        font-size: 2.25rem;
+    }
+
+    @include respond(lg) {
+        font-size: 2rem;
+    }
+
+    @include respond(md) {
+        font-size: 1.75rem;
+    }
+
+    @include respond(sm) {
+        font-size: 1.5rem;
+    }
+
+    @include respond(xs) {
+        font-size: 1.25rem;
+    }
+}
+
+.fallback-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    opacity: 0.8;
+
+    .play-icon {
+        font-size: 3rem;
+        color: $accent-coral;
+
+        @include respond(xxl) {
+            font-size: 3.5rem;
+        }
+
+        @include respond(xl) {
+            font-size: 3.25rem;
+        }
+
+        @include respond(lg) {
+            font-size: 3rem;
+        }
+
+        @include respond(md) {
+            font-size: 2.5rem;
+        }
+
+        @include respond(sm) {
+            font-size: 2rem;
+        }
+
+        @include respond(xs) {
+            font-size: 1.75rem;
+        }
+    }
+}
+
+.fallback-info {
+    h4 {
+        color: $text-primary;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+
+        @include respond(xxl) {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        @include respond(xl) {
+            font-size: 19px;
+            margin-bottom: 9px;
+        }
+
+        @include respond(lg) {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        @include respond(md) {
+            font-size: 16px;
+            margin-bottom: 7px;
+        }
+
+        @include respond(sm) {
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        @include respond(xs) {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+    }
+
+    p {
+        color: $text-secondary;
+        font-size: 14px;
+        margin-bottom: 20px;
+        line-height: 1.5;
+
+        @include respond(xxl) {
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+
+        @include respond(xl) {
+            font-size: 15px;
+            margin-bottom: 22px;
+        }
+
+        @include respond(lg) {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        @include respond(md) {
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        @include respond(sm) {
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        @include respond(xs) {
+            font-size: 11px;
+            margin-bottom: 14px;
+        }
+    }
+}
+
+.fallback-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    @include respond(xxl) {
+        gap: 16px;
+    }
+
+    @include respond(xl) {
+        gap: 14px;
+    }
+
+    @include respond(lg) {
+        gap: 12px;
+    }
+
+    @include respond(md) {
+        gap: 10px;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    @include respond(sm) {
+        gap: 8px;
+    }
+
+    @include respond(xs) {
+        gap: 6px;
+    }
+}
+
+.fallback-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 160px;
+    justify-content: center;
+
+    @include respond(xxl) {
+        padding: 14px 24px;
+        font-size: 16px;
+        min-width: 180px;
+        gap: 10px;
+    }
+
+    @include respond(xl) {
+        padding: 13px 22px;
+        font-size: 15px;
+        min-width: 170px;
+        gap: 9px;
+    }
+
+    @include respond(lg) {
+        padding: 12px 20px;
+        font-size: 14px;
+        min-width: 160px;
+        gap: 8px;
+    }
+
+    @include respond(md) {
+        padding: 11px 18px;
+        font-size: 13px;
+        min-width: 150px;
+        gap: 7px;
+    }
+
+    @include respond(sm) {
+        padding: 10px 16px;
+        font-size: 12px;
+        min-width: 140px;
+        gap: 6px;
+    }
+
+    @include respond(xs) {
+        padding: 9px 14px;
+        font-size: 11px;
+        min-width: 130px;
+        gap: 5px;
+    }
+
+    &.primary {
+        background: linear-gradient(45deg, $accent-coral, $hot-pink);
+        color: white;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+    }
+
+    &.secondary {
+        background: rgba(78, 205, 196, 0.2);
+        color: $accent-turquoise;
+        border: 1px solid $accent-turquoise;
+
+        &:hover {
+            background: rgba(78, 205, 196, 0.3);
+            transform: translateY(-2px);
+        }
+    }
+}
+
 .trailer__list {
     display: flex;
     flex-direction: column;
@@ -1943,6 +2334,104 @@
     @include respond(xs) {
         font-size: 7px;
         margin-top: 1px;
+    }
+}
+
+.trailer__direct-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: $accent-coral;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border-radius: 12px;
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    transition: all 0.3s ease;
+
+    @include respond(xxl) {
+        font-size: 11px;
+        gap: 5px;
+        margin-top: 5px;
+        padding: 3px 8px;
+        border-radius: 14px;
+    }
+
+    @include respond(xl) {
+        font-size: 10px;
+        gap: 4px;
+        margin-top: 4px;
+        padding: 2px 7px;
+        border-radius: 13px;
+    }
+
+    @include respond(lg) {
+        font-size: 10px;
+        gap: 4px;
+        margin-top: 4px;
+        padding: 2px 6px;
+        border-radius: 12px;
+    }
+
+    @include respond(md) {
+        font-size: 9px;
+        gap: 3px;
+        margin-top: 3px;
+        padding: 2px 5px;
+        border-radius: 10px;
+    }
+
+    @include respond(sm) {
+        font-size: 8px;
+        gap: 3px;
+        margin-top: 3px;
+        padding: 1px 4px;
+        border-radius: 8px;
+    }
+
+    @include respond(xs) {
+        font-size: 7px;
+        gap: 2px;
+        margin-top: 2px;
+        padding: 1px 3px;
+        border-radius: 6px;
+    }
+
+    &:hover {
+        background: rgba(255, 107, 107, 0.2);
+        border-color: $accent-coral;
+        transform: scale(1.05);
+    }
+
+    svg {
+        font-size: 8px;
+
+        @include respond(xxl) {
+            font-size: 9px;
+        }
+
+        @include respond(xl) {
+            font-size: 8px;
+        }
+
+        @include respond(lg) {
+            font-size: 8px;
+        }
+
+        @include respond(md) {
+            font-size: 7px;
+        }
+
+        @include respond(sm) {
+            font-size: 6px;
+        }
+
+        @include respond(xs) {
+            font-size: 5px;
+        }
     }
 }
 
