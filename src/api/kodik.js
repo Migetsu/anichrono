@@ -1,7 +1,14 @@
-import { getEnvConfig } from './envConfig.js';
+// Переменные окружения для Kodik API
+const KODIK_API_TOKEN = import.meta.env.VITE_KODIK_API_TOKEN;
+const KODIK_API_URL = import.meta.env.VITE_KODIK_API_URL;
 
-// Кэш для конфигурации
-let configCache = null;
+// Отладочная информация
+console.log('Kodik API Config:', {
+  token: KODIK_API_TOKEN ? '***' + KODIK_API_TOKEN.slice(-4) : 'NOT SET',
+  url: KODIK_API_URL || 'NOT SET',
+  hasToken: !!KODIK_API_TOKEN,
+  hasUrl: !!KODIK_API_URL
+});
 
 /**
  * Поиск контента в Kodik по Shikimori ID
@@ -10,15 +17,8 @@ let configCache = null;
  * @returns {Promise<object>} Результат поиска
  */
 export async function searchKodikByShikimoriId(shikimoriId, options = {}) {
-  // Получаем конфигурацию
-  if (!configCache) {
-    configCache = await getEnvConfig();
-  }
-
-  const { KODIK_API_TOKEN, KODIK_API_URL } = configCache;
-
   if (!KODIK_API_TOKEN || !KODIK_API_URL) {
-    throw new Error('Kodik API configuration is missing');
+    throw new Error('Kodik API configuration is missing. Check VITE_KODIK_API_TOKEN and VITE_KODIK_API_URL environment variables.');
   }
 
   const params = new URLSearchParams({
@@ -68,15 +68,8 @@ export async function searchKodikByShikimoriId(shikimoriId, options = {}) {
  * @returns {Promise<object>} Список материалов
  */
 export async function getKodikList(filters = {}) {
-  // Получаем конфигурацию
-  if (!configCache) {
-    configCache = await getEnvConfig();
-  }
-
-  const { KODIK_API_TOKEN, KODIK_API_URL } = configCache;
-
   if (!KODIK_API_TOKEN || !KODIK_API_URL) {
-    throw new Error('Kodik API configuration is missing');
+    throw new Error('Kodik API configuration is missing. Check VITE_KODIK_API_TOKEN and VITE_KODIK_API_URL environment variables.');
   }
 
   const params = new URLSearchParams({
@@ -109,15 +102,8 @@ export async function getKodikList(filters = {}) {
  * @returns {Promise<object>} Информация о сезонах и сериях
  */
 export async function getKodikSeasons(kodikId) {
-  // Получаем конфигурацию
-  if (!configCache) {
-    configCache = await getEnvConfig();
-  }
-
-  const { KODIK_API_TOKEN, KODIK_API_URL } = configCache;
-
   if (!KODIK_API_TOKEN || !KODIK_API_URL) {
-    throw new Error('Kodik API configuration is missing');
+    throw new Error('Kodik API configuration is missing. Check VITE_KODIK_API_TOKEN and VITE_KODIK_API_URL environment variables.');
   }
 
   const params = new URLSearchParams({
