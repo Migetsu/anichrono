@@ -69,9 +69,12 @@
                                 <font-awesome-icon icon="fa-solid fa-play" />
                                 Смотреть сейчас
                             </router-link>
-                            <button class="anime__info-btn secondary-btn">
-                                <font-awesome-icon icon="fa-solid fa-share" />
-                                Поделиться
+                            <button class="anime__info-btn secondary-btn" @click="handleShare" :disabled="isSharing">
+                                <font-awesome-icon 
+                                    :icon="isSharing ? 'fa-solid fa-spinner' : 'fa-solid fa-share'"
+                                    :class="{ spinning: isSharing }"
+                                />
+                                {{ isSharing ? 'Поделиться...' : 'Поделиться' }}
                             </button>
                         </div>
                     </div>
@@ -80,6 +83,15 @@
         </div>
     </main>
     <Footer />
+    
+    <!-- Модальное окно для шаринга -->
+    <ShareModal 
+        :is-visible="showShareModal"
+        :share-result="shareResult"
+        :share-url="currentUrl"
+        @close="closeShareModal"
+        @copy-link="handleCopyLink"
+    />
 </template>
 
 <script setup>
@@ -89,11 +101,19 @@ import DOMPurify from 'dompurify'
 import { fetchAnimeById } from '@/api/searchAnimeById'
 import { useAuthStore } from '@/stores/auth'
 import { useListsStore } from '@/stores/lists'
+import { useShare } from '@/composables/useShare'
 import Footer from '@/components/Footer/Footer.vue'
+import ShareModal from '@/components/ShareModal/ShareModal.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
 const lists = useListsStore()
+
+// Share functionality
+const { isSharing, shareAnime, copyToClipboard } = useShare()
+const showShareModal = ref(false)
+const shareResult = ref(null)
+const currentUrl = ref('')
 
 const anime = ref(null)
 const loading = ref(true)
@@ -251,8 +271,48 @@ const episodesCount = computed(() => {
     return Array.from({ length: n }, (_, i) => i + 1)
 })
 
+// Share functions
+async function handleShare() {
+    if (!anime.value) return
+    
+    try {
+        currentUrl.value = window.location.href
+        const result = await shareAnime(anime.value, currentUrl.value)
+        shareResult.value = result
+        showShareModal.value = true
+    } catch (error) {
+        console.error('Ошибка при шаринге:', error)
+        shareResult.value = { success: false, method: 'error' }
+        showShareModal.value = true
+    }
+}
+
+function closeShareModal() {
+    showShareModal.value = false
+    shareResult.value = null
+}
+
+async function handleCopyLink(url) {
+    try {
+        await copyToClipboard(url)
+        // Можно добавить уведомление об успешном копировании
+    } catch (error) {
+        console.error('Ошибка при копировании:', error)
+    }
+}
+
 </script>
 
 <style scoped lang="scss">
-@import "@/pages/AnimeTitle/AnimeTitle.scss"
+@import "@/pages/AnimeTitle/AnimeTitle.scss";
+
+// Анимация для спиннера
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 </style>
