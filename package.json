@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "predeploy": "npm run build",
+    "deploy": "gp-pages -d dist",
     "build": "vite build",
     "preview": "vite preview",
     "dev:vercel": "vercel dev",
@@ -27,6 +29,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",
+    "gh-pages": "^6.3.0",
     "globby": "^15.0.0",
     "sass": "^1.93.2",
     "strip-comments": "^2.0.1",
