@@ -1,5 +1,5 @@
 <template>
-    <header class="header" :class="{ 'header--hidden': isTransparent }">
+    <header class="header">
         <div class="header__logo">
             <router-link to="/">
                 <span>Ani</span>
@@ -61,10 +61,8 @@ const links = reactive([
     { title: "Популярное", url: "/populars" },
 ]);
 
-const isTransparent = ref(false);
 const query = ref("");
 const results = ref([]);
-let scrollTimeout;
 let searchTimeout;
 const auth = useAuthStore();
 const router = useRouter();
@@ -107,23 +105,7 @@ const closeMenu = () => {
     clearSearch();
 };
 
-const handleScroll = () => {
-    // Не скрываем навбар если бургер-меню открыто
-    if (isMenuOpen.value) {
-        return;
-    }
-    
-    isTransparent.value = true;
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-        isTransparent.value = false;
-    }, 200);
-};
-
-const handleInteraction = () => {
-    isTransparent.value = false;
-    closeMenu();
-};
+// Скрытие навбара при скролле отключено по требованию
 
 const handleSearch = () => {
     clearTimeout(searchTimeout);
@@ -142,14 +124,11 @@ const handleSearch = () => {
 
 onMounted(() => {
     auth.loadToken();
-    window.addEventListener("scroll", handleScroll);
     window.addEventListener("storage", auth.loadToken);
 });
 
 onUnmounted(() => {
-    window.removeEventListener("scroll", handleScroll);
     window.removeEventListener("storage", auth.loadToken);
-    clearTimeout(scrollTimeout);
     clearTimeout(searchTimeout);
 });
 </script>
