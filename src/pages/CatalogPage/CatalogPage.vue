@@ -71,7 +71,7 @@
                     </div>
 
                     <div class="grid-cards">
-                        <RouterLink v-for="a in visible" :key="a.id" :to="`/animes/${a.id}`" class="catalog-card">
+                        <RouterLink v-for="a in visible" :key="a.id" :to="`/watch/${a.id}`" class="catalog-card">
                             <div class="catalog-card__image"
                                 :style="{ backgroundImage: `url(${a.poster.originalUrl})` }"></div>
                             <div class="catalog-card__overlay"></div>
@@ -92,10 +92,6 @@
                                 <div class="catalog-card__genres" v-if="a.genres?.length">
                                     <span v-for="g in a.genres.slice(0, 3)" :key="g.id">{{ g.russian || g.name }}</span>
                                 </div>
-                                <router-link :to="`/watch/${a.id}`" class="catalog-card__watch">
-                                    <font-awesome-icon icon="fa-solid fa-play" />
-                                    <span>Смотреть</span>
-                                </router-link>
                             </div>
                         </RouterLink>
                         <div ref="sentinel" class="sentinel"></div>

@@ -61,7 +61,7 @@
                         </div>
 
                         <div class="timeline-content">
-                            <RouterLink :to="`/animes/${item.anime_id}`" class="timeline-title">
+                            <RouterLink :to="`/watch/${item.anime_id}`" class="timeline-title">
                                 {{ item.anime_title }}
                             </RouterLink>
 

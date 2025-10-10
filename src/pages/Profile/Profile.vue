@@ -66,7 +66,7 @@
                             <font-awesome-icon :icon="getHistoryIcon(item.action)" />
                         </div>
                         <div class="history-item__content">
-                            <RouterLink :to="`/animes/${item.anime_id}`" class="history-item__title">
+                            <RouterLink :to="`/watch/${item.anime_id}`" class="history-item__title">
                                 {{ item.anime_title }}
                             </RouterLink>
                             <div class="history-item__meta">
@@ -139,7 +139,7 @@
                     <div v-else class="anime-grid">
                         <template v-if="filteredAnimeList.length > 0">
                             <RouterLink v-for="rate in filteredAnimeList" :key="rate.id || rate.target_id"
-                                :to="`/animes/${rateId(rate)}`" class="anime-card" v-inview="rate">
+                                :to="`/watch/${rateId(rate)}`" class="anime-card" v-inview="rate">
                                 <div class="anime-card__image" :style="cardBg(rate)"></div>
                                 <div class="anime-card__overlay"></div>
                                 <div class="anime-card__content">

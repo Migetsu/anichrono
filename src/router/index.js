@@ -4,7 +4,6 @@ import HomePage from '@/pages/HomePage/HomePage.vue'
 const routes = [
     { path: '/', name: 'Home', component: HomePage },
     { path: '/catalog', name: 'Catalog', component: () => import('@/pages/CatalogPage/CatalogPage.vue'), props: true },
-    { path: '/animes/:id', name: 'animes', component: () => import('@/pages/AnimeTitle/AnimeTitle.vue'), props: true },
     { path: '/profile', name: 'profile', component: () => import('@/pages/Profile/Profile.vue') },
     { path: '/history', name: 'history', component: () => import('@/pages/HistoryPage/HistoryPage.vue') },
     { path: '/watch/:id', name: 'watch', component: () => import('@/pages/Watch/Watch.vue'), props: true }

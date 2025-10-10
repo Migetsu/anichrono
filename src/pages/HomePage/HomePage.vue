@@ -19,7 +19,7 @@
 
             <ul v-if="results.length > 0 && query.trim().length > 0" class="search-results">
                 <li v-for="a in results" :key="a.id" class="search-item">
-                    <router-link class="search-result" :to="`/animes/${a.id}`" @click="closeMenu">
+                    <router-link class="search-result" :to="`/watch/${a.id}`" @click="closeMenu">
                         <span class="search-result__title">{{ a.russian || a.name }}</span>
                         <span v-if="a.russian && a.name && a.russian !== a.name" class="search-result__subtitle">{{
                             a.name }}</span>
