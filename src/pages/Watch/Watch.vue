@@ -214,29 +214,40 @@ async function loadKodikData(shikimoriId) {
     kodikPlayerUrl.value = ''
     
     try {
+        console.log('Загружаем Kodik данные для ID:', shikimoriId)
         const data = await searchKodikByShikimoriId(shikimoriId)
+        console.log('Kodik ответ:', data)
         
         if (data && data.results && data.results.length > 0) {
             const result = data.results[0]
+            console.log('Первый результат Kodik:', result)
             
             // Загружаем первую серию
             if (result.seasons && result.seasons.length > 0) {
                 const firstSeason = result.seasons[0]
+                console.log('Первый сезон:', firstSeason)
                 
                 if (firstSeason.episodes && firstSeason.episodes.length > 0) {
                     const firstEpisode = firstSeason.episodes[0]
+                    console.log('Первая серия:', firstEpisode)
                     kodikPlayerUrl.value = firstEpisode.link
+                } else {
+                    kodikError.value = 'Нет доступных серий в первом сезоне'
                 }
             } else if (result.link) {
                 // Если нет сезонов, используем прямую ссылку
+                console.log('Используем прямую ссылку:', result.link)
                 kodikPlayerUrl.value = result.link
+            } else {
+                kodikError.value = 'Нет доступных ссылок для воспроизведения'
             }
         } else {
+            console.log('Нет результатов от Kodik API')
             kodikError.value = 'Аниме не найдено в базе Kodik'
         }
     } catch (e) {
         console.error('Ошибка загрузки Kodik данных:', e)
-        kodikError.value = 'Ошибка загрузки плеера'
+        kodikError.value = `Ошибка загрузки плеера: ${e.message || e}`
     } finally {
         isLoadingKodik.value = false
     }

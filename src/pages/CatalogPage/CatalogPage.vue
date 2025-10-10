@@ -200,54 +200,29 @@ async function fetchPage() {
     loading.value = true
     try {
         const order = sortBy.value
-        // Разворачиваем диапазоны сезонов в набор лет
-        const yearsArray = []
-        // Подготовим набор серверных комбинаций
-        const statusesList = statuses.value.length ? [...new Set(statuses.value)] : [undefined]
-        const kindsList = [undefined]
-        const yearsList = [undefined]
+        const searchQuery = query.value?.trim() || undefined
+        const statusFilter = statuses.value.length === 1 ? statuses.value[0] : null
 
-        const filtersActive = Boolean(statuses.value.length || (query.value || '').trim())
-
-        const fetchComboPage = (pg, st) => searchCatalog({
-            page: pg,
+        const arr = await searchCatalog({
+            page: page.value,
             limit,
-            search: query.value || undefined,
-            status: st,
+            search: searchQuery,
+            status: statusFilter,
             order,
-        }).catch(() => [])
+        })
 
-        const merged = []
-        const seen = new Set()
-
-        if (filtersActive) {
-            for (const st of statusesList) {
-                let pg = 1
-                while (true) {
-                    const arr = await fetchComboPage(pg, st)
-                    if (!Array.isArray(arr) || arr.length === 0) break
-                    for (const a of arr) {
-                        if (!a || seen.has(a.id)) continue
-                        seen.add(a.id)
-                        merged.push(a)
-                    }
-                    if (arr.length < limit) break
-                    pg += 1
-                }
-            }
+        if (!Array.isArray(arr)) {
+            console.error('Invalid response from searchCatalog:', arr)
             hasMore.value = false
-        } else {
-            const arr = await fetchComboPage(page.value, statusesList[0])
-            for (const a of arr) {
-                if (!a || seen.has(a.id)) continue
-                seen.add(a.id)
-                merged.push(a)
-            }
-            hasMore.value = Array.isArray(arr) && arr.length === limit
+            return
         }
 
-        if (page.value === 1) items.value = []
-        items.value.push(...merged.filter(Boolean))
+        if (page.value === 1) {
+            items.value = []
+        }
+        
+        items.value.push(...arr.filter(Boolean))
+        hasMore.value = arr.length === limit
     } catch (e) {
         console.error('fetchPage error', e)
         hasMore.value = false
@@ -269,27 +244,13 @@ function loadNext() {
     fetchPage()
 }
 
-const filtered = computed(() => {
-    const q = (query.value || '').toLowerCase()
-    return items.value.filter(a => {
-        const byQ = !q || (a.russian || '').toLowerCase().includes(q) || (a.name || '').toLowerCase().includes(q)
-        const byStatuses = !statuses.value.length || statuses.value.includes(a.status)
-        return byQ && byStatuses
-    })
-})
-
 const visible = computed(() => {
-    const arr = [...filtered.value]
-    switch (sortBy.value) {
-        case 'ranked':
-            return arr.sort((a, b) => (b.score || 0) - (a.score || 0))
-        case 'aired_on':
-            return arr.sort((a, b) => (b.airedOn?.year || 0) - (a.airedOn?.year || 0))
-        case 'title':
-            return arr.sort((a, b) => (a.russian || a.name || '').localeCompare(b.russian || b.name || ''))
-        default:
-            return arr
+    // Если у нас есть несколько статусов, фильтруем на клиенте
+    if (statuses.value.length > 1) {
+        return items.value.filter(a => statuses.value.includes(a.status))
     }
+    // Иначе возвращаем как есть, так как фильтрация уже произошла на сервере
+    return items.value
 })
 function resetFilters() {
     query.value = ''
@@ -317,15 +278,17 @@ function onToggle(key, evt) {
     })
 }
 
-watch(query, (v, o) => {
-    if (v === o) return
+watch(query, (newValue, oldValue) => {
+    if (newValue === oldValue) return
     debounceReload()
 })
 
 let debounceTimer = null
 function debounceReload() {
     if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => reloadFromStart(), 400)
+    debounceTimer = setTimeout(() => {
+        reloadFromStart()
+    }, 500)
 }
 </script>
 

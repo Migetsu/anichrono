@@ -18,21 +18,73 @@ function buildFilters({ genres = [], year = null, status = null, kind = null, ra
 
 export async function searchCatalog({ page = 1, limit = 20, search = '', status = null, order = 'popularity' } = {}) {
   const safeOrder = ORDER_WHITELIST.has(order) ? order : 'popularity'
-  const filtersComment = ''
-  const QUERY = `
-    query ($page: Int, $limit: Int, $search: String, $status: AnimeStatusString) {
-      animes(page: $page, limit: $limit, search: $search, status: $status, order: ${safeOrder}) {
-        id
-        name
-        russian
-        score
-        status
-        poster { originalUrl }
-        genres { id name russian }
-        airedOn { year month }
+  
+  // Создаем разные запросы для разных типов сортировки
+  let QUERY = ''
+  let variables = { page, limit, search: search || null, status: status || null }
+  
+  if (safeOrder === 'popularity') {
+    QUERY = `
+      query ($page: Int, $limit: Int, $search: String, $status: AnimeStatusString) {
+        animes(page: $page, limit: $limit, search: $search, status: $status, order: popularity) {
+          id
+          name
+          russian
+          score
+          status
+          poster { originalUrl }
+          genres { id name russian }
+          airedOn { year month }
+        }
       }
-    }
-  `
+    `
+  } else if (safeOrder === 'ranked') {
+    QUERY = `
+      query ($page: Int, $limit: Int, $search: String, $status: AnimeStatusString) {
+        animes(page: $page, limit: $limit, search: $search, status: $status, order: ranked) {
+          id
+          name
+          russian
+          score
+          status
+          poster { originalUrl }
+          genres { id name russian }
+          airedOn { year month }
+        }
+      }
+    `
+  } else if (safeOrder === 'aired_on') {
+    QUERY = `
+      query ($page: Int, $limit: Int, $search: String, $status: AnimeStatusString) {
+        animes(page: $page, limit: $limit, search: $search, status: $status, order: aired_on) {
+          id
+          name
+          russian
+          score
+          status
+          poster { originalUrl }
+          genres { id name russian }
+          airedOn { year month }
+        }
+      }
+    `
+  } else {
+    // Fallback на popularity
+    QUERY = `
+      query ($page: Int, $limit: Int, $search: String, $status: AnimeStatusString) {
+        animes(page: $page, limit: $limit, search: $search, status: $status, order: popularity) {
+          id
+          name
+          russian
+          score
+          status
+          poster { originalUrl }
+          genres { id name russian }
+          airedOn { year month }
+        }
+      }
+    `
+  }
 
   // Формируем варианты запроса с учётом е/ё для улучшения поиска по-русски
   const variants = new Set()
@@ -43,11 +95,12 @@ export async function searchCatalog({ page = 1, limit = 20, search = '', status 
     if (q.includes('ё') || q.includes('Ё')) variants.add(q.replace(/ё/g, 'е').replace(/Ё/g, 'Е'))
   }
 
-  const requests = Array.from(variants).map(v =>
-    shikiGQL(QUERY, { page, limit, search: v || null, status: status || null })
+  const requests = Array.from(variants).map(v => {
+    const requestVariables = { ...variables, search: v || null }
+    return shikiGQL(QUERY, requestVariables)
       .then(r => Array.isArray(r?.animes) ? r.animes : [])
       .catch(() => [])
-  )
+  })
   const results = await Promise.all(requests)
 
   // Сливаем и убираем дубликаты по id, сохраняя порядок первой выдачи

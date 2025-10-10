@@ -36,38 +36,6 @@
         <h3 class="popular__title">Популярное сейчас</h3>
         <TitleCard v-if="popularStore.popular.length" :items="popularStore.popular" />
     </section>
-    <section class="features">
-        <h3 class="features__title">Почему выбирают AniChrono</h3>
-        <div class="features-container">
-            <div class="features__content">
-                <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-circle-play"
-                            class="features-icon" /></div>
-                    <h4 class="features__content-title">HD & 4K качество</h4>
-                    <p class="features__content-desc">Наслаждайтесь любимыми аниме в высочайшем качестве с поддержкой 4K
-                        разрешения</p>
-                </div>
-                <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-clock"
-                            class="features-icon" /></div>
-                    <h4 class="features__content-title">Эксклюзивные релизы</h4>
-                    <p class="features__content-desc">Первыми смотрите новые серии сразу после выхода в Японии</p>
-                </div>
-                <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-closed-captioning"
-                            class="features-icon" /></div>
-                    <h4 class="features__content-title">Профессиональные субтитры</h4>
-                    <p class="features__content-desc">Качественный перевод на русский язык от ведущих студий</p>
-                </div>
-                <div class="features__content-item">
-                    <div class="features__content-icon"><font-awesome-icon icon="fa-solid fa-heart"
-                            class="features-icon" /></div>
-                    <h4 class="features__content-title">Персональные рекомендации</h4>
-                    <p class="features__content-desc">Индивидуальные подборки на основе ваших предпочтений</p>
-                </div>
-            </div>
-        </div>
-    </section>
     <Footer />
 </template>
 

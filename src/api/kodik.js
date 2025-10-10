@@ -1,5 +1,7 @@
-const KODIK_API_TOKEN = '0ee37704c7a66a5cb289fe2d5c78e884';
-const KODIK_API_BASE = 'https://kodikapi.com';
+import { getEnvConfig } from './envConfig.js';
+
+// Кэш для конфигурации
+let configCache = null;
 
 /**
  * Поиск контента в Kodik по Shikimori ID
@@ -8,6 +10,17 @@ const KODIK_API_BASE = 'https://kodikapi.com';
  * @returns {Promise<object>} Результат поиска
  */
 export async function searchKodikByShikimoriId(shikimoriId, options = {}) {
+  // Получаем конфигурацию
+  if (!configCache) {
+    configCache = await getEnvConfig();
+  }
+
+  const { KODIK_API_TOKEN, KODIK_API_URL } = configCache;
+
+  if (!KODIK_API_TOKEN || !KODIK_API_URL) {
+    throw new Error('Kodik API configuration is missing');
+  }
+
   const params = new URLSearchParams({
     token: KODIK_API_TOKEN,
     shikimori_id: String(shikimoriId),
@@ -18,14 +31,30 @@ export async function searchKodikByShikimoriId(shikimoriId, options = {}) {
     ...options
   });
 
+  const url = `${KODIK_API_URL}/search?${params}`;
+  console.log('Kodik API запрос:', {
+    url: url.replace(KODIK_API_TOKEN, '***'),
+    shikimoriId,
+    token: KODIK_API_TOKEN ? '***' + KODIK_API_TOKEN.slice(-4) : 'NOT SET'
+  });
+
   try {
-    const response = await fetch(`${KODIK_API_BASE}/search?${params}`);
+    const response = await fetch(url);
+    
+    console.log('Kodik API ответ:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Kodik API ошибка:', errorText);
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
     
     const data = await response.json();
+    console.log('Kodik API данные:', data);
     return data;
   } catch (error) {
     console.error('Ошибка поиска в Kodik API:', error);
@@ -39,6 +68,17 @@ export async function searchKodikByShikimoriId(shikimoriId, options = {}) {
  * @returns {Promise<object>} Список материалов
  */
 export async function getKodikList(filters = {}) {
+  // Получаем конфигурацию
+  if (!configCache) {
+    configCache = await getEnvConfig();
+  }
+
+  const { KODIK_API_TOKEN, KODIK_API_URL } = configCache;
+
+  if (!KODIK_API_TOKEN || !KODIK_API_URL) {
+    throw new Error('Kodik API configuration is missing');
+  }
+
   const params = new URLSearchParams({
     token: KODIK_API_TOKEN,
     with_seasons: 'true',
@@ -49,7 +89,7 @@ export async function getKodikList(filters = {}) {
   });
 
   try {
-    const response = await fetch(`${KODIK_API_BASE}/list?${params}`);
+    const response = await fetch(`${KODIK_API_URL}/list?${params}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -69,6 +109,17 @@ export async function getKodikList(filters = {}) {
  * @returns {Promise<object>} Информация о сезонах и сериях
  */
 export async function getKodikSeasons(kodikId) {
+  // Получаем конфигурацию
+  if (!configCache) {
+    configCache = await getEnvConfig();
+  }
+
+  const { KODIK_API_TOKEN, KODIK_API_URL } = configCache;
+
+  if (!KODIK_API_TOKEN || !KODIK_API_URL) {
+    throw new Error('Kodik API configuration is missing');
+  }
+
   const params = new URLSearchParams({
     token: KODIK_API_TOKEN,
     id: String(kodikId),
@@ -78,7 +129,7 @@ export async function getKodikSeasons(kodikId) {
   });
 
   try {
-    const response = await fetch(`${KODIK_API_BASE}/list?${params}`);
+    const response = await fetch(`${KODIK_API_URL}/list?${params}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
