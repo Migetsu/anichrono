@@ -9,19 +9,19 @@
         <nav class="header__nav">
             <ul class="header__nav-list">
                 <li class="header__nav-item"><router-link class="header__nav-link" to="/">Главная</router-link></li>
-                <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Каталог</router-link>
+                <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Каталог</router-link></li>
+                <li v-if="!auth.isLoggedIn" class="header__nav-item">
+                    <button @click.prevent="auth.login()" class="header__nav-link profile__login">Войти</button>
                 </li>
-                <li class="header__nav-item header__nav-item--profile"><button class="header__nav-link profile__login" @click="goProfile">Профиль</button>
+                <li v-else class="header__nav-item">
+                    <router-link to="/profile" class="header__nav-link profile__link">
+                        <img v-if="auth.user?.image && auth.user.image.x160"
+                            :src="auth.user.image.x160" alt="avatar" class="profile__avatar" />
+                        <span v-if="auth.user?.nickname" class="profile__nickname">{{ auth.user.nickname }}</span>
+                    </router-link>
                 </li>
             </ul>
         </nav>
-        <div class="header__profile profile">
-            <button v-if="!auth.isLoggedIn" @click.prevent="auth.login()" class="header__nav-link profile__login">Войти</button>
-            <div v-else class="profile_info">
-                <router-link to="/profile"><img v-if="auth.user?.image && auth.user.image.x160"
-                        :src="auth.user.image.x160" alt="avatar" class="profile__avatar" /></router-link>
-            </div>
-        </div>
 
         <!-- Burger button visible on md and below -->
         <button class="header__burger" :class="{ active: isMenuOpen }" :aria-expanded="isMenuOpen ? 'true' : 'false'" aria-controls="mobile-menu" @click="toggleMenu">
@@ -41,8 +41,11 @@
                 <li class="mobile-menu__item">
                     <router-link class="mobile-menu__link" to="/catalog" @click="closeMenu">Каталог</router-link>
                 </li>
-                <li class="mobile-menu__item">
-                    <button class="mobile-menu__link" @click="() => { goProfile(); }">Профиль</button>
+                <li v-if="!auth.isLoggedIn" class="mobile-menu__item">
+                    <button class="mobile-menu__link" @click="() => { auth.login(); closeMenu(); }">Войти</button>
+                </li>
+                <li v-else class="mobile-menu__item">
+                    <router-link class="mobile-menu__link" to="/profile" @click="closeMenu">Профиль</router-link>
                 </li>
             </ul>
         </nav>
