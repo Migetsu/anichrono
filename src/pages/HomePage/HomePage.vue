@@ -33,7 +33,7 @@
         <TitleCard v-if="latestStore.latest.length" :items="latestStore.latest" />
     </section>
     <section class="popular">
-        <h3 class="popular__title">Популярное сейчас</h3>
+        <h3 class="popular__title">Популярное за всё время</h3>
         <TitleCard v-if="popularStore.popular.length" :items="popularStore.popular" />
     </section>
     <Footer />

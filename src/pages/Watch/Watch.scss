@@ -6,29 +6,36 @@
     min-height: 100vh;
     background: linear-gradient(45deg, $primary-bg, $secondary-bg);
     padding-top: 100px;
+    padding-bottom: 48px;
 
     @include respond(xxl) {
         padding-top: 120px;
+        padding-bottom: 56px;
     }
 
     @include respond(xl) {
         padding-top: 100px;
+        padding-bottom: 48px;
     }
 
     @include respond(lg) {
         padding-top: 90px;
+        padding-bottom: 40px;
     }
 
     @include respond(md) {
         padding-top: 80px;
+        padding-bottom: 32px;
     }
 
     @include respond(sm) {
         padding-top: 72px;
+        padding-bottom: 24px;
     }
 
     @include respond(xs) {
         padding-top: 64px;
+        padding-bottom: 20px;
     }
 
 
@@ -251,77 +258,40 @@
     }
 
     &__info {
-        padding-bottom: 48px;
+        background: rgba(26, 26, 46, 0.8);
+        border-radius: 15px;
+        padding: 32px;
+        border: 1px solid rgba(255, 107, 107, 0.2);
+        backdrop-filter: blur(10px);
 
         @include respond(xxl) {
-            padding-bottom: 56px;
+            padding: 40px;
         }
 
         @include respond(xl) {
-            padding-bottom: 48px;
+            padding: 32px;
         }
 
         @include respond(lg) {
-            padding-bottom: 32px;
+            padding: 28px;
         }
 
         @include respond(md) {
-            padding-bottom: 24px;
-            padding-left: 16px;
-            padding-right: 16px;
+            padding: 24px;
         }
 
         @include respond(sm) {
-            padding-bottom: 20px;
-            padding-left: 12px;
-            padding-right: 12px;
+            padding: 16px;
+            border-radius: 8px;
         }
 
         @include respond(xs) {
-            padding-bottom: 16px;
-            padding-left: 8px;
-            padding-right: 8px;
+            padding: 12px;
+            border-radius: 0;
+            margin: 0 -12px;
         }
 
         & .anime__details {
-            background: rgba(26, 26, 46, 0.8);
-            border-radius: 15px;
-            padding: 32px;
-            border: 1px solid rgba(255, 107, 107, 0.2);
-            backdrop-filter: blur(10px);
-
-            @include respond(xxl) {
-                padding: 40px;
-                border-radius: 18px;
-            }
-
-            @include respond(xl) {
-                padding: 32px;
-                border-radius: 15px;
-            }
-
-            @include respond(lg) {
-                padding: 28px;
-                border-radius: 12px;
-            }
-
-            @include respond(md) {
-                padding: 20px;
-                border-radius: 8px;
-                margin: 0 -4px;
-            }
-
-            @include respond(sm) {
-                padding: 16px;
-                border-radius: 6px;
-                margin: 0 -2px;
-            }
-
-            @include respond(xs) {
-                padding: 12px;
-                border-radius: 4px;
-                margin: 0;
-            }
 
             &-title {
                 font-family: "Orbitron";

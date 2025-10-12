@@ -14,8 +14,12 @@
       <div class="share-modal__content">
         <p class="share-modal__message">{{ modalMessage }}</p>
         
-        <div v-if="showCopyButton" class="share-modal__actions">
-          <button class="share-modal__btn primary" @click="copyLink">
+        <div v-if="showActionButtons" class="share-modal__actions">
+          <button v-if="isNativeShareSupported" class="share-modal__btn primary" @click="nativeShare">
+            <font-awesome-icon icon="fa-solid fa-share" />
+            Поделиться
+          </button>
+          <button class="share-modal__btn secondary" @click="copyLink">
             <font-awesome-icon icon="fa-solid fa-copy" />
             Скопировать ссылку
           </button>
@@ -43,7 +47,12 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close', 'copy-link'])
+const emit = defineEmits(['close', 'copy-link', 'native-share'])
+
+// Проверяем поддержку нативного шаринга
+const isNativeShareSupported = computed(() => {
+  return typeof navigator !== 'undefined' && navigator.share
+})
 
 const modalIcon = computed(() => {
   if (!props.shareResult) return 'fa-solid fa-share'
@@ -71,6 +80,9 @@ const modalTitle = computed(() => {
         return 'Готово!'
     }
   } else {
+    if (props.shareResult.method === 'cancelled') {
+      return 'Поделиться'
+    }
     return 'Ошибка'
   }
 })
@@ -89,17 +101,27 @@ const modalMessage = computed(() => {
         return 'Поделились успешно!'
     }
   } else {
+    if (props.shareResult.method === 'cancelled') {
+      return 'Поделитесь этим аниме с друзьями!'
+    }
     return 'Не удалось поделиться контентом. Попробуйте еще раз.'
   }
 })
 
-const showCopyButton = computed(() => {
-  return props.shareResult?.success && 
-         (props.shareResult.method === 'clipboard' || props.shareResult.method === 'clipboard-fallback')
+const showActionButtons = computed(() => {
+  // Показываем кнопки действий, если нет результата (начальное состояние), если результат неуспешный или если пользователь отменил
+  return !props.shareResult || 
+         !props.shareResult.success || 
+         props.shareResult.method === 'error' ||
+         props.shareResult.method === 'cancelled'
 })
 
 function close() {
   emit('close')
+}
+
+function nativeShare() {
+  emit('native-share')
 }
 
 function copyLink() {

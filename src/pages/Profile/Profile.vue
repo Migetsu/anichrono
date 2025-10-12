@@ -57,7 +57,7 @@
             <section class="profile-section history-section" v-if="userHistory.length">
                 <RouterLink to="/history" class="section-title section-title--link">
                     <font-awesome-icon icon="fa-solid fa-clock-rotate-left" />
-                    История
+                    История изменений
                     <font-awesome-icon icon="fa-solid fa-chevron-right" class="section-title__arrow" />
                 </RouterLink>
                 <div class="history-list">

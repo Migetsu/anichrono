@@ -11,7 +11,7 @@
                 <li class="header__nav-item"><router-link class="header__nav-link" to="/">Главная</router-link></li>
                 <li class="header__nav-item"><router-link class="header__nav-link" to="/catalog">Каталог</router-link>
                 </li>
-                <li class="header__nav-item"><button class="header__nav-link profile__login" @click="goProfile">Профиль</button>
+                <li class="header__nav-item header__nav-item--profile"><button class="header__nav-link profile__login" @click="goProfile">Профиль</button>
                 </li>
             </ul>
         </nav>

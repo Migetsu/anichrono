@@ -230,6 +230,13 @@
                 gap: 8px;
             }
         }
+
+        // Скрываем кнопку "Профиль" на экранах больше 768px
+        &-item--profile {
+            @media (min-width: 769px) {
+                display: none;
+            }
+        }
     }
 
     // Burger button (hidden by default on desktop)
