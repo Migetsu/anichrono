@@ -686,95 +686,160 @@
 }
 
 // Mobile menu overlay
-.mobile-menu {
+.mobile-menu-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10, 10, 10, 0.9);
+    background: rgba(10, 10, 10, 0.7);
     backdrop-filter: blur(6px);
-    z-index: 1100; // below header (header is 1200)
-    display: block;
+    z-index: 1099;
+    
+    // Анимация для overlay
+    &.slide-right-enter-active,
+    &.slide-right-leave-active {
+        transition: opacity .3s ease;
+    }
+    
+    &.slide-right-enter-from,
+    &.slide-right-leave-to {
+        opacity: 0;
+    }
+}
+
+// Mobile menu sidebar
+#mobile-menu.mobile-menu {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    width: 280px !important;
+    height: 100vh !important;
+    background: rgba(10, 10, 10, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 1100 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 80px 0 20px 0 !important;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.4) !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.3s ease !important;
+    
+    &.mobile-menu--open {
+        transform: translateX(0) !important;
+    }
+
+    // Добавляем декоративные элементы как на других страницах
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(255, 107, 107, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(78, 205, 196, 0.08) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    @include respond(sm) {
+        width: 260px;
+        padding: 70px 0 20px 0;
+    }
+
+    @include respond(xs) {
+        width: 240px;
+        padding: 60px 0 20px 0;
+    }
 
     &__list {
-        width: 100vw;
-        height: calc(100vh - 64px); // учитываем высоту хедера
-        margin-top: 64px;
+        list-style: none;
         padding: 0;
+        margin: 0;
         display: flex;
         flex-direction: column;
-        align-items: stretch;
-        justify-content: space-evenly;
-        gap: 0;
-
-        @include respond(sm) {
-            height: calc(100vh - 60px);
-            margin-top: 60px;
-        }
-
-        @include respond(xs) {
-            height: calc(100vh - 56px);
-            margin-top: 56px;
-        }
+        gap: 1rem;
+        padding: 0 20px;
     }
 
     &__item {
-        flex: 1;
+        opacity: 0;
+        transform: translateX(30px);
+        animation: slideInRight 0.3s ease forwards;
+
+        &:nth-child(1) { animation-delay: 0.1s; }
+        &:nth-child(2) { animation-delay: 0.2s; }
+        &:nth-child(3) { animation-delay: 0.3s; }
+        &:nth-child(4) { animation-delay: 0.4s; }
     }
 
     &__link {
-        color: #fff;
-        padding: 0;
-        border-radius: 0;
-        font-family: "Comfortaa";
-        font-size: 24px;
-        font-weight: 600;
-        transition: background .2s ease, color .2s ease;
-        text-align: center;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-top: 1px solid rgba(255, 107, 107, 0.12);
-        border-bottom: 1px solid rgba(255, 107, 107, 0.12);
-        background: transparent;
+        color: $text-primary !important;
+        text-decoration: none !important;
+        font-family: "Comfortaa" !important;
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        transition: all 0.3s ease !important;
+        background: linear-gradient(135deg, rgba(26, 26, 46, 0.6) 0%, rgba(22, 33, 62, 0.6) 100%) !important;
+        backdrop-filter: blur(5px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        display: block !important;
+        text-align: left !important;
+        position: relative !important;
+        z-index: 1 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
 
         @include respond(sm) {
-            font-size: 22px;
+            font-size: 1rem !important;
+            padding: 10px 14px !important;
         }
 
         @include respond(xs) {
-            font-size: 20px;
+            font-size: 0.95rem !important;
+            padding: 8px 12px !important;
         }
 
         &:hover {
-            color: $accent-coral;
-            background: rgba(255, 107, 107, 0.08);
-            text-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(78, 205, 196, 0.15) 100%) !important;
+            color: $accent-coral !important;
+            transform: translateX(5px) !important;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2) !important;
+            border-color: rgba(255, 107, 107, 0.3) !important;
         }
 
         &.router-link-exact-active {
-            color: $accent-coral;
-            background: rgba(255, 107, 107, 0.12);
-            text-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
+            color: $accent-coral !important;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(78, 205, 196, 0.2) 100%) !important;
+            border-color: rgba(255, 107, 107, 0.4) !important;
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3) !important;
         }
 
         &:focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.6), 0 0 0 5px rgba(255, 107, 107, 0.45);
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.3) !important;
         }
+    }
+
+    // Дополнительные стили для кнопки "Войти"
+    button.mobile-menu__link {
+        background: none !important;
+        border: none !important;
+        cursor: pointer !important;
+        font-family: "Comfortaa" !important;
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
     }
 }
 
-// Slide-in from right transition
-.slide-right-enter-active,
-.slide-right-leave-active {
-    transition: transform .2s ease, opacity .2s ease;
-}
 
-.slide-right-enter-from,
-.slide-right-leave-to {
-    transform: translateX(100%);
-    opacity: 0;
+// Animation for menu items
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 // Responsive rules using mixins
