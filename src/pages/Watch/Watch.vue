@@ -166,10 +166,43 @@ import { useListsStore } from '@/stores/lists'
 import { useShare } from '@/composables/useShare'
 import Footer from '@/components/Footer/Footer.vue'
 import ShareModal from '@/components/ShareModal/ShareModal.vue'
+import { useHead } from '@unhead/vue'
 
 const route = useRoute()
 const auth = useAuthStore()
 const lists = useListsStore()
+
+// SEO
+useHead({
+    title: computed(() => anime.value ? (anime.value.russian || anime.value.name) : 'Загрузка...'),
+    meta: [
+        { 
+            name: 'description', 
+            content: computed(() => {
+                if (!anime.value) return ''
+                // Убираем HTML теги для meta description
+                const text = anime.value.description?.replace(/<[^>]*>/g, '') || ''
+                return text.slice(0, 160) + (text.length > 160 ? '...' : '')
+            }) 
+        },
+        {
+            property: 'og:title',
+            content: computed(() => anime.value ? (anime.value.russian || anime.value.name) : '')
+        },
+        {
+            property: 'og:description',
+            content: computed(() => {
+                if (!anime.value) return ''
+                const text = anime.value.description?.replace(/<[^>]*>/g, '') || ''
+                return text.slice(0, 200) + (text.length > 200 ? '...' : '')
+            })
+        },
+        {
+            property: 'og:image',
+            content: computed(() => anime.value?.poster?.originalUrl || '')
+        }
+    ]
+})
 
 // Share functionality
 const { isSharing, shareWatchPage, copyToClipboard } = useShare()

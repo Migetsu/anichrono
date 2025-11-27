@@ -104,20 +104,6 @@
             </div>
         </div>
     </div>
-    <Footer />
-</template>
-
-<script setup>
-import { computed, ref, onMounted, watch } from 'vue'
-import { RouterLink } from 'vue-router'
-import { searchCatalog } from '@/api/searchCatalog'
-import Footer from '@/components/Footer/Footer.vue'
-
-const query = ref('')
-const sortBy = ref('popularity')
-// расширенные фильтры
-const statuses = ref([])
-// Убраны прочие фильтры — остаётся статус + поиск + сортировка
 
 const page = ref(1)
 const limit = 20

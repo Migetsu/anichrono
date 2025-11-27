@@ -15,10 +15,15 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
 
+import { createHead } from '@unhead/vue'
+
 const app = createApp(App)
 const pinia = createPinia()
+const head = createHead()
+
 app.use(pinia)
 app.use(router)
+app.use(head)
 
 library.add(fas, far, fab)
 app.component('font-awesome-icon', FontAwesomeIcon)
