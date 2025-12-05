@@ -47,16 +47,7 @@ import Footer from '@/components/Footer/Footer.vue'
 import TypedTitle from '@/components/TypedTitle/TypedTitle.vue'
 import { useLatestStore } from '@/stores/latestStore'
 import { usePopularStore } from '@/stores/popularStore'
-import { usePopularStore } from '@/stores/popularStore'
 import { searchAnimes } from "@/api/searchAnimes";
-import { useHead } from '@unhead/vue'
-
-useHead({
-    title: 'Главная',
-    meta: [
-        { name: 'description', content: 'AniChrono - ваш проводник в мир аниме. Смотрите новинки и популярные тайтлы в высоком качестве.' }
-    ]
-})
 
 const latestStore = useLatestStore()
 const popularStore = usePopularStore()
