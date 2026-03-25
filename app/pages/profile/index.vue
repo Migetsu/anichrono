@@ -293,13 +293,19 @@ function posterOf(anime: ShikimoriAnimeListItem | null): string {
 
 .profile-hero {
   position: relative;
-  height: 200px; // Compact height
+  min-height: 200px;
   display: flex;
   align-items: flex-end;
   padding-bottom: 2rem;
   margin-bottom: 20px;
-  overflow: hidden;
-  background: none; // REMOVED ALL HERO BACKGROUNDS
+  overflow: visible;
+  background: none;
+
+  @media (max-width: 768px) {
+    min-height: unset;
+    align-items: center;
+    padding: 2rem 0;
+  }
 }
 
 
@@ -310,7 +316,10 @@ function posterOf(anime: ShikimoriAnimeListItem | null): string {
 
   @media (max-width: 768px) {
     flex-direction: column;
+    align-items: center;
     text-align: center;
+    width: 100%;
+    gap: 16px;
   }
 
   &-avatar-wrap {
