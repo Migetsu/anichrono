@@ -1,0 +1,42 @@
+@mixin Logo {
+    font-size: 32px;
+    font-weight: 800;
+}
+
+@mixin Title {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+@mixin Text-base {
+    font-size: 18px;
+    font-weight: 400;
+}
+
+$breakpoints: (
+    mobile-s: 320px,
+    mobile-m: 375px,
+    mobile-l: 425px,
+    tablet: 768px,
+    tablet-l: 991px,
+    laptop: 1024px,
+    laptop-l: 1440px,
+    fhd: 1920px
+) !default;
+
+// --------- Миксин для медиазапросов ---------
+// Пример: @include respond(md) { ... }
+@mixin respond($point) {
+    $val: map-get($breakpoints, $point
+    );
+
+@if $val {
+    @media (min-width: $val) {
+        @content;
+    }
+}
+
+@else {
+    @warn "respond: брейкпоинт `#{$point}` не найден в $breakpoints.";
+}
+}
