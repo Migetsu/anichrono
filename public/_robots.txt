@@ -1,2 +1,4 @@
 User-Agent: *
 Disallow:
+
+Sitemap: https://anichrono.vercel.app/sitemap.xml
