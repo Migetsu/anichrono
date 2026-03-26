@@ -5,16 +5,18 @@ import { useSearch } from '@/composables/useSearch'
 import FilterSidebar from '@/components/catalog/FilterSidebar.vue'
 import AnimeCardSkeleton from '@/components/skeletons/AnimeCardSkeleton.vue'
 
+const siteUrl = 'https://anichrono.vercel.app'
+
 useSeoMeta({
   title: 'Каталог аниме - AniChrono',
   ogTitle: 'Каталог аниме - AniChrono',
   description: 'Полный каталог аниме. Найдите любимые тайтлы по жанрам, годам и рейтингу.',
   ogDescription: 'Полный каталог аниме. Найдите любимые тайтлы по жанрам, годам и рейтингу.',
-  ogImage: '/logo.jpg',
+  ogImage: `${siteUrl}/logo.jpg`,
   twitterCard: 'summary_large_image',
   twitterTitle: 'Каталог аниме - AniChrono',
   twitterDescription: 'Полный каталог аниме. Найдите любимые тайтлы по жанрам, годам и рейтингу.',
-  twitterImage: '/logo.jpg'
+  twitterImage: `${siteUrl}/logo.jpg`
 })
 
 const {

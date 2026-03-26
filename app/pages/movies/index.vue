@@ -4,16 +4,18 @@ import { useIntersectionObserver } from '@vueuse/core'
 import { useFilmSearch } from '@/composables/useFilmSearch'
 import FilmCard from '@/components/FilmCard.vue'
 
+const siteUrl = 'https://anichrono.vercel.app'
+
 useSeoMeta({
   title: 'Кино и Сериалы - AniChrono',
   ogTitle: 'Кино и Сериалы - AniChrono',
   description: 'Каталог фильмов и сериалов. Смотрите лучшие новинки кино в хорошем качестве.',
   ogDescription: 'Каталог фильмов и сериалов. Смотрите лучшие новинки кино в хорошем качестве.',
-  ogImage: '/logo.jpg',
+  ogImage: `${siteUrl}/logo.jpg`,
   twitterCard: 'summary_large_image',
   twitterTitle: 'Кино и Сериалы - AniChrono',
   twitterDescription: 'Каталог фильмов и сериалов. Смотрите лучшие новинки кино в хорошем качестве.',
-  twitterImage: '/logo.jpg'
+  twitterImage: `${siteUrl}/logo.jpg`
 })
 
 const {
