@@ -19,9 +19,9 @@ const currentYear = new Date().getFullYear()
           <span class="footer__logo-ani">Ani</span><span class="footer__logo-chrono">Chrono</span>
         </NuxtLink>
         <p class="footer__tagline">Смотри аниме. Следи за выходом.</p>
-        <a href="https://t.me/anichrono" target="_blank" rel="noopener noreferrer" class="footer__telegram">
+        <a href="https://t.me/m1getsu" target="_blank" rel="noopener noreferrer" class="footer__telegram">
           <Icon name="simple-icons:telegram" size="18" />
-          <span>Telegram канал</span>
+          <span>Написать мне</span>
         </a>
       </div>
 
