@@ -2,9 +2,18 @@
 import { storeToRefs } from 'pinia'
 import { useScheduleStore } from '@/stores/schedule'
 
+const siteUrl = 'https://anichrono.vercel.app'
+
 useSeoMeta({
-  title: 'Календарь онгоингов - AniChrono',
-  description: 'Расписание выхода новых серий аниме. Следите за выходом любимых тайтлов.'
+  title: 'Календарь аниме — расписание онгоингов | AniChrono',
+  ogTitle: 'Календарь аниме — расписание онгоингов | AniChrono',
+  description: 'Расписание выхода новых эпизодов аниме по дням недели. Следите за онгоингами и не пропускайте выход новых серий.',
+  ogDescription: 'Расписание выхода новых эпизодов аниме по дням недели. Следите за онгоингами и не пропускайте выход новых серий.',
+  ogImage: `${siteUrl}/logo.jpg`,
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'Календарь аниме — расписание онгоингов | AniChrono',
+  twitterDescription: 'Расписание выхода новых эпизодов аниме по дням недели.',
+  twitterImage: `${siteUrl}/logo.jpg`
 })
 
 const scheduleStore = useScheduleStore()

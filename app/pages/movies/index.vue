@@ -7,14 +7,14 @@ import FilmCard from '@/components/FilmCard.vue'
 const siteUrl = 'https://anichrono.vercel.app'
 
 useSeoMeta({
-  title: 'Кино и Сериалы - AniChrono',
-  ogTitle: 'Кино и Сериалы - AniChrono',
-  description: 'Каталог фильмов и сериалов. Смотрите лучшие новинки кино в хорошем качестве.',
-  ogDescription: 'Каталог фильмов и сериалов. Смотрите лучшие новинки кино в хорошем качестве.',
+  title: 'Кино и сериалы — информационная база | AniChrono',
+  ogTitle: 'Кино и сериалы — информационная база | AniChrono',
+  description: 'Каталог фильмов и сериалов на AniChrono. Информационная база для ознакомления с тайтлами. Основной раздел сайта — аниме.',
+  ogDescription: 'Каталог фильмов и сериалов на AniChrono. Информационная база для ознакомления с тайтлами. Основной раздел сайта — аниме.',
   ogImage: `${siteUrl}/logo.jpg`,
   twitterCard: 'summary_large_image',
-  twitterTitle: 'Кино и Сериалы - AniChrono',
-  twitterDescription: 'Каталог фильмов и сериалов. Смотрите лучшие новинки кино в хорошем качестве.',
+  twitterTitle: 'Кино и сериалы — информационная база | AniChrono',
+  twitterDescription: 'Каталог фильмов и сериалов на AniChrono. Информационная база. Основной раздел — аниме.',
   twitterImage: `${siteUrl}/logo.jpg`
 })
 

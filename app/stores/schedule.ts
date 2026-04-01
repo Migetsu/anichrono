@@ -112,7 +112,7 @@ export const useScheduleStore = defineStore('schedule', {
                     anime: {
                        ...entry.anime,
                        poster: gqlAnime.poster,
-                       score: gqlAnime.score,
+                       score: parseFloat(gqlAnime.score) || 0,
                        genres: gqlAnime.genres || entry.anime.genres
                     }
                  }

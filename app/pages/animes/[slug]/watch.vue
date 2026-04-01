@@ -71,7 +71,7 @@ onMounted(async () => {
 
         <div v-else-if="playerUrl" class="player-wrapper">
           <div class="player-aspect">
-            <iframe :src="playerUrl" frameborder="0" allowfullscreen></iframe>
+            <iframe :src="playerUrl" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
           </div>
         </div>
       </main>
@@ -142,12 +142,35 @@ onMounted(async () => {
 
 .player-wrapper {
   width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .player-aspect {
-  aspect-ratio: 16/9;
+  // Mobile / tablet: responsive 16:9
   width: 100%;
-  iframe { width: 100%; height: 100%; }
+  aspect-ratio: 16 / 9;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+
+  iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  // Desktop: fixed 1100x760
+  @include respond(laptop) {
+    width: 1100px;
+    height: 760px;
+    aspect-ratio: unset;
+    flex-shrink: 0;
+  }
 }
 
 .watch-loading, .watch-error {

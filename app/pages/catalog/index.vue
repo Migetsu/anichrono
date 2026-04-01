@@ -8,14 +8,14 @@ import AnimeCardSkeleton from '@/components/skeletons/AnimeCardSkeleton.vue'
 const siteUrl = 'https://anichrono.vercel.app'
 
 useSeoMeta({
-  title: 'Каталог аниме - AniChrono',
-  ogTitle: 'Каталог аниме - AniChrono',
-  description: 'Полный каталог аниме. Найдите любимые тайтлы по жанрам, годам и рейтингу.',
-  ogDescription: 'Полный каталог аниме. Найдите любимые тайтлы по жанрам, годам и рейтингу.',
+  title: 'Каталог аниме — AniChrono',
+  ogTitle: 'Каталог аниме — AniChrono',
+  description: 'Полный каталог аниме на AniChrono. Ищите тайтлы по жанрам, году выхода, рейтингу и типу — TV, OVA, фильм, спешл.',
+  ogDescription: 'Полный каталог аниме на AniChrono. Ищите тайтлы по жанрам, году выхода, рейтингу и типу — TV, OVA, фильм, спешл.',
   ogImage: `${siteUrl}/logo.jpg`,
   twitterCard: 'summary_large_image',
-  twitterTitle: 'Каталог аниме - AniChrono',
-  twitterDescription: 'Полный каталог аниме. Найдите любимые тайтлы по жанрам, годам и рейтингу.',
+  twitterTitle: 'Каталог аниме — AniChrono',
+  twitterDescription: 'Полный каталог аниме на AniChrono. Ищите тайтлы по жанрам, году выхода, рейтингу и типу — TV, OVA, фильм, спешл.',
   twitterImage: `${siteUrl}/logo.jpg`
 })
 

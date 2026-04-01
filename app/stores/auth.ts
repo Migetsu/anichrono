@@ -35,68 +35,77 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Actions
     async function fetchMe() {
-        if (!sessionCookie.value) return
+        if (!sessionCookie.value || loading.value) return
         loading.value = true
         error.value = null
         try {
-            // /api/whoami uses the HttpOnly shiki_token cookie
+            // /api/whoami uses the HttpOnly shiki_token/shiki_refresh cookies
             const data = await $fetch<User>('/api/whoami')
             user.value = data
-            // Fetch users lists after successful login
-            try {
-                const listsStore = useListsStore()
-                listsStore.fetchRates()
-            } catch { }
+            
+            // Try to fetch users lists after successful login
+            const listsStore = useListsStore()
+            listsStore.fetchRates().catch(err => {
+                console.warn('Post-login lists fetch failed', err)
+            })
         } catch (e: any) {
-            console.error('Fetch user error', e)
+            console.error('Fetch user error:', e)
             error.value = e.message || 'Failed to fetch user'
-            clearToken()
+            
+            // Only clear token if it's a 401 (meaning session is truly dead)
+            // or if we explicitly failed refreshing on the server
+            if (e.statusCode === 401 || e.status === 401) {
+                clearToken()
+            }
         } finally {
             loading.value = false
         }
     }
 
     function login(redirectTo: string | null = null) {
-        // Build state for redirect
+        if (typeof window === 'undefined') return
+        
         let state = ''
         try {
-            const target = (typeof redirectTo === 'string' && redirectTo)
-                ? redirectTo
-                : (typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/')
+            const target = redirectTo || window.location.pathname + window.location.search
 
-            // simple base64 encode
-            const b64 = (typeof btoa === 'function')
-                ? btoa(encodeURIComponent(target).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16))))
-                : Buffer.from(target).toString('base64')
+            const b64 = btoa(encodeURIComponent(target).replace(/%([0-9A-F]{2})/g, (match, p1) => 
+                String.fromCharCode(parseInt(p1, 16))
+            ))
 
-            state = b64 ? b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '') : ''
+            state = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
         } catch (e) { console.error('SignState Error', e) }
 
-        const url = state ? `/api/auth/login?state=${state}` : '/api/auth/login'
-        if (typeof window !== 'undefined') {
-            window.location.href = url
-        }
+        window.location.href = state ? `/api/auth/login?state=${state}` : '/api/auth/login'
     }
 
     function logout() {
+        if (typeof window === 'undefined') return
         clearToken()
-        if (typeof window !== 'undefined') {
-            window.location.href = '/api/auth/logout'
-        }
+        window.location.href = '/api/auth/logout'
     }
 
     function clearToken() {
         sessionCookie.value = null
         user.value = null
-        const listsStore = useListsStore()
-        listsStore.$reset()
+        try {
+            const listsStore = useListsStore()
+            listsStore.$reset()
+        } catch {}
     }
 
     // Initialize
+    let initPromise: Promise<void> | null = null
     async function init() {
-        if (sessionCookie.value && !user.value) {
-            await fetchMe()
+        if (user.value) return
+        if (!sessionCookie.value) return
+        
+        if (!initPromise) {
+            initPromise = fetchMe().finally(() => {
+                initPromise = null
+            })
         }
+        return initPromise
     }
 
     return {

@@ -1,24 +1,15 @@
 import type { ShikimoriAnimeListItem, AnimeStatus, ShikimoriGenre } from './shikimori'
 
-export interface CalendarAnime extends Omit<ShikimoriAnimeListItem, 'airedOn' | 'poster' | 'score'> {
-  score: string | number
+export interface CalendarAnime extends ShikimoriAnimeListItem {
   status: AnimeStatus | null
   episodes: number
   episodes_aired: number
   url: string
-  airedOn?: {
-    year: number | null
-  }
-  genres: ShikimoriGenre[]
   image?: {
     original: string
     preview: string
     x96: string
     x48: string
-  }
-  poster?: {
-    mainUrl: string
-    originalUrl: string
   }
 }
 

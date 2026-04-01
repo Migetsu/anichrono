@@ -5,17 +5,21 @@ const auth = useAuthStore()
 const siteUrl = 'https://anichrono.vercel.app'
 
 // Initialize auth on app mount
-auth.init()
+onBeforeMount(() => {
+  auth.init().catch(err => {
+    console.error('Initial auth failed:', err)
+  })
+})
 
 useSeoMeta({
-  title: 'AniChrono - Смотреть аниме, фильмы и сериалы онлайн',
-  ogTitle: 'AniChrono - Смотреть аниме, фильмы и сериалы онлайн',
-  description: 'Крупнейший каталог аниме, фильмов и сериалов. Удобный поиск, фильтры и вся необходимая информация в одном месте.',
-  ogDescription: 'Крупнейший каталог аниме, фильмов и сериалов. Удобный поиск, фильтры и вся необходимая информация в одном месте.',
+  title: 'AniChrono — Смотреть аниме онлайн',
+  ogTitle: 'AniChrono — Смотреть аниме онлайн',
+  description: 'AniChrono — аниме-сервис для просмотра и отслеживания аниме. Актуальные релизы, онгоинги, сезонные новинки и ваш личный список просмотренного.',
+  ogDescription: 'AniChrono — аниме-сервис для просмотра и отслеживания аниме. Актуальные релизы, онгоинги, сезонные новинки и ваш личный список просмотренного.',
   ogImage: `${siteUrl}/logo.jpg`,
   twitterCard: 'summary_large_image',
-  twitterTitle: 'AniChrono - Смотреть аниме, фильмы и сериалы онлайн',
-  twitterDescription: 'Крупнейший каталог аниме, фильмов и сериалов. Удобный поиск, фильтры и вся необходимая информация в одном месте.',
+  twitterTitle: 'AniChrono — Смотреть аниме онлайн',
+  twitterDescription: 'AniChrono — аниме-сервис для просмотра и отслеживания аниме. Актуальные релизы, онгоинги, сезонные новинки и ваш личный список просмотренного.',
   twitterImage: `${siteUrl}/logo.jpg`,
 })
 </script>

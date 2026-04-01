@@ -253,7 +253,10 @@ onMounted(async () => {
   padding-bottom: 5rem;
   color: #fff;
   overflow-x: hidden;
-  margin-top: 70px;
+  
+  @include respond(tablet-l) {
+    margin-top: 70px;
+  }
 }
 
 .breadcrumb-nav {

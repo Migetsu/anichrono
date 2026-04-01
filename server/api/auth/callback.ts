@@ -32,7 +32,9 @@ export default defineEventHandler(async (event) => {
     })
 
     const accessToken = tokenRes.access_token
+    const refreshToken = tokenRes.refresh_token
     const expiresIn = tokenRes.expires_in || 86400
+    const THIRTY_DAYS = 30 * 24 * 60 * 60
 
     if (!accessToken) {
       throw createError({
@@ -41,7 +43,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Set cookies
+    // Set Access Token cookie
     setCookie(event, 'shiki_token', accessToken, {
       path: '/',
       maxAge: expiresIn,
@@ -50,12 +52,22 @@ export default defineEventHandler(async (event) => {
       secure: process.env.NODE_ENV === 'production'
     })
 
+    // Set Refresh Token cookie (Long-lived, httpOnly)
+    if (refreshToken) {
+      setCookie(event, 'shiki_refresh', refreshToken, {
+        path: '/',
+        maxAge: THIRTY_DAYS,
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production'
+      })
+    }
+
     // Client-readable cookie to indicate session existence (boolean flag only)
-    // We do NOT store the access token here to prevent XSS theft.
     setCookie(event, 'shiki_session', '1', {
       path: '/',
-      maxAge: expiresIn,
-      httpOnly: false, // Accessible by JS to know if we should try to fetch user
+      maxAge: THIRTY_DAYS, // Keep session active for 30 days
+      httpOnly: false,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production'
     })
