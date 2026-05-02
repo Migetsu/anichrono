@@ -125,7 +125,7 @@ onMounted(async () => {
     if (k?.results?.length > 0) playerUrl.value = k.results[0].link
     const title = d.russian || d.name
     const description = d.description ? d.description.slice(0, 160) + (d.description.length > 160 ? '...' : '') : 'Смотрите аниме на AniChrono'
-    const image = d.poster?.originalUrl ? `https://shikimori.one${d.poster.originalUrl}` : '/logo.jpg'
+    const image = d.poster?.originalUrl ? `https://shikimori.io${d.poster.originalUrl}` : '/logo.jpg'
 
     useSeoMeta({
       title: `${title} - AniChrono`,

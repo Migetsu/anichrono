@@ -3,7 +3,7 @@
 // PUT  /api/user/rates?id=:id      → update
 // DELETE /api/user/rates?id=:id   → destroy
 
-const SHIKI_BASE = 'https://shikimori.one'
+const SHIKI_BASE = 'https://shikimori.io'
 
 export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'shiki_token')

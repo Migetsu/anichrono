@@ -150,8 +150,10 @@ const posterUrl = computed(() => {
     
     // Fallback to image.original if poster is missing (Calendar API)
     const anime = props.item as any 
-    if (anime.image?.original) return `https://shikimori.one${anime.image.original}`
-    if (anime.image?.preview) return `https://shikimori.one${anime.image.preview}`
+    if (anime.image?.original && !anime.image.original.includes('missing'))
+      return `https://shikimori.io${anime.image.original}`
+    if (anime.image?.preview && !anime.image.preview.includes('missing'))
+      return `https://shikimori.io${anime.image.preview}`
     
     return ''
 })

@@ -54,7 +54,7 @@ export async function fetchAnimeCharacters(id: string): Promise<any[]> {
  */
 export async function fetchRandomAnime(): Promise<any | null> {
   try {
-    const response = await $fetch<any[]>('https://shikimori.one/api/animes', {
+    const response = await $fetch<any[]>('https://shikimori.io/api/animes', {
       params: {
         order: 'random',
         limit: 1,

@@ -79,11 +79,10 @@ export async function shikiGQL<T>(query: string, variables: Record<string, unkno
   }
   lastRequestTime = Date.now()
   
-  const res = await fetch('https://shikimori.one/api/graphql', {
+  const res = await fetch('/api/shiki-graphql', {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
-      'User-Agent': 'AniChrono/1.0'
     },
     body: JSON.stringify({ query, variables })
   })

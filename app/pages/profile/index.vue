@@ -204,8 +204,8 @@ function posterOf(anime: ShikimoriAnimeListItem | null): string {
             >
               <div class="history-card-poster-wrap">
                 <img
-                  v-if="posterOf(getHistoryAnime(item.target?.id)) || (item.target?.image?.original ? `https://shikimori.one${item.target.image.original}` : '')"
-                  :src="posterOf(getHistoryAnime(item.target?.id)) || (item.target?.image?.original ? `https://shikimori.one${item.target.image.original}` : '')"
+                  v-if="posterOf(getHistoryAnime(item.target?.id)) || (item.target?.image?.original ? `https://shikimori.io${item.target.image.original}` : '')"
+                  :src="posterOf(getHistoryAnime(item.target?.id)) || (item.target?.image?.original ? `https://shikimori.io${item.target.image.original}` : '')"
                   class="history-card-poster"
                   :alt="item.target?.russian || item.target?.name || ''"
                 >

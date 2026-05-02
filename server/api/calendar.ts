@@ -30,9 +30,15 @@ export default defineCachedEventHandler(async (event) => {
         query {
           animes(ids: "${chunkIds.join(',')}", limit: ${chunkSize}) {
             id
+            score
             poster {
               mainUrl
               originalUrl
+            }
+            genres {
+              id
+              name
+              russian
             }
           }
         }
@@ -51,7 +57,7 @@ export default defineCachedEventHandler(async (event) => {
 
         if (response.data && response.data.animes) {
           response.data.animes.forEach((anime: any) => {
-            postersMap.set(Number(anime.id), anime.poster)
+            postersMap.set(Number(anime.id), anime)
           })
         }
       } catch (err) {
@@ -65,11 +71,13 @@ export default defineCachedEventHandler(async (event) => {
       ...entry,
       anime: {
         ...entry.anime,
-        poster: postersMap.get(entry.anime.id) || {
+        poster: postersMap.get(entry.anime.id)?.poster || {
           // Fallback to REST image if GraphQL fails or missing
           mainUrl: 'https://shikimori.io' + entry.anime.image.preview,
           originalUrl: 'https://shikimori.io' + entry.anime.image.original
-        }
+        },
+        score: postersMap.get(entry.anime.id)?.score ? parseFloat(postersMap.get(entry.anime.id)?.score) : 0,
+        genres: postersMap.get(entry.anime.id)?.genres || entry.anime.genres || []
       }
     }))
 

@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const data: any[] = await $fetch(`https://shikimori.one/api/users/${id}/history`, {
+    const data: any[] = await $fetch(`https://shikimori.io/api/users/${id}/history`, {
       query: { limit },
       headers
     })

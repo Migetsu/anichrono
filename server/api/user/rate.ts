@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   try {
     if (method === 'POST') {
       const body = await readBody(event)
-      const res = await $fetch('https://shikimori.one/api/v2/user_rates', {
+      const res = await $fetch('https://shikimori.io/api/v2/user_rates', {
         method: 'POST',
         headers,
         body: { user_rate: body }
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
       
       if (!id) throw createError({ statusCode: 400, message: 'Missing rate ID' })
       
-      const res = await $fetch(`https://shikimori.one/api/v2/user_rates/${id}`, {
+      const res = await $fetch(`https://shikimori.io/api/v2/user_rates/${id}`, {
         method: 'PATCH', // v2 supports PATCH
         headers,
         body: { user_rate: body }
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
       const id = query.id
       if (!id) throw createError({ statusCode: 400, message: 'Missing rate ID' })
       
-      const res = await $fetch(`https://shikimori.one/api/v2/user_rates/${id}`, {
+      const res = await $fetch(`https://shikimori.io/api/v2/user_rates/${id}`, {
         method: 'DELETE',
         headers
       })

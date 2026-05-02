@@ -6,7 +6,6 @@ const scheduleStore = useScheduleStore()
 const containerRef = ref<any>(null)
 
 const swiperOptions = {
-  loop: true,
   slidesPerView: 1,
   pagination: true,
   spaceBetween: 12,
@@ -46,32 +45,51 @@ const upcomingReleases = computed(() => {
 
 <template>
     <div class="calendar">
-        <swiper-container 
-            v-show="!scheduleStore.loading && upcomingReleases.length" 
-            class="calendar-swiper" 
-            ref="containerRef" 
-            :init="false"
-        >
-            <swiper-slide v-for="entry in upcomingReleases" :key="entry.anime.id">
-                <HomeReleaseInfo :item="entry" />
-            </swiper-slide>
-        </swiper-container>
+        <ClientOnly>
+            <swiper-container 
+                v-show="!scheduleStore.loading && upcomingReleases.length" 
+                class="calendar-swiper" 
+                ref="containerRef" 
+                :init="false"
+            >
+                <swiper-slide v-for="entry in upcomingReleases" :key="entry.anime.id">
+                    <HomeReleaseInfo :item="entry" />
+                </swiper-slide>
+            </swiper-container>
 
-        <!-- Skeleton Loading State -->
-        <div v-if="scheduleStore.loading" class="calendar-skeleton">
-            <div class="calendar-skeleton-content">
-                <div class="calendar-skeleton-badge"></div>
-                <div class="calendar-skeleton-title"></div>
-                <div class="calendar-skeleton-meta"></div>
-                <div class="calendar-skeleton-genres">
-                    <div class="calendar-skeleton-genre"></div>
-                    <div class="calendar-skeleton-genre"></div>
-                    <div class="calendar-skeleton-genre"></div>
+            <!-- Skeleton Loading State -->
+            <div v-if="scheduleStore.loading" class="calendar-skeleton">
+                <div class="calendar-skeleton-content">
+                    <div class="calendar-skeleton-badge"></div>
+                    <div class="calendar-skeleton-title"></div>
+                    <div class="calendar-skeleton-meta"></div>
+                    <div class="calendar-skeleton-genres">
+                        <div class="calendar-skeleton-genre"></div>
+                        <div class="calendar-skeleton-genre"></div>
+                        <div class="calendar-skeleton-genre"></div>
+                    </div>
+                    <div class="calendar-skeleton-button"></div>
                 </div>
-                <div class="calendar-skeleton-button"></div>
+                <div class="calendar-skeleton-poster"></div>
             </div>
-            <div class="calendar-skeleton-poster"></div>
-        </div>
+            
+            <template #fallback>
+                <div class="calendar-skeleton">
+                    <div class="calendar-skeleton-content">
+                        <div class="calendar-skeleton-badge"></div>
+                        <div class="calendar-skeleton-title"></div>
+                        <div class="calendar-skeleton-meta"></div>
+                        <div class="calendar-skeleton-genres">
+                            <div class="calendar-skeleton-genre"></div>
+                            <div class="calendar-skeleton-genre"></div>
+                            <div class="calendar-skeleton-genre"></div>
+                        </div>
+                        <div class="calendar-skeleton-button"></div>
+                    </div>
+                    <div class="calendar-skeleton-poster"></div>
+                </div>
+            </template>
+        </ClientOnly>
     </div>
 </template>
 

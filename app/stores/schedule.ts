@@ -2,20 +2,11 @@ import { defineStore } from 'pinia'
 import { format, isToday, isTomorrow } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import type { CalendarEntry, ScheduleState } from '@/types/schedule'
-import { shikiGQL } from '@/lib/api/shikiClient'
-import type { AnimesQueryResponse } from '@/types/shikimori'
+
 
 const TTL = 1000 * 60 * 15 // 15 minutes cache
 
-const SCHEDULE_ANIME_QUERY = `
-  query ($ids: String, $limit: Int) {
-    animes(ids: $ids, limit: $limit) {
-      id score
-      poster { mainUrl originalUrl }
-      genres { id name russian }
-    }
-  }
-`
+
 
 export const useScheduleStore = defineStore('schedule', {
   state: (): ScheduleState => ({
@@ -84,42 +75,7 @@ export const useScheduleStore = defineStore('schedule', {
         this.entries = data
         this.fetchedAt = Date.now()
 
-        // Batch fetch high-res posters via GraphQL
-        if (data.length > 0) {
-           const uniqueIds = Array.from(new Set(data.map(e => e.anime?.id).filter(id => id)))
-           const chunkSize = 50
-           const animeMap = new Map()
 
-           for (let i = 0; i < uniqueIds.length; i += chunkSize) {
-              const chunk = uniqueIds.slice(i, i + chunkSize)
-              try {
-                const gqlData = await shikiGQL<AnimesQueryResponse>(SCHEDULE_ANIME_QUERY, {
-                  ids: chunk.map(String).join(','),
-                  limit: chunk.length
-                })
-                gqlData?.animes?.forEach(anime => animeMap.set(Number(anime.id), anime))
-              } catch (err) {
-                console.warn('GQL fetch for schedule posters failed', err)
-              }
-           }
-
-           // Patch the store entries with high-res details
-           this.entries = this.entries.map(entry => {
-              if (entry.anime && animeMap.has(entry.anime.id)) {
-                 const gqlAnime = animeMap.get(entry.anime.id)
-                 return {
-                    ...entry,
-                    anime: {
-                       ...entry.anime,
-                       poster: gqlAnime.poster,
-                       score: parseFloat(gqlAnime.score) || 0,
-                       genres: gqlAnime.genres || entry.anime.genres
-                    }
-                 }
-              }
-              return entry
-           })
-        }
       } catch (e: any) {
         console.error('Failed to load schedule store:', e)
         this.error = e.statusMessage || 'Не удалось загрузить расписание'

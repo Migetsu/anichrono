@@ -4,9 +4,11 @@ import { useDebounceFn, onClickOutside } from '@vueuse/core'
 import { searchAnime } from '@/lib/api/searchAnime'
 import { slugify } from '@/utils/slugify'
 import type { ShikimoriAnimeListItem } from '@/types/shikimori'
+import { useUIStore } from '@/stores/ui'
 
 const query = ref('')
 const results = ref<ShikimoriAnimeListItem[]>([])
+const uiStore = useUIStore()
 const isLoading = ref(false)
 const isOpen = ref(false)
 const searchContainer = ref<HTMLElement | null>(null)
@@ -49,6 +51,8 @@ function clearSearch() {
 
 function selectResult() {
     clearSearch()
+    uiStore.closeSearchModal()
+    uiStore.closeMobileMenu()
 }
 
 function handleSubmit(e: Event) {

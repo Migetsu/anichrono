@@ -26,7 +26,7 @@ export default defineEventHandler(async (event): Promise<any> => {
   // Attempt to refresh if token is missing but refresh token exists
   if (!token && refreshToken) {
     try {
-      const tokenRes = await $fetch<ShikimoriTokenResponse>('https://shikimori.one/oauth/token', {
+      const tokenRes = await $fetch<ShikimoriTokenResponse>('https://shikimori.io/oauth/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event): Promise<any> => {
   }
 
   try {
-    const user = await $fetch<any>('https://shikimori.one/api/users/whoami', {
+    const user = await $fetch<any>('https://shikimori.io/api/users/whoami', {
       headers: {
         'User-Agent': process.env.SHIKI_USER_AGENT || 'AniChrono',
         'Authorization': `Bearer ${token}`
