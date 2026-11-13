@@ -4,6 +4,7 @@ import { STATUS_OPTIONS, KIND_OPTIONS, RATING_OPTIONS, ORDER_OPTIONS, SCORE_OPTI
 import FilterOrder from '@/components/catalog/FilterOrder.vue'
 import FilterGroup from '@/components/catalog/FilterGroup.vue'
 import FilterGenres from '@/components/catalog/FilterGenres.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const props = defineProps<{
   modelValue: CatalogFilters
@@ -14,14 +15,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: CatalogFilters): void
   (e: 'update:isOpen', value: boolean): void
-  (e: 'apply'): void
-  (e: 'reset'): void
 }>()
 
-const sidebarRef = ref<HTMLElement | null>(null)
-
-// Local filter state
-const localFilters = reactive<{
+const local = reactive<{
   status: AnimeStatus[]
   kind: AnimeKind[]
   rating: AnimeRating[]
@@ -34,276 +30,221 @@ const localFilters = reactive<{
   rating: [],
   order: 'popularity',
   score: [],
-  genre: []
+  genre: [],
 })
 
-// Sync with props
-watch(() => props.modelValue, (val) => {
-  localFilters.status = val.status ?? []
-  localFilters.kind = val.kind ?? []
-  localFilters.rating = val.rating ?? []
-  localFilters.order = val.order ?? 'popularity'
-  localFilters.score = val.score ? [val.score] : []
-  localFilters.genre = val.genre ?? []
+let syncing = false
+
+watch(() => props.modelValue, (value) => {
+  syncing = true
+  local.status = value.status ?? []
+  local.kind = value.kind ?? []
+  local.rating = value.rating ?? []
+  local.order = value.order ?? 'popularity'
+  local.score = value.score ? [value.score] : []
+  local.genre = value.genre ?? []
+  nextTick(() => {
+    syncing = false
+  })
 }, { immediate: true })
 
+watch(local, () => {
+  if (syncing) return
+  emit('update:modelValue', {
+    ...props.modelValue,
+    status: local.status.length ? [...local.status] : undefined,
+    kind: local.kind.length ? [...local.kind] : undefined,
+    rating: local.rating.length ? [...local.rating] : undefined,
+    order: local.order,
+    score: local.score.length ? local.score[0] : undefined,
+    genre: local.genre.length ? [...local.genre] : undefined,
+    page: 1,
+  })
+}, { deep: true })
 
+const activeCount = computed(() => {
+  let count = 0
+  if (local.status.length) count++
+  if (local.kind.length) count++
+  if (local.rating.length) count++
+  if (local.score.length) count++
+  if (local.genre.length) count++
+  if (local.order !== 'ranked' && local.order !== 'popularity') count++
+  return count
+})
 
 function close() {
   emit('update:isOpen', false)
 }
 
-function applyFilters() {
-  const newFilters: CatalogFilters = {
-    ...props.modelValue,
-    status: localFilters.status.length > 0 ? localFilters.status : undefined,
-    kind: localFilters.kind.length > 0 ? localFilters.kind : undefined,
-    rating: localFilters.rating.length > 0 ? localFilters.rating : undefined,
-    order: localFilters.order,
-    score: localFilters.score.length > 0 ? localFilters.score[0] : undefined,
-    genre: localFilters.genre.length > 0 ? localFilters.genre : undefined,
-    page: 1 // Reset page on filter change
-  }
-  
-  emit('update:modelValue', newFilters)
-  emit('apply')
-  close()
+function reset() {
+  syncing = false
+  local.status = []
+  local.kind = []
+  local.rating = []
+  local.order = 'popularity'
+  local.score = []
+  local.genre = []
 }
 
-function resetFilters() {
-  localFilters.status = []
-  localFilters.kind = []
-  localFilters.rating = []
-  localFilters.order = 'popularity'
-  localFilters.score = []
-  localFilters.genre = []
-  
-  emit('reset')
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') close()
 }
 
-const activeFiltersCount = computed(() => {
-  let count = 0
-  if (localFilters.status.length > 0) count++
-  if (localFilters.kind.length > 0) count++
-  if (localFilters.rating.length > 0) count++
-  if (localFilters.score.length > 0) count++
-  if (localFilters.genre.length > 0) count++
-  // Don't count 'popularity' as active filter since it's the default
-  if (localFilters.order !== 'ranked' && localFilters.order !== 'popularity') count++
-  return count
-})
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <Teleport to="body">
-    <div 
-      v-if="props.isOpen" 
-      class="filter-sidebar" 
-      :class="{ 'filter-sidebar--visible': props.isOpen }"
-      @click.self="close"
-    >
-      <div class="filter-sidebar-panel" ref="sidebarRef">
-          <div class="filter-sidebar-header">
-            <h3>Фильтры</h3>
-            <button class="filter-sidebar-close" @click="close">
-              <Icon name="mdi:close" />
-            </button>
-          </div>
-          
-          <div class="filter-sidebar-content">
-            <FilterOrder
-              title="Сортировка"
-              :options="ORDER_OPTIONS"
-              v-model="localFilters.order"
-            />
-            
-            <FilterGroup
-              title="Статус"
-              :options="STATUS_OPTIONS"
-              v-model="localFilters.status"
-            />
-            
-            <FilterGroup
-              title="Тип"
-              :options="KIND_OPTIONS"
-              v-model="localFilters.kind"
-            />
-            
-            <FilterGroup
-              title="Оценка"
-              :options="SCORE_OPTIONS"
-              v-model="localFilters.score"
-            />
-            
-            <FilterGroup
-              title="Рейтинг"
-              :options="RATING_OPTIONS"
-              v-model="localFilters.rating"
-            />
-            
-            <FilterGenres
-              title="Жанры"
-              :genres="genres"
-              v-model="localFilters.genre"
-            />
-          </div>
-          
-          <div class="filter-sidebar-footer">
-            <button 
-              v-if="activeFiltersCount > 0"
-              class="filter-sidebar-reset"
-              @click="resetFilters"
-            >
-              Сбросить ({{ activeFiltersCount }})
-            </button>
-            <button 
-              class="filter-sidebar-apply"
-              @click="applyFilters"
-            >
-              Применить
-            </button>
-          </div>
-        </div>
+  <div class="filters" :class="{ 'filters--open': props.isOpen }">
+    <div class="filters__veil" @click="close" />
+
+    <aside class="filters__panel" aria-label="Фильтры каталога">
+      <div class="filters__head">
+        <h2 class="filters__title">Фильтры</h2>
+        <button type="button" class="icon-btn filters__close" title="Закрыть" @click="close">
+          <AppIcon name="close" :size="19" />
+          <span class="visually-hidden">Закрыть</span>
+        </button>
       </div>
-  </Teleport>
+
+      <div class="filters__body">
+        <FilterOrder v-model="local.order" title="Сортировка" :options="ORDER_OPTIONS" />
+        <FilterGroup v-model="local.status" title="Статус" :options="STATUS_OPTIONS" />
+        <FilterGroup v-model="local.kind" title="Тип" :options="KIND_OPTIONS" />
+        <FilterGroup v-model="local.score" title="Оценка" :options="SCORE_OPTIONS" />
+        <FilterGroup v-model="local.rating" title="Возрастной рейтинг" :options="RATING_OPTIONS" />
+        <FilterGenres v-model="local.genre" title="Жанры" :genres="props.genres" />
+      </div>
+
+      <div class="filters__foot">
+        <button type="button" class="filters__reset" :disabled="!activeCount" @click="reset">
+          Сбросить{{ activeCount ? ` (${activeCount})` : '' }}
+        </button>
+        <button type="button" class="btn btn--primary filters__done" @click="close">
+          Готово
+        </button>
+      </div>
+    </aside>
+  </div>
 </template>
 
 <style lang="scss" scoped>
-.filter-sidebar {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 9999;
-  display: flex;
-  justify-content: flex-end;
-  pointer-events: auto;
+.filters {
+  &__veil {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.72);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--dur) var(--ease);
+  }
 
-  &-panel {
-    width: 100%;
-    max-width: 380px;
-    height: 100%;
-    background: var(--surface2);
+  &__panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 201;
     display: flex;
     flex-direction: column;
-    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
+    width: min(360px, 90vw);
+    background: var(--paper-raised);
+    border-left: 1px solid var(--rule-strong);
+    transform: translateX(100%);
+    transition: transform var(--dur) var(--ease);
   }
 
-  &-header {
+  &--open &__veil {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &--open &__panel {
+    transform: translateX(0);
+  }
+
+  &__head {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border);
-
-    h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text);
-    }
+    gap: 12px;
+    padding: 14px var(--gutter);
+    border-bottom: 1px solid var(--rule-strong);
   }
 
-  &-close {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    color: var(--muted);
-    transition: all 0.2s ease;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-
-    svg {
-      width: 24px;
-      height: 24px;
-    }
-
-    &:hover {
-      background: rgba(var(--accent-rgb), 0.1);
-      color: var(--accent);
-    }
+  &__title {
+    font-size: 22px;
+    font-weight: 600;
   }
 
-  &-content {
+  &__body {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 3px;
-    }
+    padding: 18px var(--gutter) 24px;
+    overscroll-behavior: contain;
   }
 
-  &-footer {
-    padding: 20px 24px;
-    border-top: 1px solid var(--border);
+  &__foot {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-
-    @include respond(mobile-l) {
-      padding: 16px;
-      gap: 8px;
-    }
+    align-items: center;
+    gap: 10px;
+    padding: 14px var(--gutter) calc(14px + env(safe-area-inset-bottom, 0));
+    border-top: 1px solid var(--rule-strong);
   }
 
-  &-reset {
+  &__reset {
     flex: 1;
-    min-width: 140px;
-    padding: 12px;
-    border-radius: 10px;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    cursor: pointer;
+    height: 44px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    font-size: 14px;
+    color: var(--ink-2);
+    transition: color var(--dur-fast) var(--ease),
+      border-color var(--dur-fast) var(--ease),
+      opacity var(--dur-fast) var(--ease);
 
-    &:hover {
-      border-color: var(--accent);
-      color: var(--accent);
+    &:hover:not(:disabled) {
+      color: var(--ink);
+      border-color: var(--ink-3);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: default;
     }
   }
 
-  &-apply {
+  &__done {
     flex: 1;
-    min-width: 140px;
-    padding: 12px;
-    border-radius: 10px;
-    background: var(--accent);
-    color: #fff;
-    font-size: 0.875rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
+  }
 
-    &:hover {
-      background: var(--accent2);
-      transform: translateY(-2px);
+  @include respond(laptop) {
+    &__veil,
+    &__close,
+    &__foot,
+    &__head {
+      display: none;
+    }
+
+    &__panel {
+      position: static;
+      width: 100%;
+      max-height: calc(100dvh - var(--masthead-h) - 40px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-right: 6px;
+      transform: none;
+      background: transparent;
+      border: 0;
+      transition: none;
+    }
+
+    &__body {
+      overflow: visible;
+      padding: 0;
     }
   }
-}
-
-// Sidebar transition
-.sidebar-enter-active,
-.sidebar-leave-active {
-  transition: transform 0.3s ease;
-}
-
-.sidebar-enter-from,
-.sidebar-leave-to {
-  transform: translateX(100%);
 }
 </style>

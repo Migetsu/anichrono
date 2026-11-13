@@ -1,5 +1,6 @@
 import { shikiGQL } from '~/lib/api/shikiClient'
 import type { ShikimoriAnimeListItem, AnimesQueryResponse } from '~/types/shikimori'
+import { isKidsAnime } from '#shared/kids'
 
 const QUERY = `
   query ($search: String!, $limit: Int) {
@@ -8,6 +9,9 @@ const QUERY = `
       name
       russian
       score
+      kind
+      rating
+      duration
       poster { originalUrl }
       genres { id name russian }
       airedOn { year }
@@ -17,9 +21,7 @@ const QUERY = `
 
 export async function searchAnime(search: string, limit = 50): Promise<ShikimoriAnimeListItem[]> {
   if (!search || search.trim().length === 0) return []
-  
-  // Request results from API
-  // We use a higher default limit to get more results
+
   const data = await shikiGQL<AnimesQueryResponse>(QUERY, { search: search.trim(), limit })
-  return data?.animes ?? []
+  return (data?.animes ?? []).filter(item => !isKidsAnime(item))
 }

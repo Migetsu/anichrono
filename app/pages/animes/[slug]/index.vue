@@ -1,513 +1,650 @@
 <script lang="ts" setup>
 import { useRoute } from 'vue-router'
-import { 
-  fetchAnimeDetails, 
-  fetchRelatedAnimes
-} from '@/lib/api/animeDetails'
+import { fetchAnimeDetails, fetchRelatedAnimes } from '@/lib/api/animeDetails'
 import type { ShikimoriAnimeFull } from '@/types/shikimori'
 import { slugify } from '@/utils/slugify'
 import { useListsStore } from '@/stores/lists'
 import { useAuthStore } from '@/stores/auth'
-import { onClickOutside } from '@vueuse/core'
+import AppIcon from '@/components/ui/AppIcon.vue'
+import AppCrumbs from '@/components/ui/AppCrumbs.vue'
+import ListMenu from '@/components/list/ListMenu.vue'
 
 const route = useRoute()
 const lists = useListsStore()
 const auth = useAuthStore()
+const siteUrl = 'https://anichrono.vercel.app'
+
 const slug = computed(() => (route.params.slug as string) || '')
 const animeId = computed(() => slug.value.split('-')[0] || '')
 
-const anime = ref<ShikimoriAnimeFull | null>(null)
-const related = ref<any[]>([])
+// Rendered on the server as well: crawlers must get the real title, text and
+// metadata instead of an empty client-side skeleton.
+const { data, pending, error: loadError } = await useAsyncData(
+  () => `anime-${animeId.value}`,
+  async () => {
+    const details = await fetchAnimeDetails(animeId.value)
+    if (!details) return null
+    const relations = await fetchRelatedAnimes(animeId.value).catch(() => [])
+    return { details, relations }
+  },
+  { watch: [animeId] },
+)
+
+const anime = computed<ShikimoriAnimeFull | null>(() => data.value?.details ?? null)
+const related = computed(() => data.value?.relations ?? [])
 const playerUrl = ref<string | null>(null)
-const isLoading = ref(true)
-const error = ref<string | null>(null)
+const isLoading = computed(() => pending.value)
+const error = computed(() => (loadError.value ? loadError.value.message || 'Ошибка загрузки' : null))
 
-// Dropdown state
-const isListOpen = ref(false)
-const dropdownRef = ref<HTMLElement | null>(null)
-const playerSection = ref<HTMLElement | null>(null)
-
-onClickOutside(dropdownRef, () => { isListOpen.value = false })
-
-const currentRate = computed(() => anime.value ? lists.rateFor(anime.value.id) : null)
-
-const statusLabels: Record<string, string> = {
-  planned: 'В планах',
-  watching: 'Смотрю',
-  rewatching: 'Пересматриваю',
-  completed: 'Просмотрено',
-  on_hold: 'Отложено',
-  dropped: 'Брошено'
+const kindLabels: Record<string, string> = {
+  tv: 'ТВ-сериал',
+  movie: 'Фильм',
+  ova: 'OVA',
+  ona: 'ONA',
+  special: 'Спешл',
+  tv_special: 'ТВ-спешл',
+  music: 'Клип',
 }
 
-const relatedTitles = computed(() => {
-  return (related.value || [])
-    .filter(r => !!r.anime)
-    .sort((a, b) => (a.anime.airedOn?.year || 0) - (b.anime.airedOn?.year || 0))
-    .map(r => r.anime)
+const seasonLabels: Record<string, string> = {
+  winter: 'Зима',
+  spring: 'Весна',
+  summer: 'Лето',
+  fall: 'Осень',
+}
+
+const rateLabels: Record<string, string> = {
+  g: 'G',
+  pg: '6+',
+  pg_13: '12+',
+  r: '16+',
+  r_plus: '18+',
+  rx: '18+',
+}
+
+const title = computed(() => anime.value?.russian || anime.value?.name || '')
+
+const metaLine = computed(() => {
+  const item = anime.value
+  if (!item) return ''
+  const season = item.season ? seasonLabels[item.season.split('_')[0] ?? ''] : null
+  const year = item.airedOn?.year ? String(item.airedOn.year) : null
+  const seasonYear = [season, year].filter(Boolean).join(' ')
+  return [
+    item.kind ? kindLabels[item.kind] ?? item.kind.toUpperCase() : null,
+    seasonYear || null,
+    item.rating ? rateLabels[item.rating] ?? null : null,
+  ]
+    .filter(Boolean)
+    .join('  ·  ')
 })
 
-function scrollToPlayer() {
-  navigateTo(`/animes/${slug.value}/watch`)
-}
+const stats = computed(() => {
+  const item = anime.value
+  if (!item) return []
+  return [
+    { label: 'Оценка', value: item.score ? Number(item.score).toFixed(2) : '—' },
+    { label: 'Эпизоды', value: item.episodes ? String(item.episodes) : item.episodesAired ? `${item.episodesAired}+` : '—' },
+    { label: 'Серия', value: item.duration ? `${item.duration} мин` : '—' },
+    {
+      label: 'Статус',
+      value: item.status === 'ongoing' ? 'Выходит' : item.status === 'released' ? 'Вышло' : item.status === 'anons' ? 'Анонс' : '—',
+    },
+  ]
+})
 
-async function handleSetStatus(status: string) {
-  if (!anime.value) return
-  await lists.setStatus(anime.value.id, status)
-  isListOpen.value = false
-}
-
-// Formatters
-function formatWatchTime(eps: number, dur: number) {
-  const tot = eps * dur
-  const h = Math.floor(tot / 60)
-  const m = tot % 60
-  let res = ''
-  if (h > 0) res += `${h} часа`
-  if (m > 0) res += `${h > 0 ? ', ' : ''}${m} минут`
-  return res
-}
-
-function tSeason(s: string | null) {
-  if (!s) return ''
-  // Handle strings like 'winter_2026' by taking the first part
-  const clean = s.split('_')[0]?.toLowerCase() || ''
-  const m: Record<string, string> = { 
-    'summer': 'Лето', 
-    'winter': 'Зима', 
-    'spring': 'Весна', 
-    'fall': 'Осень' 
-  }
-  return m[clean] || s
-}
-
-function fKind(k: string | null) {
-  if (!k) return '—'
-  const m: Record<string, string> = { 
-    'tv': 'ТВ-сериал', 
-    'movie': 'Фильм', 
-    'ova': 'OVA', 
-    'ona': 'ONA', 
-    'special': 'Спешл', 
-    'music': 'Клип',
-    'tv_13': 'ТВ-сериал',
-    'tv_24': 'ТВ-сериал',
-    'tv_48': 'ТВ-сериал'
-  }
-  return m[k.toLowerCase()] || k.toUpperCase()
-}
-
-function fRate(r: string | null) {
-  if (!r) return ''
-  const m: Record<string, string> = { 'g':'G', 'pg':'6+', 'pg_13':'12+', 'r':'16+', 'r_plus':'18+', 'rx':'18+' }
-  return m[r.toLowerCase()] || r.toUpperCase().replace('R_', 'R')
-}
-
-const processedDescription = computed(() => {
+const description = computed(() => {
   if (!anime.value?.descriptionHtml) return ''
   return anime.value.descriptionHtml.replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" ')
 })
 
+const relationLabels: Record<string, string> = {
+  adaptation: 'Адаптация',
+  alternative_setting: 'Другая вселенная',
+  alternative_version: 'Другая версия',
+  character: 'Персонаж',
+  full_story: 'Полная история',
+  other: 'Другое',
+  parent_story: 'Основная история',
+  prequel: 'Приквел',
+  sequel: 'Сиквел',
+  side_story: 'Сайд-стори',
+  spin_off: 'Спин-офф',
+  summary: 'Пересказ',
+}
+
+function relationLabel(kind: string | undefined, text: string | undefined) {
+  if (kind && relationLabels[kind]) return relationLabels[kind]
+  return text || ''
+}
+
+const chronology = computed(() =>
+  [...related.value]
+    .filter(item => !!item.anime)
+    .sort((a, b) => (a.anime.airedOn?.year || 0) - (b.anime.airedOn?.year || 0)),
+)
+
+function posterOf(item: ShikimoriAnimeFull) {
+  const direct = item.poster?.originalUrl || item.poster?.mainUrl
+  return direct || ''
+}
+
+const canonical = computed(() =>
+  anime.value
+    ? `${siteUrl}/animes/${anime.value.id}-${slugify(anime.value.name)}`
+    : `${siteUrl}${route.path}`,
+)
+
+const seoTitle = computed(() => {
+  if (!anime.value) return 'Аниме — AniChrono'
+  return `${title.value} — смотреть онлайн и расписание серий | AniChrono`
+})
+
+const seoDescription = computed(() => {
+  const item = anime.value
+  if (!item) return 'Каталог аниме, расписание эфира и просмотр онлайн на AniChrono.'
+  const facts = [
+    item.kind ? kindLabels[item.kind] ?? null : null,
+    item.airedOn?.year ? `${item.airedOn.year} год` : null,
+    item.episodes ? `${item.episodes} эпизодов` : null,
+    item.genres?.length ? item.genres.slice(0, 4).map(genre => genre.russian).filter(Boolean).join(', ') : null,
+  ].filter(Boolean)
+  const summary = item.description ? item.description.replace(/\s+/g, ' ').trim() : ''
+  return [facts.join(' · '), summary.slice(0, 160)].filter(Boolean).join('. ')
+    || `Смотреть ${title.value} онлайн на AniChrono.`
+})
+
+const posterUrl = computed(() => anime.value?.poster?.originalUrl || `${siteUrl}/logo.jpg`)
+
+useSeoMeta({
+  title: seoTitle,
+  ogTitle: seoTitle,
+  description: seoDescription,
+  ogDescription: seoDescription,
+  ogImage: posterUrl,
+  ogType: 'video.tv_show',
+  twitterCard: 'summary_large_image',
+  twitterTitle: seoTitle,
+  twitterDescription: seoDescription,
+  twitterImage: posterUrl,
+  robots: 'index, follow',
+})
+
+useHead(computed(() => ({
+  link: [{ rel: 'canonical', href: canonical.value }],
+  script: anime.value
+    ? [{
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': anime.value.kind === 'movie' ? 'Movie' : 'TVSeries',
+          name: title.value,
+          alternateName: anime.value.name,
+          description: anime.value.description?.replace(/\s+/g, ' ').slice(0, 500),
+          image: anime.value.poster?.originalUrl,
+          url: canonical.value,
+          inLanguage: 'ru',
+          genre: (anime.value.genres || []).map(genre => genre.russian).filter(Boolean),
+          numberOfEpisodes: anime.value.episodes || undefined,
+          datePublished: anime.value.airedOn?.date || anime.value.airedOn?.year?.toString(),
+          aggregateRating: anime.value.score
+            ? {
+                '@type': 'AggregateRating',
+                ratingValue: Number(anime.value.score),
+                bestRating: 10,
+                worstRating: 1,
+              }
+            : undefined,
+        }),
+      }]
+    : [],
+})))
+
 onMounted(async () => {
-  try {
-    isLoading.value = true
-    const d = await fetchAnimeDetails(animeId.value)
-    if (!d) throw new Error('Not found')
-    anime.value = d
-    
-    if (auth.isAuthorized) {
-        await lists.ensureRates()
-    }
+  if (auth.isAuthorized) {
+    lists.ensureRates().catch(() => {})
+  }
 
-    const rl = await fetchRelatedAnimes(animeId.value)
-    related.value = rl
-    const k: any = await $fetch('/api/kodik/search', { params: { shikimori_id: d.id } })
-    if (k?.results?.length > 0) playerUrl.value = k.results[0].link
-    const title = d.russian || d.name
-    const description = d.description ? d.description.slice(0, 160) + (d.description.length > 160 ? '...' : '') : 'Смотрите аниме на AniChrono'
-    const image = d.poster?.originalUrl ? `https://shikimori.io${d.poster.originalUrl}` : '/logo.jpg'
+  const id = anime.value?.id
+  if (!id) return
 
-    useSeoMeta({
-      title: `${title} - AniChrono`,
-      ogTitle: `${title} - AniChrono`,
-      description,
-      ogDescription: description,
-      ogImage: image,
-      twitterCard: 'summary_large_image',
-      twitterTitle: `${title} - AniChrono`,
-      twitterDescription: description,
-      twitterImage: image
-    })
-  } catch (e: any) { error.value = e.message } finally { isLoading.value = false }
+  const kodik = await $fetch<{ results?: { link: string }[] }>('/api/kodik/search', {
+    params: { shikimori_id: id },
+  }).catch(() => null)
+
+  if (kodik?.results?.length) playerUrl.value = kodik.results[0]?.link ?? null
 })
 </script>
 
 <template>
-  <div class="anime-page-final">
-    <div v-if="anime" class="container">
-      <!-- Breadcrumbs -->
-      <nav class="breadcrumb-nav">
-        <NuxtLink to="/" class="breadcrumb-item">Главная страница</NuxtLink>
-        <NuxtLink to="/catalog" class="breadcrumb-item">Каталог релизов</NuxtLink>
-        <span class="breadcrumb-item breadcrumb-item--active">{{ anime.russian || anime.name }}</span>
-      </nav>
-
-      <!-- Hero Header -->
-      <header class="hero-header">
-        <div class="hero-header__poster">
-          <img :src="anime.poster?.originalUrl" :alt="anime.russian || ''">
+  <div class="title">
+    <div class="container">
+      <div v-if="isLoading" class="title__skeleton" aria-hidden="true">
+        <span class="title__skeleton-poster"></span>
+        <div class="title__skeleton-body">
+          <span class="title__skeleton-line title__skeleton-line--short"></span>
+          <span class="title__skeleton-line title__skeleton-line--title"></span>
+          <span class="title__skeleton-line"></span>
+          <span class="title__skeleton-line title__skeleton-line--short"></span>
         </div>
-        
-        <div class="hero-header__content">
-          <h1 class="hero-header__title">{{ anime.russian }}</h1>
-          <p class="hero-header__subtitle">{{ anime.name }}</p>
-
-          <div class="hero-header__badges">
-            <span class="b-status" v-if="anime.rating">{{ fRate(anime.rating) }}</span>
-            <span class="b-status" v-if="anime.kind">{{ fKind(anime.kind) }}</span>
-            <span class="b-status" v-if="anime.season || anime.airedOn?.year">
-              {{ tSeason(anime.season) }} {{ anime.airedOn?.year }}
-            </span>
-          </div>
-
-          <div class="hero-header__meta">
-            <div class="meta-line">
-              <span class="label">Жанры:</span>
-              <span class="val">{{ anime.genres.map(g => g.russian).join(' • ') }}</span>
-            </div>
-            <div class="meta-line">
-              <span class="label">Год выхода:</span>
-              <span class="val">{{ anime.airedOn?.year || '—' }}</span>
-            </div>
-            <div class="meta-line">
-              <span class="label">Длительность:</span>
-              <span class="val">~ {{ anime.duration }} мин</span>
-            </div>
-            <div class="meta-line">
-              <span class="label">Всего эпизодов:</span>
-              <span class="val">{{ anime.episodes }} эпизодов</span>
-            </div>
-          </div>
-
-          <div class="hero-header__actions">
-            <!-- Watch Button -->
-            <button v-if="playerUrl" class="btn-watch" @click="scrollToPlayer">
-              <Icon name="solar:play-bold" size="18" />
-              <span>Смотреть</span>
-            </button>
-
-            <!-- Lists Dropdown Section -->
-            <div v-if="auth.isAuthorized" class="list-dropdown" ref="dropdownRef">
-              <button 
-                class="btn-list" 
-                :class="{ 'btn-list--active': !!currentRate }"
-                @click="isListOpen = !isListOpen"
-              >
-                <Icon :name="currentRate ? 'solar:clipboard-list-bold' : 'solar:add-circle-bold'" size="20" />
-                <span>{{ currentRate ? statusLabels[currentRate.status] : 'В списки' }}</span>
-                <Icon name="solar:alt-arrow-down-linear" size="16" class="arrow" :class="{ rotated: isListOpen }" />
-              </button>
-              
-              <Transition name="dropdown">
-                <div v-if="isListOpen" class="list-dropdown__menu">
-                  <button 
-                    v-for="(label, status) in statusLabels" 
-                    :key="status"
-                    class="menu-item"
-                    :class="{ 'menu-item--active': currentRate?.status === status }"
-                    @click="handleSetStatus(status)"
-                  >
-                    {{ label }}
-                  </button>
-                  <div class="divider" v-if="currentRate"></div>
-                  <button v-if="currentRate" class="menu-item menu-item--danger" @click="lists.remove(anime.id); isListOpen = false">
-                    Удалить из списка
-                  </button>
-                </div>
-              </Transition>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- Content sections -->
-      <div class="page-content">
-        <section class="desc-content">
-          <div v-if="processedDescription" class="desc-content__html" v-html="processedDescription"></div>
-          <div v-else class="desc-content__none">Описание отсутствует</div>
-        </section>
-
-        <!-- Related Swiper -->
-        <section v-if="relatedTitles.length" class="related-content">
-          <h2 class="block-title">Хронология</h2>
-          <SwiperCards :items="relatedTitles" />
-        </section>
       </div>
+
+      <div v-else-if="error || !anime" class="title__state">
+        <p class="title__state-title">Тайтл не открылся</p>
+        <p class="title__state-text">{{ error || 'Shikimori не отдал данные об этом аниме.' }}</p>
+        <NuxtLink to="/catalog" class="btn btn--outline">Вернуться в каталог</NuxtLink>
+      </div>
+
+      <template v-else>
+        <AppCrumbs :items="[
+          { label: 'Главная', to: '/' },
+          { label: 'Каталог', to: '/catalog' },
+          { label: title },
+        ]" />
+
+        <header class="title__hero">
+          <div class="title__poster">
+            <img v-if="posterOf(anime)" :src="posterOf(anime)" :alt="title">
+            <span v-else class="title__poster-empty"></span>
+          </div>
+
+          <div class="title__info">
+            <p class="title__meta tabular">{{ metaLine }}</p>
+            <h1 class="title__name">{{ title }}</h1>
+            <p v-if="anime.name && anime.name !== title" class="title__original">{{ anime.name }}</p>
+
+            <dl class="title__stats">
+              <div v-for="stat in stats" :key="stat.label" class="title__stat">
+                <dt class="title__stat-label">{{ stat.label }}</dt>
+                <dd class="title__stat-value tabular">{{ stat.value }}</dd>
+              </div>
+            </dl>
+
+            <p v-if="anime.genres?.length" class="title__genres">
+              {{ anime.genres.map(genre => genre.russian).join(', ') }}
+            </p>
+
+            <div class="title__actions">
+              <NuxtLink v-if="playerUrl" :to="`/animes/${slug}/watch`" class="btn btn--primary">
+                <AppIcon name="play" :size="15" />
+                <span>Смотреть</span>
+              </NuxtLink>
+
+              <ListMenu v-if="auth.isAuthorized" :anime-id="anime.id" label="В списки" />
+              <NuxtLink to="/schedule" class="btn btn--quiet">Расписание</NuxtLink>
+            </div>
+          </div>
+        </header>
+
+        <section class="section title__about">
+          <div class="section-head">
+            <h2 class="section-title">Описание</h2>
+          </div>
+          <div v-if="description" class="prose" v-html="description"></div>
+          <p v-else class="title__none">Описание пока не добавили.</p>
+        </section>
+
+        <section v-if="chronology.length" class="section title__chronology">
+          <div class="section-head">
+            <h2 class="section-title">Хронология</h2>
+            <span class="section-meta">{{ chronology.length }} связанных тайтлов</span>
+          </div>
+
+          <ol class="chrono">
+            <li v-for="link in chronology" :key="link.anime.id" class="chrono__row">
+              <NuxtLink :to="`/animes/${link.anime.id}-${slugify(link.anime.name)}`" class="chrono__link">
+                <span class="chrono__relation">{{ relationLabel(link.relationKind, link.relationText) }}</span>
+                <span class="chrono__poster">
+                  <img
+                    v-if="link.anime.poster?.mainUrl || link.anime.poster?.originalUrl"
+                    :src="link.anime.poster.mainUrl || link.anime.poster.originalUrl"
+                    alt=""
+                    loading="lazy"
+                  >
+                </span>
+                <span class="chrono__body">
+                  <span class="chrono__name">{{ link.anime.russian || link.anime.name }}</span>
+                  <span class="chrono__sub tabular">
+                    {{ link.anime.kind ? kindLabels[link.anime.kind] ?? link.anime.kind : '' }}
+                    <template v-if="link.anime.airedOn?.year"> · {{ link.anime.airedOn.year }}</template>
+                  </span>
+                </span>
+                <span v-if="Number(link.anime.score)" class="chrono__score tabular">
+                  {{ Number(link.anime.score).toFixed(1) }}
+                </span>
+              </NuxtLink>
+            </li>
+          </ol>
+        </section>
+      </template>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.anime-page-final {
-  min-height: 100vh;
-  padding-bottom: 5rem;
-  color: #fff;
-  overflow-x: hidden;
-  
-  @include respond(tablet-l) {
-    margin-top: 70px;
+.title {
+  padding-block: 20px 64px;
+
+  @include respond(tablet) {
+    padding-block: 28px 88px;
   }
-}
 
-.breadcrumb-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 2rem;
-  padding: 1.5rem 0;
-  font-size: 0.9rem;
+  &__hero {
+    display: grid;
+    gap: 24px;
+    padding-block: 24px 8px;
 
-  @include respond(mobile-l) { gap: 0.5rem 1rem; }
-
-  .breadcrumb-item {
-    color: #666;
-    text-decoration: none;
-    transition: color 0.2s;
-    white-space: nowrap;
-
-    &:hover { color: #fff; }
-
-    &--active {
-      color: #fff;
-      font-weight: 700;
-      white-space: normal;
-      word-break: break-word;
+    @include respond(tablet) {
+      grid-template-columns: 232px minmax(0, 1fr);
+      gap: 40px;
+      align-items: start;
     }
-  }
-}
 
-.hero-header {
-  display: flex;
-  flex-direction: column; 
-  gap: 2rem;
-  margin-bottom: 3rem;
-
-  @include respond(tablet-l) {
-    flex-direction: row; 
-    gap: 3.5rem;
+    @include respond(laptop) {
+      grid-template-columns: 268px minmax(0, 1fr);
+      gap: 56px;
+    }
   }
 
   &__poster {
-    width: 100%; 
-    max-width: 310px;
-    margin: 0 auto;
-    @include respond(tablet-l) { margin: 0; }
-    flex-shrink: 0;
-    border-radius: 16px;
+    width: min(100%, 280px);
+    aspect-ratio: 2 / 3;
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
     overflow: hidden;
+    background: var(--paper-sunk);
 
     img {
       width: 100%;
-      display: block;
+      height: 100%;
       object-fit: cover;
-      aspect-ratio: 2/3;
+    }
+
+    @include respond(tablet) {
+      width: 100%;
     }
   }
 
-  &__content {
-    flex: 1;
+  &__poster-empty {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__info {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     min-width: 0;
   }
 
-  &__title {
-    font-size: 2rem;
-    font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 0.5rem;
-    word-break: break-all;
-    hyphens: auto;
-
-    @include respond(mobile-l) { font-size: 2.5rem; }
-    @include respond(tablet-l) { font-size: 4rem; margin-bottom: 0.2rem; word-break: normal; }
-  }
-
-  &__subtitle {
-    font-size: 1.1rem;
-    color: #666;
-    margin-bottom: 1.5rem;
-  }
-
-  &__badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.8rem;
-    margin-bottom: 2rem;
-  }
-
-  .b-status {
-    padding: 4px 12px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 0.85rem;
-    border: 1px solid #333;
-    background: rgba(255, 255, 255, 0.05);
-    color: #aaa;
-  }
-
   &__meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    margin-bottom: 2.5rem;
+    font-size: 13px;
+    color: var(--ink-3);
+    letter-spacing: 0.01em;
   }
 
-  .meta-line {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem 0.5rem;
-    font-size: 1rem;
-    
-    .label { color: #555; }
-    .val { font-weight: 700; color: #fff; }
+  &__name {
+    margin-top: 10px;
+    font-size: clamp(28px, 5vw, 52px);
+    line-height: 0.98;
+  }
+
+  &__original {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--ink-3);
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    width: 100%;
+    margin-block: 24px 16px;
+    border-top: 1px solid var(--rule-strong);
+    border-bottom: 1px solid var(--rule);
+
+    @include respond(tablet) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  &__stat {
+    padding: 12px 12px 12px 0;
+    border-right: 1px solid var(--rule);
+
+    &:first-child {
+      padding-left: 0;
+    }
+
+    &:last-child {
+      border-right: 0;
+    }
+
+    @include respond(tablet) {
+      padding: 14px 16px;
+    }
+  }
+
+  &__stat-label {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    margin-bottom: 2px;
+  }
+
+  &__stat-value {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.1;
+  }
+
+  &__genres {
+    font-size: 13.5px;
+    color: var(--ink-2);
+    max-width: 60ch;
   }
 
   &__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: auto;
-    @include respond(tablet-l) { margin-top: 2rem; }
-  }
-}
-
-.btn-watch {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 24px;
-  background: #2a2a2a;
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover { background: #333; }
-}
-
-.list-dropdown {
-  position: relative;
-  display: inline-block;
-  
-  .btn-list {
-    display: inline-flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 20px;
-    background: #1a1a1a;
-    color: #fff;
-    border: 1px solid #333;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover { background: #222; border-color: #444; }
-
-    &--active {
-      border-color: #2ecc71;
-    }
-
-    .arrow {
-      margin-left: 8px;
-      transition: transform 0.2s;
-      opacity: 0.5;
-      &.rotated { transform: rotate(180deg); }
-    }
+    gap: 10px;
+    margin-top: 24px;
   }
 
-  &__menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    width: 200px;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 12px;
-    padding: 8px;
-    z-index: 100;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  &__none {
+    font-size: 14px;
+    color: var(--ink-3);
+    padding-top: 16px;
+  }
+
+  &__state {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    align-items: flex-start;
+    gap: 12px;
+    padding-block: 56px;
+    max-width: 52ch;
   }
 
-  .menu-item {
-    padding: 10px 14px;
-    border-radius: 8px;
-    background: none;
-    border: none;
-    color: #999;
-    text-align: left;
-    font-size: 0.9rem;
+  &__state-title {
+    font-family: var(--font-display);
+    font-size: 28px;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
+  }
 
-    &:hover { background: #222; color: #fff; }
+  &__state-text {
+    font-size: 14px;
+    color: var(--ink-3);
+  }
 
-    &--active {
-      background: rgba(46, 204, 113, 0.1);
-      color: #2ecc71;
-    }
+  &__skeleton {
+    display: grid;
+    gap: 24px;
+    padding-block: 24px;
 
-    &--danger {
-      color: #ef5350;
-      &:hover { background: rgba(239, 83, 80, 0.1); }
+    @include respond(tablet) {
+      grid-template-columns: 232px minmax(0, 1fr);
+      gap: 40px;
     }
   }
 
-  .divider {
-    height: 1px;
-    background: #333;
-    margin: 4px 6px;
+  &__skeleton-poster {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    background: var(--paper-sunk);
+    border-radius: 2px;
+    animation: skeleton-pulse 1600ms var(--ease) infinite;
+  }
+
+  &__skeleton-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 8px;
+  }
+
+  &__skeleton-line {
+    display: block;
+    width: 80%;
+    height: 16px;
+    background: var(--paper-sunk);
+    border-radius: 2px;
+    animation: skeleton-pulse 1600ms var(--ease) infinite;
+
+    &--short {
+      width: 32%;
+      height: 12px;
+    }
+
+    &--title {
+      width: 70%;
+      height: 48px;
+    }
   }
 }
 
-.page-content {
+.prose {
+  padding-top: 18px;
+  max-width: 78ch;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-2);
+
+  :deep(p) {
+    margin-bottom: 12px;
+  }
+
+  :deep(a) {
+    color: var(--lapis-deep);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  :deep(br) {
+    display: block;
+    content: '';
+    margin-top: 6px;
+  }
+}
+
+.chrono {
   display: flex;
   flex-direction: column;
-  gap: 4rem;
-}
 
-.related-content {
-  .block-title { margin-bottom: 0.5rem; }
-}
-
-.desc-content {
-  &__html {
-    font-size: 1.1rem;
-    line-height: 1.8;
-    color: #999;
-    word-break: break-word;
+  &__row {
+    border-bottom: 1px solid var(--rule);
   }
-  &__none {
-    color: #666;
-    font-style: italic;
+
+  &__link {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding-block: 10px;
+    color: var(--ink);
+    transition: background-color var(--dur-fast) var(--ease);
+
+    @include respond(tablet) {
+      grid-template-columns: 118px 40px minmax(0, 1fr) auto;
+    }
+
+    &:hover {
+      background: var(--paper-raised);
+
+      .chrono__name {
+        color: var(--lapis-deep);
+      }
+    }
+  }
+
+  &__relation {
+    display: none;
+    font-size: 12px;
+    color: var(--ink-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @include respond(tablet) {
+      display: block;
+    }
+  }
+
+  &__poster {
+    display: block;
+    width: 40px;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    background: var(--paper-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 14.5px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color var(--dur-fast) var(--ease);
+  }
+
+  &__sub {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+
+  &__score {
+    font-family: var(--font-display);
+    font-size: 16px;
+    color: var(--ink-2);
   }
 }
 
-.block-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-}
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
 
-// Transitions
-.dropdown-enter-active, .dropdown-leave-active { transition: opacity 0.2s, transform 0.2s; }
-.dropdown-enter-from, .dropdown-leave-to { opacity: 0; transform: translateY(-10px); }
+  50% {
+    opacity: 0.5;
+  }
+}
 </style>

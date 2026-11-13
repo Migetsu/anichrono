@@ -2,10 +2,10 @@
 import { useRoute } from 'vue-router'
 import { fetchAnimeDetails } from '@/lib/api/animeDetails'
 import type { ShikimoriAnimeFull } from '@/types/shikimori'
-import { useAuthStore } from '@/stores/auth'
+import AppIcon from '@/components/ui/AppIcon.vue'
+import AppCrumbs from '@/components/ui/AppCrumbs.vue'
 
 const route = useRoute()
-const auth = useAuthStore()
 const slug = computed(() => (route.params.slug as string) || '')
 const animeId = computed(() => slug.value.split('-')[0] || '')
 
@@ -13,174 +13,202 @@ const anime = ref<ShikimoriAnimeFull | null>(null)
 const playerUrl = ref<string | null>(null)
 const isLoading = ref(true)
 const error = ref<string | null>(null)
+const retryKey = ref(0)
+
+const title = computed(() => anime.value?.russian || anime.value?.name || '')
 
 useSeoMeta({
-  title: computed(() => anime.value ? `Смотреть ${anime.value.russian || anime.value.name} онлайн - AniChrono` : 'Загрузка...'),
-  description: computed(() => anime.value ? `Смотреть аниме ${anime.value.russian || anime.value.name} онлайн в хорошем качестве.` : '')
+  title: computed(() => (anime.value ? `Смотреть ${title.value} — AniChrono` : 'Просмотр — AniChrono')),
+  description: computed(() => (anime.value ? `Смотреть аниме ${title.value} онлайн в хорошем качестве.` : '')),
+  robots: 'noindex, follow',
 })
 
-onMounted(async () => {
+const crumbs = computed(() => [
+  { label: 'Главная', to: '/' },
+  { label: 'Каталог', to: '/catalog' },
+  { label: title.value || 'Тайтл', to: `/animes/${slug.value}` },
+  { label: 'Просмотр' },
+])
+
+async function load() {
   try {
     isLoading.value = true
-    const d = await fetchAnimeDetails(animeId.value)
-    if (!d) throw new Error('Аниме не найдено')
-    anime.value = d
-    
-    const k: any = await $fetch('/api/kodik/search', { params: { shikimori_id: d.id } })
-    if (k?.results?.length > 0) {
-      playerUrl.value = k.results[0].link
+    error.value = null
+    const data = await fetchAnimeDetails(animeId.value)
+    if (!data) throw new Error('Тайтл не найден')
+    anime.value = data
+
+    const response = await $fetch<{ results?: { link: string }[] }>('/api/kodik/search', {
+      params: { shikimori_id: data.id },
+    }).catch(() => null)
+
+    if (response?.results?.length) {
+      playerUrl.value = response.results[0]?.link ?? null
     } else {
-      error.value = 'Плеер временно недоступен'
+      error.value = 'Плеер для этого тайтла недоступен'
     }
-  } catch (e: any) {
-    error.value = e.message
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Ошибка загрузки'
   } finally {
     isLoading.value = false
   }
-})
+}
+
+onMounted(load)
+watch(retryKey, load)
 </script>
 
 <template>
-  <div class="watch-page">
-    <div v-if="anime" class="container">
-      <nav class="breadcrumb-nav">
-        <NuxtLink to="/" class="breadcrumb-item">Главная</NuxtLink>
-        <NuxtLink to="/catalog" class="breadcrumb-item">Каталог</NuxtLink>
-        <NuxtLink :to="`/animes/${slug}`" class="breadcrumb-item">{{ anime.russian || anime.name }}</NuxtLink>
-        <span class="breadcrumb-item breadcrumb-item--active">Просмотр</span>
-      </nav>
+  <div class="watch">
+    <div class="container">
+      <AppCrumbs :items="crumbs" />
 
-      <header class="watch-header">
-        <NuxtLink :to="`/animes/${slug}`" class="btn-back">
-          <Icon name="solar:alt-arrow-left-linear" size="20" />
-          <span>Назад к описанию</span>
+      <header class="watch__head">
+        <NuxtLink :to="`/animes/${slug}`" class="watch__back">
+          <AppIcon name="arrow-left" :size="15" />
+          <span>К тайтлу</span>
         </NuxtLink>
-        <h1 class="watch-title">{{ anime.russian || anime.name }}</h1>
+        <h1 v-if="anime" class="watch__title">{{ title }}</h1>
       </header>
 
-      <main class="watch-content">
-        <div v-if="isLoading" class="watch-loading">
-          <Icon name="eos-icons:loading" size="40" />
-          <p>Загрузка плеера...</p>
-        </div>
-        
-        <div v-else-if="error" class="watch-error">
-          <Icon name="solar:danger-triangle-bold" size="40" />
-          <p>{{ error }}</p>
-        </div>
+      <div v-if="isLoading" class="watch__frame watch__frame--skeleton">
+        <span class="watch__loading">Загружаем плеер</span>
+      </div>
 
-        <div v-else-if="playerUrl" class="player-wrapper">
-          <div class="player-aspect">
-            <iframe :src="playerUrl" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
-          </div>
+      <div v-else-if="!playerUrl" class="watch__frame watch__frame--state">
+        <p class="watch__state-title">Смотреть пока нечего</p>
+        <p class="watch__state-text">{{ error }}</p>
+        <div class="watch__state-actions">
+          <button type="button" class="btn btn--outline" @click="retryKey++">Попробовать снова</button>
+          <NuxtLink :to="`/animes/${slug}`" class="btn btn--quiet">К описанию</NuxtLink>
         </div>
-      </main>
+      </div>
+
+      <div v-else class="watch__frame">
+        <iframe
+          :src="playerUrl"
+          class="watch__player"
+          frameborder="0"
+          allowfullscreen
+          allow="autoplay; fullscreen"
+          referrerpolicy="origin"
+        />
+      </div>
+
+      <p class="watch__note">
+        Плеер Kodik. Если видео не запускается, отключите блокировщик рекламы для этого домена.
+      </p>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.watch-page {
-  min-height: 100vh;
-  padding-bottom: 5rem;
-}
+.watch {
+  padding-block: 20px 56px;
 
-.breadcrumb-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 1.5rem 0;
-  font-size: 0.9rem;
-
-  .breadcrumb-item {
-    color: #666;
-    text-decoration: none;
-    transition: color 0.2s;
-    &:hover { color: #fff; }
-    &--active { color: #fff; font-weight: 700; }
+  @include respond(tablet) {
+    padding-block: 28px 80px;
   }
-}
 
-.watch-header {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  
-  @include respond(tablet-l) {
-    flex-direction: row;
+  &__head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-block: 18px;
+  }
+
+  &__back {
+    display: inline-flex;
     align-items: center;
-    gap: 2rem;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-3);
+    transition: color var(--dur-fast) var(--ease);
+
+    &:hover {
+      color: var(--ink);
+    }
   }
-}
 
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #888;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s;
-  &:hover { color: #fff; }
-}
+  &__title {
+    font-size: clamp(24px, 3.4vw, 38px);
+  }
 
-.watch-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  @include respond(tablet-l) { font-size: 2rem; }
-}
+  &__frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    overflow: hidden;
 
-.watch-content {
-  border-radius: 16px;
-  overflow: hidden;
-  min-height: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    &--skeleton {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--paper-sunk);
+    }
 
-.player-wrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
+    &--state {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      aspect-ratio: auto;
+      min-height: 220px;
+      background: var(--paper-raised);
+    }
+  }
 
-.player-aspect {
-  // Mobile / tablet: responsive 16:9
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
-
-  iframe {
-    position: absolute;
-    inset: 0;
+  &__player {
     width: 100%;
     height: 100%;
-    border: 0;
     display: block;
+    border: 0;
   }
 
-  // Desktop: fixed 1100x760
-  @include respond(laptop) {
-    width: 1100px;
-    height: 760px;
-    aspect-ratio: unset;
-    flex-shrink: 0;
+  &__loading {
+    font-size: 13px;
+    color: var(--ink-3);
+    animation: loading-pulse 1600ms var(--ease) infinite;
+  }
+
+  &__state-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  &__state-text {
+    font-size: 14px;
+    color: var(--ink-3);
+  }
+
+  &__state-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  &__note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--ink-3);
   }
 }
 
-.watch-loading, .watch-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  color: #666;
-  text-align: center;
-}
+@keyframes loading-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
 
-.watch-error { color: #ef5350; }
+  50% {
+    opacity: 0.45;
+  }
+}
 </style>

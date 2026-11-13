@@ -2,6 +2,7 @@ import { shikiGQL } from '~/lib/api/shikiClient'
 import type { ShikimoriAnimeListItem, AnimesQueryResponse } from '~/types/shikimori'
 import type { CatalogFilters, Genre } from '@/types/catalog'
 import { AnimesQueryResponseSchema } from '@/lib/api/schemas'
+import { isKidsAnime } from '#shared/kids'
 
 // Query with server-side filter support where available
 const CATALOG_QUERY = `
@@ -34,6 +35,7 @@ const CATALOG_QUERY = `
       kind
       rating
       status
+      duration
       poster { originalUrl }
       genres { id name russian }
       airedOn { year }
@@ -56,10 +58,16 @@ interface GenresResponse {
   genres: Genre[]
 }
 
+export interface CatalogPage {
+  items: ShikimoriAnimeListItem[]
+  /** How many entries the API returned before the kids filter, used for pagination. */
+  rawCount: number
+}
+
 /**
  * Fetch anime catalog with filters
  */
-export async function fetchCatalog(filters: CatalogFilters = {}): Promise<ShikimoriAnimeListItem[]> {
+export async function fetchCatalog(filters: CatalogFilters = {}): Promise<CatalogPage> {
   try {
     const variables: Record<string, unknown> = {
       limit: filters.limit ?? 20,
@@ -98,19 +106,26 @@ export async function fetchCatalog(filters: CatalogFilters = {}): Promise<Shikim
     }
     
     const data = await shikiGQL<AnimesQueryResponse>(CATALOG_QUERY, variables)
-    
+    const raw = data?.animes ?? []
+
     // Validate with Zod
     const validated = AnimesQueryResponseSchema.safeParse(data)
     if (!validated.success) {
       console.warn('Zod validation failed for catalog:', validated.error)
-      return data?.animes ?? [] // Fallback to raw data if validation fails but we have data
+      return {
+        items: raw.filter(item => !isKidsAnime(item)) as unknown as ShikimoriAnimeListItem[],
+        rawCount: raw.length,
+      }
     }
 
-    return validated.data.animes as unknown as ShikimoriAnimeListItem[]
+    return {
+      items: (validated.data.animes as unknown as ShikimoriAnimeListItem[]).filter(item => !isKidsAnime(item)),
+      rawCount: raw.length,
+    }
   } catch (error) {
     console.error('Failed to fetch catalog:', error)
     // Return empty array on error to prevent page crash
-    return []
+    return { items: [], rawCount: 0 }
   }
 }
 

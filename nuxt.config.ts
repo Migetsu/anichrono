@@ -48,7 +48,6 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxt/icon',
-    'nuxt-swiper',
     '@pinia/nuxt',
     '@nuxt/fonts',
     '@nuxtjs/sitemap',
@@ -59,18 +58,24 @@ export default defineNuxtConfig({
     url: process.env.SITE_URL || 'https://anichrono.vercel.app',
   },
 
+  sitemap: {
+    sources: ['/api/sitemap-urls'],
+    exclude: ['/profile', '/random', '/animes/**/watch', '/movies/**/watch'],
+  },
+
   fonts: {
     families: [
       {
-        name: "Comfortaa",
+        name: "Oswald",
         provider: 'google',
+        weights: [500, 600, 700],
+        subsets: ['cyrillic', 'latin'],
       },
       {
-        name: "Orbitron",
+        name: "Golos Text",
         provider: 'google',
-      }, {
-        name: "Exo2",
-        provider: 'google',
+        weights: [400, 500, 600],
+        subsets: ['cyrillic', 'latin'],
       },
     ]
   },

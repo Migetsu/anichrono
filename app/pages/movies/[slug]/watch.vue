@@ -1,378 +1,413 @@
 <script lang="ts" setup>
 import { useRoute, useRouter } from 'vue-router'
-import { ref, onMounted, computed } from 'vue'
 import { fetchTMDBDetails } from '~/lib/api/tmdb'
+import AppIcon from '@/components/ui/AppIcon.vue'
+import AppCrumbs from '@/components/ui/AppCrumbs.vue'
 
 const route = useRoute()
 const router = useRouter()
+
 const slug = computed(() => (route.params.slug as string) || '')
 const [type, id] = slug.value.split('-') as ['movie' | 'tv', string]
+const isTv = type === 'tv'
 
-const film = ref<any>(null)
+const film = ref<Record<string, any> | null>(null)
 const isLoading = ref(true)
 const error = ref<string | null>(null)
 
+const season = ref(Number(route.query.season) || 1)
+const episode = ref(Number(route.query.episode) || 1)
+
 interface PlayerSource {
-  id: string;
-  name: string;
-  url: string;
+  id: string
+  name: string
+  url: string
 }
+
 const sources = ref<PlayerSource[]>([])
-const activeSourceId = ref<string>('')
+const activeSourceId = ref('')
+
+const title = computed<string>(() => film.value?.title || film.value?.name || '')
+const year = computed<number | null>(() => {
+  const value = film.value?.release_date || film.value?.first_air_date
+  return value ? new Date(value).getFullYear() : null
+})
+
+const seasonList = computed<Array<{ season_number: number, episode_count: number, name?: string }>>(() =>
+  isTv && Array.isArray(film.value?.seasons)
+    ? film.value!.seasons.filter((item: any) => item.season_number > 0)
+    : [],
+)
+
+const currentSeason = computed(() =>
+  seasonList.value.find(item => item.season_number === season.value) ?? seasonList.value[0],
+)
+
+const episodeCount = computed(() => currentSeason.value?.episode_count ?? 0)
+
+const embessUrl = computed(() => {
+  const imdb = film.value?.external_ids?.imdb_id
+  if (!imdb) return null
+  const base = `https://api.embess.ws/embed/imdb/${imdb}`
+  if (!isTv) return base
+  return `${base}?season=${season.value}&episode=${episode.value}`
+})
+
+const activeUrl = computed(() => {
+  if (activeSourceId.value === 'embess') return embessUrl.value
+  return sources.value.find(source => source.id === activeSourceId.value)?.url ?? null
+})
 
 useSeoMeta({
-  title: computed(() => film.value ? `Смотреть ${film.value.title || film.value.name} онлайн - AniChrono` : 'Загрузка...'),
-  description: computed(() => film.value ? `Смотреть ${film.value.title || film.value.name} онлайн в хорошем качестве.` : '')
+  title: computed(() => (film.value ? `Смотреть ${title.value} — AniChrono` : 'Просмотр — AniChrono')),
+  description: computed(() => (film.value ? `Смотреть ${title.value} онлайн на AniChrono.` : '')),
+  robots: 'noindex, follow',
 })
+
+const crumbs = computed(() => [
+  { label: 'Главная', to: '/' },
+  { label: 'Фильмы', to: '/movies' },
+  { label: title.value || 'Тайтл', to: `/movies/${slug.value}` },
+  { label: 'Просмотр' },
+])
+
+function syncQuery() {
+  const query = isTv ? { season: String(season.value), episode: String(episode.value) } : {}
+  router.replace({ path: `/movies/${slug.value}/watch`, query })
+}
+
+function onSeasonChange() {
+  episode.value = 1
+  syncQuery()
+}
+
+function onEpisodeChange() {
+  syncQuery()
+}
 
 onMounted(async () => {
   try {
     isLoading.value = true
     const res = await fetchTMDBDetails(id, type)
-    if (!res) throw new Error('Фильм не найден')
+    if (!res) throw new Error('Тайтл не найден')
     film.value = res
 
-    const availableSources: PlayerSource[] = []
-    
-    // 1. Пытаемся получить Kodik (Аниме и некоторые сериалы/фильмы)
-    if (res.external_ids?.imdb_id) {
+    const imdb = res.external_ids?.imdb_id
+
+    // Embess takes IMDb ids directly and covers both films and series.
+    if (imdb) {
+      sources.value = [{ id: 'embess', name: 'Embess (RU)', url: embessUrl.value as string }]
+      activeSourceId.value = 'embess'
+    }
+
+    // Kodik stays as a second source when it has this title.
+    if (imdb) {
       try {
-        const k: any = await $fetch('/api/kodik/search', { params: { imdb_id: res.external_ids.imdb_id } })
-        if (k?.results?.length > 0) {
-          availableSources.push({
-            id: 'kodik',
-            name: 'Kodik (Основной)',
-            url: k.results[0].link
-          })
-        }
-      } catch (e) {
-        console.error('Kodik fetch error', e)
+        const kodik = await $fetch<{ results?: { link: string }[] }>('/api/kodik/search', {
+          params: { imdb_id: imdb },
+        }).catch(() => null)
+        const link = kodik?.results?.[0]?.link
+        if (link) sources.value.push({ id: 'kodik', name: 'Kodik', url: link })
+      } catch {
+        // Kodik is optional — ignore failures.
       }
     }
 
-    // 2. Добавляем запасные открытые балансеры, если есть IMDB ID
-    if (res.external_ids?.imdb_id) {
-      const imdbId = res.external_ids.imdb_id
-      
-      availableSources.push({
-        id: 'dbgo',
-        name: 'Резерв 1 (DBGO)',
-        url: `https://dbgo.fun/imdb/${imdbId}`
-      })
-
-      availableSources.push({
-        id: 'vidsrc',
-        name: 'Резерв 2 (VidSrc)',
-        url: `https://vidsrc.me/embed/${type}?imdb=${imdbId}`
-      })
-
-      availableSources.push({
-        id: 'superembed',
-        name: 'Резерв 3 (SuperEmbed)',
-        url: `https://multiembed.mov/?video_id=${imdbId}&tmdb=${res.id}`
-      })
+    if (!sources.value.length) {
+      error.value = 'Для этого тайтла не нашлось источника видео'
     }
-
-    if (availableSources.length > 0) {
-      sources.value = availableSources
-      activeSourceId.value = availableSources[0].id
-    } else {
-      error.value = 'По техническим причинам и лицензионным соображениям данный плеер недоступен.'
-    }
-
-  } catch (e: any) {
-    error.value = e.message
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Ошибка загрузки'
   } finally {
     isLoading.value = false
   }
 })
 
-const activeSourceUrl = computed(() => {
-  const source = sources.value.find(s => s.id === activeSourceId.value)
-  return source ? source.url : null
-})
-
-const heroStyle = computed(() => {
-  if (!film.value?.backdrop_path) return {}
-  const bgUrl = `https://image.tmdb.org/t/p/original${film.value.backdrop_path}`
-  return {
-    backgroundImage: `linear-gradient(to bottom, rgba(15, 15, 17, 0.4) 0%, rgba(15, 15, 17, 1) 100%), url(${bgUrl})`
+watch([season, episode], () => {
+  if (activeSourceId.value === 'embess') {
+    const source = sources.value.find(item => item.id === 'embess')
+    if (source && embessUrl.value) source.url = embessUrl.value
   }
 })
-
-function goBack() {
-  const currentType = route.query.type === 'tv' ? 'tv' : 'movie'
-  router.push({
-    path: `/movies/${route.params.slug}`,
-    query: { type: currentType }
-  })
-}
 </script>
 
 <template>
-  <div class="watch-page" :style="heroStyle">
-    <div v-if="film" class="watch-page__container container">
-      <nav class="breadcrumb-nav">
-        <NuxtLink to="/" class="breadcrumb-item">Главная</NuxtLink>
-        <NuxtLink to="/movies" class="breadcrumb-item">Фильмы</NuxtLink>
-        <NuxtLink :to="`/movies/${slug}`" class="breadcrumb-item">{{ film.title || film.name }}</NuxtLink>
-        <span class="breadcrumb-item breadcrumb-item--active">Просмотр</span>
-      </nav>
+  <div class="watch">
+    <div class="container">
+      <AppCrumbs :items="crumbs" />
 
-      <header class="watch-header">
-        <button class="back-btn" @click="goBack">
-          <Icon name="solar:arrow-left-linear" size="24" />
+      <header class="watch__head">
+        <NuxtLink :to="`/movies/${slug}`" class="watch__back">
+          <AppIcon name="arrow-left" :size="15" />
           <span>К тайтлу</span>
-        </button>
-        
-        <h1 class="title">
-          Смотреть {{ film.title || film.name }}
-          <span class="year" v-if="film.release_date || film.first_air_date">
-            ({{ new Date(film.release_date || film.first_air_date).getFullYear() }})
-          </span>
+        </NuxtLink>
+        <h1 v-if="film" class="watch__title">
+          Смотреть {{ title }}<span v-if="year" class="watch__year"> ({{ year }})</span>
         </h1>
       </header>
 
-      <div class="player-container">
-        <!-- Вкладки плееров -->
-        <div class="player-tabs" v-if="sources.length > 1">
-          <button 
-            v-for="source in sources" 
-            :key="source.id"
-            class="tab-btn"
-            :class="{ active: activeSourceId === source.id }"
-            @click="activeSourceId = source.id"
-          >
-            {{ source.name }}
-          </button>
-        </div>
+      <div v-if="isLoading" class="watch__frame watch__frame--skeleton">
+        <span class="watch__loading">Ищем источник видео</span>
+      </div>
 
-        <div v-if="isLoading" class="player-loading">
-          <Icon name="eos-icons:loading" size="48" class="loading-icon" />
-          <span>Поиск источников видео...</span>
-        </div>
-        
-        <div v-else-if="error" class="player-error">
-          <Icon name="solar:danger-triangle-bold" size="48" class="error-icon" />
-          <h3>Плеер недоступен</h3>
-          <p>{{ error }}</p>
-          <button class="retry-btn" @click="goBack">Вернуться назад</button>
-        </div>
-
-        <div v-else-if="activeSourceUrl" class="player-wrapper">
-          <div class="player-aspect">
-            <!-- Ключ key заставляет iframe перезагружаться при смене URL -->
-            <iframe :key="activeSourceUrl" :src="activeSourceUrl" frameborder="0" allowfullscreen></iframe>
-          </div>
+      <div v-else-if="!activeUrl" class="watch__frame watch__frame--state">
+        <p class="watch__state-title">Плеер недоступен</p>
+        <p class="watch__state-text">{{ error || 'У этого тайтла нет IMDb-идентификатора, по которому работает плеер.' }}</p>
+        <div class="watch__state-actions">
+          <NuxtLink :to="`/movies/${slug}`" class="btn btn--outline">К описанию</NuxtLink>
+          <NuxtLink to="/movies" class="btn btn--quiet">Все фильмы</NuxtLink>
         </div>
       </div>
+
+      <template v-else>
+        <div class="watch__bar">
+          <div class="watch__sources" v-if="sources.length > 1">
+            <button
+              v-for="source in sources"
+              :key="source.id"
+              type="button"
+              class="watch__source"
+              :class="{ 'watch__source--active': activeSourceId === source.id }"
+              @click="activeSourceId = source.id"
+            >
+              {{ source.name }}
+            </button>
+          </div>
+
+          <div v-if="isTv && seasonList.length" class="watch__episode-controls">
+            <label class="watch__control">
+              <span>Сезон</span>
+              <select v-model.number="season" class="watch__select" @change="onSeasonChange">
+                <option v-for="item in seasonList" :key="item.season_number" :value="item.season_number">
+                  {{ item.season_number }}
+                </option>
+              </select>
+            </label>
+
+            <label class="watch__control">
+              <span>Серия</span>
+              <select v-model.number="episode" class="watch__select" @change="onEpisodeChange">
+                <option v-for="n in episodeCount" :key="n" :value="n">{{ n }}</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="watch__frame">
+          <iframe
+            :key="activeUrl"
+            :src="activeUrl"
+            class="watch__player"
+            frameborder="0"
+            allowfullscreen
+            allow="autoplay; fullscreen; encrypted-media"
+            referrerpolicy="origin"
+          />
+        </div>
+
+        <p class="watch__note">
+          Плеер сторонний и может показывать рекламу. Если видео не запускается, попробуйте другой источник
+          или отключите блокировщик для этого домена.
+        </p>
+      </template>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.watch-page {
-  min-height: calc(100vh - var(--header-height));
-  padding: 2rem 0;
-  background-size: cover;
-  background-position: center 20%;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  position: relative;
-  
-  &__container {
-    max-width: 1400px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 10;
-  }
-}
+.watch {
+  padding-block: 20px 56px;
 
-.breadcrumb-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 0 0 1.5rem 0;
-  font-size: 0.9rem;
-
-  .breadcrumb-item {
-    color: rgba(255,255,255,0.6);
-    text-decoration: none;
-    transition: color 0.2s;
-    &:hover { color: #fff; }
-    &--active { color: #fff; font-weight: 700; }
-  }
-}
-
-.watch-header {
-  margin-bottom: 2rem;
-  
-  .back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: rgba(255,255,255,0.7);
-    background: rgba(15, 15, 17, 0.5);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-bottom: 1.5rem;
-    
-    &:hover {
-      color: #fff;
-      background: rgba(15, 15, 17, 0.8);
-      transform: translateX(-5px);
-    }
+  @include respond(tablet) {
+    padding-block: 28px 80px;
   }
 
-  .title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-    
-    .year {
-      color: rgba(255,255,255,0.7);
-      font-weight: 400;
-    }
-  }
-}
-
-.player-container {
-  width: 100%;
-  background: #0f0f11;
-  border-radius: 16px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-
-  .player-tabs {
-    display: flex;
-    gap: 0.5rem;
-    padding: 1rem 1.5rem;
-    background: #1a1a1c;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    overflow-x: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent) transparent;
-
-    &::-webkit-scrollbar {
-      height: 4px;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: var(--accent);
-      border-radius: 10px;
-    }
-
-    .tab-btn {
-      padding: 0.5rem 1rem;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: transparent;
-      color: rgba(255,255,255,0.6);
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-
-      &:hover {
-        background: rgba(255,255,255,0.05);
-        color: #fff;
-      }
-
-      &.active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-      }
-    }
-  }
-
-  .player-wrapper {
-    width: 100%;
-  }
-
-  .player-aspect {
-    aspect-ratio: 16/9;
-    width: 100%;
-    
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-  }
-
-  .player-loading, .player-error {
-    aspect-ratio: 16/9;
+  &__head {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    color: #888;
-    text-align: center;
-    padding: 2rem;
+    gap: 10px;
+    padding-block: 18px;
+  }
 
-    .loading-icon {
-      color: var(--accent);
+  &__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-3);
+    transition: color var(--dur-fast) var(--ease);
+
+    &:hover {
+      color: var(--ink);
     }
   }
 
-  .player-error {
-    .error-icon {
-      color: #ff4d4d;
+  &__title {
+    font-size: clamp(24px, 3.4vw, 38px);
+  }
+
+  &__year {
+    color: var(--ink-3);
+    font-weight: 400;
+  }
+
+  &__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+  }
+
+  &__sources {
+    display: flex;
+    gap: 16px;
+  }
+
+  &__source {
+    position: relative;
+    padding-bottom: 6px;
+    font-size: 13.5px;
+    color: var(--ink-3);
+    transition: color var(--dur-fast) var(--ease);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      bottom: 0;
+      height: 2px;
+      background: var(--lapis);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--dur) var(--ease);
     }
 
-    h3 {
-      color: #fff;
-      font-size: 1.5rem;
-      margin: 0;
+    &:hover {
+      color: var(--ink-2);
     }
 
-    p {
-      margin: 0 0 1rem;
-      max-width: 400px;
-      line-height: 1.5;
-    }
+    &--active {
+      color: var(--ink);
 
-    .retry-btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-
-      &:hover {
-        transform: translateY(-2px);
+      &::after {
+        transform: scaleX(1);
       }
     }
   }
-}
 
-@media (max-width: 768px) {
-  .watch-page {
-    padding: 1rem 0;
+  &__episode-controls {
+    display: flex;
+    align-items: center;
+    gap: 18px;
   }
-  
-  .watch-header {
-    .title {
-      font-size: 1.5rem;
+
+  &__control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+
+  &__select {
+    height: 32px;
+    padding: 0 22px 0 8px;
+    background-color: transparent;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%),
+      linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+    background-position: calc(100% - 8px) 13px, calc(100% - 3px) 13px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    border-bottom: 1px solid var(--rule-strong);
+    border-radius: 0;
+    font-size: 13px;
+    color: var(--ink);
+    appearance: none;
+    cursor: pointer;
+
+    option {
+      background: var(--paper-raised);
+      color: var(--ink);
     }
   }
-  
-  .player-container {
-    border-radius: 8px;
+
+  &__frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    overflow: hidden;
+
+    &--skeleton {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--paper-sunk);
+    }
+
+    &--state {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      aspect-ratio: auto;
+      min-height: 220px;
+      background: var(--paper-raised);
+    }
+  }
+
+  &__player {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border: 0;
+  }
+
+  &__loading {
+    font-size: 13px;
+    color: var(--ink-3);
+    animation: loading-pulse 1600ms var(--ease) infinite;
+  }
+
+  &__state-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  &__state-text {
+    font-size: 14px;
+    color: var(--ink-3);
+  }
+
+  &__state-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  &__note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+}
+
+@keyframes loading-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
   }
 }
 </style>

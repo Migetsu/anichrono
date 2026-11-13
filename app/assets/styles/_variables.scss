@@ -1,23 +1,58 @@
-$primary-bg: #0a0a0a;
-$secondary-bg: #1a1a2e;
-$text-primary: #ffffff;
-$text-secondary: #e0e0e0;
+// SCSS mirrors of the CSS custom properties in global.scss.
+// Kept so component styles can use values at build time when needed.
 
-$inp-bg: #1a1a2ecc;
-$inp-border: #ff6b6b4d;
+$paper: #101216;
+$paper-raised: #1c2128;
+$paper-sunk: #0a0c0f;
 
-$dark-blue: #16213e;
-$hot-pink: #e94560;
-$neon-cyan: #00ffff;
-$neon-pink: #ff00ff;
-$neon-yellow: #ffff00;
-$accent-coral: #ff6b6b;
-$accent-coral-opacity: #ff6b6b1a;
-$accent-turquoise: #4ecdc4;
-$accent-gold: #ffe66d;
-$accent-green: #00ff00;
-$accent-purple: #9d4edd;
+$ink: #eceae2;
+$ink-2: #b3b2ab;
+$ink-3: #85857f;
 
-$font-orbitron: "Orbitron", sans-serif;
-$font-exo2: "Exo2", sans-serif;
-$font-comfortaa: "Comfortaa", sans-serif;
+$rule: rgba(236, 234, 226, 0.12);
+$rule-strong: rgba(236, 234, 226, 0.26);
+
+$lapis: #6d88ff;
+$lapis-deep: #b7c3ff;
+
+$signal: #e0a06a;
+$signal-dot: #f08a3c;
+
+$seal: #e0705c;
+
+$inverse: #0a0b0e;
+$on-inverse: #eceae2;
+
+$font-display: "Oswald", "Arial Narrow", system-ui, sans-serif;
+$font-main: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+$ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+// ---------------------------------------------------------------------------
+// Legacy SCSS names. Screens that were not redesigned yet still reference
+// them; every value points at the current palette.
+// ---------------------------------------------------------------------------
+
+$primary-bg: $paper;
+$secondary-bg: $paper-raised;
+$text-primary: $ink;
+$text-secondary: $ink-2;
+
+$inp-bg: $paper-raised;
+$inp-border: $rule;
+
+$dark-blue: $lapis;
+$hot-pink: $seal;
+$neon-cyan: $lapis;
+$neon-pink: $seal;
+$neon-yellow: $signal;
+$accent-coral: $lapis;
+$accent-coral-opacity: rgba(109, 136, 255, 0.12);
+$accent-turquoise: $lapis-deep;
+$accent-gold: $signal;
+$accent-green: $lapis-deep;
+$accent-purple: $lapis;
+
+$font-orbitron: $font-display;
+$font-exo2: $font-main;
+$font-comfortaa: $font-main;

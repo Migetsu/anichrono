@@ -1,135 +1,123 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { slugify } from '@/utils/slugify'
 import { fetchRandomAnime } from '@/lib/api/animeDetails'
 
 const router = useRouter()
 const error = ref<string | null>(null)
+const isPicking = ref(true)
 
 useSeoMeta({
-  title: 'Случайное аниме - AniChrono',
-  description: 'Подбор случайного аниме для просмотра.'
+  title: 'Случайное аниме — AniChrono',
+  description: 'Подбор случайного аниме для просмотра.',
 })
 
 async function roll() {
-  const anime = await fetchRandomAnime()
-  if (anime) {
-    // Redirect to the anime page with ID-Slug format
+  error.value = null
+  isPicking.value = true
+  try {
+    const anime = await fetchRandomAnime()
+    if (!anime) {
+      error.value = 'Shikimori не отдал случайный тайтл'
+      return
+    }
     await router.replace(`/animes/${anime.id}-${slugify(anime.name)}`)
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Не получилось выбрать тайтл'
+  } finally {
+    isPicking.value = false
   }
 }
 
-onMounted(async () => {
-  await roll()
-})
+onMounted(roll)
 </script>
 
 <template>
-  <div class="random-page">
-    <div class="container">
-      <div v-if="error" class="error-state">
-        <Icon name="solar:sad-circle-bold" class="icon" />
-        <p>{{ error }}</p>
-        <button @click="roll" class="retry-btn">Попробовать снова</button>
-      </div>
-      <div v-else class="loading-state">
-        <div class="dice-wrapper">
-           <Icon name="solar:shuffle-linear" class="dice-icon" />
+  <div class="random">
+    <div class="container random__inner">
+      <p class="random__label">Случайный тайтл</p>
+
+      <template v-if="error">
+        <h1 class="random__title">Не получилось</h1>
+        <p class="random__text">{{ error }}</p>
+        <div class="random__actions">
+          <button type="button" class="btn btn--primary" @click="roll">Ещё раз</button>
+          <NuxtLink to="/catalog" class="btn btn--outline">В каталог</NuxtLink>
         </div>
-        <h2>Ищем что-то интересное...</h2>
-        <p>Подбираем для вас отличный тайтл</p>
-      </div>
+      </template>
+
+      <template v-else>
+        <h1 class="random__title">Выбираем</h1>
+        <p class="random__text">Открываем случайный тайтл из каталога.</p>
+        <div class="random__progress" aria-hidden="true">
+          <span class="random__progress-bar"></span>
+        </div>
+        <span class="visually-hidden" role="status">{{ isPicking ? 'Идёт выбор' : '' }}</span>
+      </template>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.random-page {
-  min-height: 80vh;
+.random {
   display: flex;
+  min-height: 62vh;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-}
+  padding-block: 48px;
 
-.loading-state, .error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  animation: fadeIn 0.5s ease;
-}
+  &__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 
-.dice-wrapper {
-  position: relative;
-  width: 100px;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle, rgba(230, 57, 70, 0.4) 0%, transparent 70%);
-    filter: blur(20px);
-    animation: pulse 2s infinite;
+  &__label {
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+
+  &__title {
+    font-size: clamp(31px, 5vw, 48px);
+  }
+
+  &__text {
+    max-width: 44ch;
+    font-size: 15px;
+    color: var(--ink-2);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  &__progress {
+    width: min(100%, 320px);
+    height: 2px;
+    margin-top: 16px;
+    background: var(--rule);
+    overflow: hidden;
+  }
+
+  &__progress-bar {
+    display: block;
+    width: 40%;
+    height: 100%;
+    background: var(--lapis);
+    animation: picking 1200ms var(--ease) infinite;
   }
 }
 
-.dice-icon {
-  font-size: 80px;
-  color: var(--accent);
-  animation: shake 2s infinite ease-in-out;
-}
+@keyframes picking {
+  0% {
+    transform: translateX(-100%);
+  }
 
-h2 {
-  font-size: 28px;
-  margin: 0;
-  color: white;
-}
-
-p {
-  color: var(--muted);
-  margin: 0;
-}
-
-.icon {
-    font-size: 64px;
-    color: var(--accent);
-}
-
-.retry-btn {
-    padding: 12px 24px;
-    background: rgba(230, 57, 70, 0.1);
-    color: var(--accent);
-    border: 1px solid rgba(230, 57, 70, 0.3);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: 600;
-    
-    &:hover {
-        background: var(--accent);
-        color: #fff;
-    }
-}
-
-@keyframes shake {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-10deg); }
-  75% { transform: rotate(10deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.2); }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+  100% {
+    transform: translateX(350%);
+  }
 }
 </style>

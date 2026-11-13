@@ -8,30 +8,27 @@ const props = defineProps<{
 }>()
 
 const title = computed(() => (props.item as TMDBMovie).title || (props.item as TMDBTV).name)
+const original = computed(() => (props.item as TMDBMovie).original_title || (props.item as TMDBTV).original_name)
 const date = computed(() => (props.item as TMDBMovie).release_date || (props.item as TMDBTV).first_air_date)
-const year = computed(() => date.value ? new Date(date.value).getFullYear() : '')
-const posterUrl = computed(() => getTMDBImageUrl(props.item.poster_path))
+const year = computed(() => (date.value ? new Date(date.value).getFullYear() : ''))
+const posterUrl = computed(() => getTMDBImageUrl(props.item.poster_path, 'w500'))
+const score = computed(() => (Number(props.item.vote_average) ? Number(props.item.vote_average).toFixed(1) : null))
+
+const meta = computed(() =>
+  [props.type === 'movie' ? 'Фильм' : 'Сериал', year.value || null].filter(Boolean).join('  ·  '),
+)
 </script>
 
 <template>
   <NuxtLink :to="`/movies/${type}-${item.id}`" class="film-card">
-    <div class="film-card__poster-wrap">
-      <img v-if="posterUrl" :src="posterUrl" :alt="title" class="film-card__poster">
-      <div v-else class="film-card__no-poster">
-        <Icon name="solar:clapperboard-play-linear" size="40" />
-      </div>
-      <div class="film-card__score" v-if="item.vote_average">
-        <Icon name="solar:star-bold" size="10" />
-        {{ item.vote_average.toFixed(1) }}
-      </div>
-    </div>
-    <div class="film-card__body">
-      <h3 class="film-card__title" :title="title">{{ title }}</h3>
-      <div class="film-card__meta">
-        <span class="film-card__type">{{ type === 'movie' ? 'Фильм' : 'Сериал' }}</span>
-        <span class="film-card__year" v-if="year">{{ year }}</span>
-      </div>
-    </div>
+    <span class="film-card__frame">
+      <img v-if="posterUrl" :src="posterUrl" :alt="title" class="film-card__image" loading="lazy">
+      <span v-else class="film-card__image film-card__image--empty"></span>
+      <span v-if="score" class="film-card__score tabular">{{ score }}</span>
+    </span>
+    <span class="film-card__title">{{ title }}</span>
+    <span class="film-card__meta tabular">{{ meta }}</span>
+    <span v-if="original && original !== title" class="film-card__original">{{ original }}</span>
   </NuxtLink>
 </template>
 
@@ -39,108 +36,77 @@ const posterUrl = computed(() => getTMDBImageUrl(props.item.poster_path))
 .film-card {
   display: flex;
   flex-direction: column;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ink);
 
-  &:hover {
-    transform: translateY(-8px);
-    background: var(--surface3);
-    border-color: rgba(var(--accent-rgb), 0.5);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.3);
-
-    .film-card__poster {
-      transform: scale(1.05);
-    }
-  }
-
-  &__poster-wrap {
+  &__frame {
     position: relative;
-    padding-top: 150%;
+    display: block;
+    aspect-ratio: 2 / 3;
     overflow: hidden;
-    background: #111;
+    background: var(--paper-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
   }
 
-  &__poster {
-    position: absolute;
-    top: 0;
-    left: 0;
+  &__image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease;
-  }
 
-  &__no-poster {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #333;
+    &--empty {
+      display: block;
+      background: var(--paper-sunk);
+    }
   }
 
   &__score {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0,0,0,0.7);
-    padding: 4px 8px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--gold);
-    font-size: 11px;
-    font-weight: 700;
-    z-index: 2;
-  }
-
-  &__body {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    gap: 8px;
+    top: 8px;
+    right: 8px;
+    padding: 3px 6px;
+    background: rgba(10, 12, 15, 0.78);
+    border-radius: 2px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink);
   }
 
   &__title {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #fff;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    height: 2.6em;
+    min-height: 2.64em;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.32;
+    transition: color var(--dur-fast) var(--ease);
   }
 
   &__meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: auto;
+    font-size: 12px;
+    color: var(--ink-3);
   }
 
-  &__type {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
+  &__original {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  &__year {
-    color: var(--chrono);
+  &:hover &__frame {
+    border-color: var(--rule-strong);
+    transform: translateY(-2px);
+  }
+
+  &:hover &__title {
+    color: var(--lapis-deep);
   }
 }
 </style>

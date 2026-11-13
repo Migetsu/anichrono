@@ -93,6 +93,8 @@ export const ANIME_RELATED_QUERY = `
     animes(ids: $id, limit: 1) {
       related {
         id
+        relationKind
+        relationText
         anime {
           id
           name
@@ -104,9 +106,11 @@ export const ANIME_RELATED_QUERY = `
           }
           season
           rating
+          duration
           score
           poster {
             mainUrl
+            originalUrl
           }
         }
       }

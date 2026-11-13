@@ -59,17 +59,17 @@ export function useSearch() {
               ...(searchParam && searchParam.length >= 2 ? { search: searchParam } : {})
           }
 
-          const result = await fetchCatalog(currentFilters)
+          const page = await fetchCatalog(currentFilters)
 
-          if (!result) throw new Error('No data received')
+          if (!page) throw new Error('No data received')
 
           if (reset) {
-              animes.value = result
+              animes.value = page.items
           } else {
-              animes.value = [...animes.value, ...result]
+              animes.value = [...animes.value, ...page.items]
           }
 
-          if (result.length < ITEMS_PER_PAGE) {
+          if (page.rawCount < ITEMS_PER_PAGE) {
               hasMore.value = false
           }
       } catch (e: any) {
