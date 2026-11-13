@@ -4,6 +4,7 @@ import {
   ANIME_RELATED_QUERY, 
   ANIME_CHARACTERS_QUERY 
 } from './queries'
+import { isKidsAnime } from '#shared/kids'
 import type { 
   ShikimoriAnimeFull, 
   ShikimoriRelatedAnime, 
@@ -29,7 +30,7 @@ export async function fetchAnimeDetails(id: string): Promise<ShikimoriAnimeFull 
 export async function fetchRelatedAnimes(id: string): Promise<any[]> {
   try {
     const data = await shikiGQL<{ animes: { related: any[] }[] }>(ANIME_RELATED_QUERY, { id })
-    return data?.animes?.[0]?.related || []
+    return (data?.animes?.[0]?.related || []).filter(item => item?.anime && !isKidsAnime(item.anime))
   } catch (error) {
     console.error(`Failed to fetch related animes for ID ${id}:`, error)
     return []

@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
-import { useIntersectionObserver } from '@vueuse/core'
-import { useSearch } from '@/composables/useSearch'
+import { useDebounceFn, useIntersectionObserver } from '@vueuse/core'
+import { useSearch, ITEMS_PER_PAGE } from '@/composables/useSearch'
+import { fetchCatalog, fetchGenres } from '@/lib/api/searchCatalog'
 import FilterSidebar from '@/components/catalog/FilterSidebar.vue'
 import AnimeCardSkeleton from '@/components/skeletons/AnimeCardSkeleton.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const siteUrl = 'https://anichrono.vercel.app'
 
@@ -16,38 +17,59 @@ useSeoMeta({
   twitterCard: 'summary_large_image',
   twitterTitle: 'Каталог аниме — AniChrono',
   twitterDescription: 'Полный каталог аниме на AniChrono. Ищите тайтлы по жанрам, году выхода, рейтингу и типу — TV, OVA, фильм, спешл.',
-  twitterImage: `${siteUrl}/logo.jpg`
+  twitterImage: `${siteUrl}/logo.jpg`,
+  robots: 'index, follow',
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: `${siteUrl}/catalog` }],
 })
 
 const {
-    filters,
-    searchQuery,
-    animes,
-    genres,
-    isLoading,
-    isLoadingMore,
-    error,
-    hasMore,
-    activeFiltersCount,
-    
-    loadGenres,
-    loadAnimes,
-    handleLoadMore,
-    resetFilters
+  filters,
+  searchQuery,
+  animes,
+  genres,
+  isLoading,
+  isLoadingMore,
+  error,
+  hasMore,
+  activeFiltersCount,
+  loadAnimes,
+  handleLoadMore,
 } = useSearch()
 
 const isFiltersOpen = ref(false)
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 
-// Init
-onMounted(async () => {
-    // Check if data is already loaded (e.g. from SSR or navigation) or explicitly reload?
-    // useSearch returns fresh state by default.
-    await loadGenres()
-    await loadAnimes(true)
+// Server-rendered first page: crawlers and the first paint get real cards
+// instead of an empty skeleton. Filters keep working client-side afterwards.
+const { data: initial } = await useAsyncData('catalog-initial', async () => {
+  const [genreList, page] = await Promise.all([
+    fetchGenres().catch(() => []),
+    fetchCatalog({ order: 'popularity', page: 1, limit: ITEMS_PER_PAGE }).catch(() => ({ items: [], rawCount: 0 })),
+  ])
+  return { genreList, page }
 })
 
-// Scroll Observer
+if (initial.value) {
+  genres.value = initial.value.genreList
+  animes.value = initial.value.page.items
+  hasMore.value = initial.value.page.rawCount >= ITEMS_PER_PAGE
+}
+
+onMounted(() => {
+  if (!animes.value.length) {
+    loadAnimes(true)
+  }
+})
+
+const applyFilters = useDebounceFn(() => {
+  loadAnimes(true)
+}, 350)
+
+watch(filters, applyFilters, { deep: true })
+
 useIntersectionObserver(
   loadMoreTrigger,
   (entries) => {
@@ -56,342 +78,279 @@ useIntersectionObserver(
       handleLoadMore()
     }
   },
-  { rootMargin: '100px' }
+  { rootMargin: '240px' },
 )
 
-function openFilters() {
-  isFiltersOpen.value = true
-}
+const headingMeta = computed(() => {
+  if (isLoading.value) return 'Загружаем'
+  if (error.value) return 'Ошибка загрузки'
+  return `${animes.value.length}${hasMore.value ? '+' : ''} тайтлов`
+})
 </script>
 
 <template>
   <div class="catalog">
     <div class="container">
-      <h1 class="catalog-title">Каталог аниме</h1>
-      
-      <!-- Search and Filter Bar -->
-      <div class="catalog-toolbar">
-        <div class="catalog-search">
-          <Icon name="ic:round-search" class="catalog-search-icon" />
-          <input 
-            v-model="searchQuery"
-            type="text"
-            class="catalog-search-input"
-            placeholder="Поиск по названию..."
-          >
-          <Icon 
-            v-if="searchQuery" 
-            name="fa6-solid:xmark" 
-            class="catalog-search-clear"
-            @click="() => { searchQuery = ''; loadAnimes(true) }"
-          />
+      <header class="catalog__head">
+        <div class="catalog__heading">
+          <h1 class="catalog__title">Каталог</h1>
+          <span class="catalog__meta tabular">{{ headingMeta }}</span>
         </div>
-        
-        <button 
-          class="catalog-filter-btn"
-          type="button"
-          @click="openFilters"
-        >
-          <Icon name="mdi:filter-variant" />
-          <span>Фильтры</span>
-          <span v-if="activeFiltersCount > 0" class="catalog-filter-badge">
-            {{ activeFiltersCount }}
-          </span>
-        </button>
-      </div>
-      
-      <!-- Loading state -->
-      <div v-if="isLoading" class="catalog-grid">
-        <AnimeCardSkeleton v-for="i in 12" :key="i" />
-      </div>
-      
-      <!-- Error state -->
-      <div v-else-if="error" class="catalog-error">
-        <Icon name="mdi:alert-circle" class="catalog-error-icon" />
-        <p>{{ error }}</p>
-        <button class="catalog-error-retry" @click="loadAnimes(true)">
-          Попробовать снова
-        </button>
-      </div>
-      
-      <!-- Anime Grid -->
-      <div v-else-if="animes.length > 0" class="catalog-grid">
-        <TitleCard 
-            v-for="anime in animes" 
-            :key="anime.id" 
-            :item="anime" 
+
+        <div class="catalog__toolbar">
+          <div class="catalog__search">
+            <AppIcon class="catalog__search-icon" name="search" :size="18" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              class="catalog__search-input"
+              placeholder="Название тайтла"
+              autocomplete="off"
+            >
+            <button
+              v-if="searchQuery"
+              type="button"
+              class="catalog__search-clear"
+              title="Очистить"
+              @click="searchQuery = ''"
+            >
+              <AppIcon name="close" :size="16" />
+            </button>
+          </div>
+
+          <button type="button" class="catalog__filters-btn" @click="isFiltersOpen = true">
+            <AppIcon name="menu" :size="16" />
+            <span>Фильтры</span>
+            <span v-if="activeFiltersCount" class="catalog__filters-count tabular">{{ activeFiltersCount }}</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="catalog__layout">
+        <FilterSidebar
+          v-model="filters"
+          class="catalog__filters"
+          :genres="genres"
+          :is-open="isFiltersOpen"
+          @update:is-open="isFiltersOpen = $event"
         />
-      </div>
-      
-      <!-- Empty State -->
-      <div v-else class="catalog-empty">
-        <Icon name="mdi:movie-search-outline" class="catalog-empty-icon" />
-        <p>Ничего не найдено</p>
-        <span>Попробуйте изменить параметры поиска</span>
-      </div>
-      
-      <!-- Infinite Scroll Trigger -->
-      <div 
-        v-if="animes.length > 0 && hasMore" 
-        ref="loadMoreTrigger" 
-        class="catalog-load-more-trigger"
-      ></div>
-      
-      <!-- Loading More Indicator -->
-      <div v-if="isLoadingMore" class="catalog-loading-more">
-        <Icon name="eos-icons:loading" class="catalog-loading-more-icon" />
-        <span>Загрузка...</span>
-      </div>
-      
-      <!-- End of Results -->
-      <div v-if="animes.length > 0 && !hasMore && !isLoadingMore" class="catalog-end">
-        <p>Все тайтлы загружены</p>
+
+        <div class="catalog__results">
+          <div v-if="isLoading" class="catalog__grid">
+            <AnimeCardSkeleton v-for="i in 12" :key="i" />
+          </div>
+
+          <div v-else-if="error" class="catalog__state">
+            <p class="catalog__state-title">Каталог не загрузился</p>
+            <p class="catalog__state-text">{{ error }}</p>
+            <button type="button" class="btn btn--outline" @click="loadAnimes(true)">Попробовать снова</button>
+          </div>
+
+          <div v-else-if="!animes.length" class="catalog__state">
+            <p class="catalog__state-title">Ничего не найдено</p>
+            <p class="catalog__state-text">Измените запрос или снимите часть фильтров.</p>
+          </div>
+
+          <template v-else>
+            <div class="catalog__grid">
+              <TitleCard v-for="anime in animes" :key="anime.id" :item="anime" />
+            </div>
+
+            <div ref="loadMoreTrigger" class="catalog__more">
+              <span v-if="isLoadingMore" class="catalog__more-text">Загружаем ещё</span>
+              <span v-else-if="!hasMore" class="catalog__more-text">Это все тайтлы по этим фильтрам</span>
+            </div>
+          </template>
+        </div>
       </div>
     </div>
-    
-    <!-- Filter Sidebar -->
-    <ClientOnly>
-      <FilterSidebar
-        v-model="filters"
-        :is-open="isFiltersOpen"
-        @update:is-open="(val) => { isFiltersOpen = val }"
-        :genres="genres"
-        @apply="() => loadAnimes(true)"
-        @reset="resetFilters"
-      />
-    </ClientOnly>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .catalog {
-  padding: 40px 0 60px;
-  min-height: 80vh;
-  
-  @include respond(tablet-l) {
-    margin-top: 70px;
+  padding-block: 28px 64px;
+
+  @include respond(tablet) {
+    padding-block: 40px 80px;
   }
 
-  &-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 32px;
-    text-align: center;
+  &__head {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--rule-strong);
+    margin-bottom: 24px;
   }
 
-  &-toolbar {
+  &__heading {
     display: flex;
+    align-items: baseline;
+    justify-content: space-between;
     gap: 16px;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
+    margin-bottom: 18px;
   }
 
-  &-search {
-    flex: 1;
+  &__title {
+    font-size: clamp(30px, 4vw, 44px);
+  }
+
+  &__meta {
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+
+  &__toolbar {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: var(--surface);
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 2px solid var(--border);
-    transition: all 0.3s ease;
+  }
+
+  &__search {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+    height: 48px;
+    padding-inline: 8px;
+    margin-inline: -8px;
+    border-bottom: 2px solid var(--rule-strong);
+    transition: border-color var(--dur-fast) var(--ease),
+      background-color var(--dur-fast) var(--ease);
 
     &:focus-within {
-      border-color: var(--accent);
-      box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.2);
-    }
-
-    &-icon {
-      width: 22px;
-      height: 22px;
-      color: var(--muted);
-      flex-shrink: 0;
-    }
-
-    &-input {
-      flex: 1;
-      background: transparent;
-      color: var(--text);
-      font-size: 1rem;
-      border: none;
-      outline: none;
-
-      &::placeholder {
-        color: var(--muted);
-      }
-    }
-
-    &-clear {
-      width: 20px;
-      height: 20px;
-      color: var(--muted);
-      cursor: pointer;
-      transition: color 0.2s ease;
-
-      &:hover {
-        color: var(--accent);
-      }
+      border-color: var(--lapis);
+      background: var(--lapis-tint);
     }
   }
 
-  &-filter-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
-    background: var(--surface2);
-    border-radius: 12px;
-    color: var(--text);
-    font-size: 1rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border: 1px solid var(--border);
+  &__search-icon {
+    color: var(--ink-3);
+  }
 
-    svg {
-      width: 22px;
-      height: 22px;
+  &__search-input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    font-size: 16px;
+    color: var(--ink);
+
+    &::placeholder {
+      color: var(--ink-3);
     }
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+
+  &__search-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 2px;
+    color: var(--ink-3);
 
     &:hover {
-      background: var(--surface3);
-      border-color: var(--accent);
+      color: var(--ink);
+      background: var(--paper-raised);
     }
   }
 
-  &-filter-badge {
-    background: var(--accent);
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-left: 4px;
-  }
+  &__filters-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding-inline: 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    font-size: 13.5px;
+    color: var(--ink);
 
-  &-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-
-    @include respond(tablet) {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-
-    @include respond(tablet-l) {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
+    &:hover {
+      border-color: var(--ink);
     }
 
     @include respond(laptop) {
-      grid-template-columns: repeat(5, 1fr);
+      display: none;
     }
   }
 
-  &-empty {
+  &__filters-count {
+    padding: 1px 5px;
+    background: var(--lapis);
+    border-radius: 2px;
+    color: var(--paper);
+    font-size: 11px;
+  }
+
+  &__layout {
+    display: block;
+
+    @include respond(laptop) {
+      display: grid;
+      grid-template-columns: 232px minmax(0, 1fr);
+      gap: 48px;
+      align-items: start;
+    }
+  }
+
+  &__filters {
+    @include respond(laptop) {
+      position: sticky;
+      top: calc(var(--masthead-h) + 24px);
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 18px 10px;
+
+    @include respond(tablet) {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 24px 14px;
+    }
+
+    @include respond(laptop) {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 28px 18px;
+    }
+  }
+
+  &__state {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 20px;
-    text-align: center;
-
-    &-icon {
-      width: 80px;
-      height: 80px;
-      color: var(--muted);
-      margin-bottom: 20px;
-      opacity: 0.5;
-    }
-
-    p {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 8px;
-    }
-
-    span {
-      font-size: 0.875rem;
-      color: var(--muted);
-    }
+    align-items: flex-start;
+    gap: 12px;
+    padding-block: 40px;
+    max-width: 48ch;
   }
 
-  &-error {
+  &__state-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  &__state-text {
+    font-size: 14px;
+    color: var(--ink-3);
+  }
+
+  &__more {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 80px 20px;
-    text-align: center;
-
-    &-icon {
-      width: 80px;
-      height: 80px;
-      color: var(--accent);
-      margin-bottom: 20px;
-    }
-
-    p {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 20px;
-    }
-
-    &-retry {
-      padding: 12px 24px;
-      background: var(--accent);
-      color: #fff;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: var(--accent2);
-        transform: translateY(-2px);
-      }
-    }
+    padding-top: 32px;
+    min-height: 64px;
   }
 
-  &-load-more-trigger {
-    height: 1px;
-    width: 100%;
-    margin: 40px 0;
+  &__more-text {
+    font-size: 12.5px;
+    color: var(--ink-3);
   }
-
-  &-loading-more {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    color: var(--muted);
-    gap: 16px;
-
-    &-icon {
-      width: 32px;
-      height: 32px;
-      color: var(--accent);
-      animation: spin 1s linear infinite;
-    }
-  }
-
-  &-end {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--muted);
-    font-size: 0.875rem;
-  }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 </style>

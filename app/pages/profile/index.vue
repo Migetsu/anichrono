@@ -6,34 +6,46 @@ import type { AnimeRate } from '@/stores/lists'
 import type { ShikimoriAnimeListItem, AnimesQueryResponse } from '@/types/shikimori'
 import { ANIME_DETAILS_QUERY } from '~/lib/api/queries'
 import { slugify } from '@/utils/slugify'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const auth = useAuthStore()
 const lists = useListsStore()
+
+useSeoMeta({
+  title: 'Профиль — AniChrono',
+  robots: 'noindex, nofollow',
+})
 
 definePageMeta({
   middleware: [
     async function (to) {
       if (import.meta.server) return
-      const auth = useAuthStore()
-      if (!auth.isAuthorized) {
-         auth.login(to.fullPath)
-         return abortNavigation()
+      const authStore = useAuthStore()
+      if (!authStore.isAuthorized) {
+        authStore.login(to.fullPath)
+        return abortNavigation()
       }
-      if (!auth.isLoggedIn) {
-         try {
-           await auth.fetchMe()
-         } catch(e) {}
-         if (!auth.isLoggedIn) {
-           auth.login(to.fullPath)
-           return abortNavigation()
-         }
+      if (!authStore.isLoggedIn) {
+        try {
+          await authStore.fetchMe()
+        } catch {}
+        if (!authStore.isLoggedIn) {
+          authStore.login(to.fullPath)
+          return abortNavigation()
+        }
       }
-    }
-  ]
+    },
+  ],
 })
 
 const animeMap = ref<Map<number, ShikimoriAnimeListItem>>(new Map())
 const loadingAnimes = ref(false)
+const recentHistory = ref<Array<{
+  id: number
+  description: string
+  created_at: string
+  target?: { id: number, name: string, russian?: string, image?: { original?: string } } | null
+}>>([])
 
 async function loadAnimeDetails(ids: number[]) {
   if (!ids.length) return
@@ -55,31 +67,26 @@ async function loadAnimeDetails(ids: number[]) {
   }
 }
 
-const recentHistory = ref<any[]>([])
-
 onMounted(async () => {
   await lists.ensureRates()
 
   if (auth.user?.id) {
     try {
-      const historyData = await $fetch<any[]>(`/api/user/history?id=${auth.user.id}&limit=3`)
+      const historyData = await $fetch<typeof recentHistory.value>(
+        `/api/user/history?id=${auth.user.id}&limit=3`,
+      )
       recentHistory.value = (historyData || []).slice(0, 3)
-    } catch(e) {
-      console.warn('Failed to load history', e)
+    } catch {
+      recentHistory.value = []
     }
   }
 
-  const ids = new Set(lists.rates.map(r => r.target_id).filter(Boolean))
-  recentHistory.value.forEach(h => {
-    if (h.target?.id) ids.add(h.target.id)
+  const ids = new Set(lists.rates.map(rate => rate.target_id).filter(Boolean))
+  recentHistory.value.forEach(entry => {
+    if (entry.target?.id) ids.add(entry.target.id)
   })
 
   await loadAnimeDetails(Array.from(ids))
-})
-
-const activeTab = ref('watching')
-const activeSection = computed(() => {
-  return listSections.value.find(s => s.key === activeTab.value) || listSections.value[0]
 })
 
 const statusLabels: Record<string, string> = {
@@ -91,519 +98,506 @@ const statusLabels: Record<string, string> = {
   dropped: 'Брошено',
 }
 
-const statusColors: Record<string, string> = {
-  planned:    '#64b5f6',
-  watching:   '#4caf50',
-  rewatching: '#00bcd4',
-  completed:  '#a5d6a7',
-  on_hold:    '#ffb74d',
-  dropped:    '#ef5350',
-}
+const activeTab = ref('watching')
 
-const listSections = computed(() => {
-  return Object.entries(statusLabels).map(([key, label]) => ({
+const listSections = computed(() =>
+  Object.entries(statusLabels).map(([key, label]) => ({
     key,
     label,
-    items: lists.rates.filter(r => r.status === key)
-  }))
-})
+    items: lists.rates.filter(rate => rate.status === key),
+  })),
+)
 
-const totalCount = computed(() => lists.rates.length)
+const activeSection = computed(() => listSections.value.find(section => section.key === activeTab.value))
+
+const stats = computed(() => {
+  const count = (status: string) => lists.rates.filter(rate => rate.status === status).length
+  return [
+    { label: 'Всего', value: lists.rates.length },
+    { label: 'Смотрю', value: count('watching') },
+    { label: 'Просмотрено', value: count('completed') },
+    { label: 'В планах', value: count('planned') },
+  ]
+})
 
 function getAnime(rate: AnimeRate) {
   return animeMap.value.get(Number(rate.target_id))
-}
-
-function getHistoryAnime(id: number | undefined) {
-  if (!id) return null
-  return animeMap.value.get(Number(id)) || null
-}
-
-function getHistoryColor(text: string) {
-  if (text.includes('смотрит')) return '#4caf50'
-  if (text.includes('бросил')) return '#ef5350'
-  if (text.includes('заплани')) return '#64b5f6'
-  if (text.includes('просмотрено')) return '#a5d6a7'
-  if (text.includes('оцен')) return '#ffca28'
-  return '#00bcd4'
-}
-
-function formatDate(str: string) {
-  return new Date(str).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function posterOf(anime: ShikimoriAnimeListItem | null): string {
   if (!anime) return ''
   return anime.poster?.mainUrl || anime.poster?.originalUrl || ''
 }
+
+function historyPoster(entry: typeof recentHistory.value[number]) {
+  const anime = entry.target?.id ? animeMap.value.get(Number(entry.target.id)) : null
+  const fromMap = posterOf(anime ?? null)
+  if (fromMap) return fromMap
+  if (entry.target?.image?.original) return `https://shikimori.io${entry.target.image.original}`
+  return ''
+}
+
+function historyTone(description: string) {
+  if (description.includes('бросил')) return 'seal'
+  if (description.includes('смотрит')) return 'lapis'
+  if (description.includes('заплани')) return 'muted'
+  if (description.includes('оцен')) return 'signal'
+  return 'ink'
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
+}
 </script>
 
 <template>
-  <div class="profile-page">
-    <div class="profile-hero">
-      <div class="container profile-hero-content">
-        <div class="user-identity">
-          <div class="user-identity-avatar-wrap">
-            <img
-              v-if="auth.user?.image?.x160"
-              :src="auth.user.image.x160"
-              :alt="auth.user.nickname"
-              class="user-identity-avatar"
-            >
-            <div v-else class="user-identity-placeholder">
-              <Icon name="solar:user-circle-bold-duotone" size="64" />
-            </div>
-            <div class="user-identity-indicator">
-              <div class="user-identity-pulse"></div>
-            </div>
-          </div>
+  <div class="profile">
+    <div class="container">
+      <header class="profile__head">
+        <div class="profile__avatar">
+          <img v-if="auth.user?.image?.x160" :src="auth.user.image.x160" :alt="auth.user.nickname">
+          <AppIcon v-else name="user" :size="34" />
+        </div>
 
-          <div class="user-identity-info">
-            <h1 class="user-identity-name">{{ auth.user?.nickname }}</h1>
-            <div class="user-identity-actions">
-              <a
-                :href="`https://shikimori.io/${auth.user?.nickname}`"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn-action btn-action-info"
-              >
-                <Icon name="solar:arrow-right-up-linear" size="18" />
-                <span>Shikimori</span>
-              </a>
-              <button class="btn-action btn-action-danger" @click="auth.logout()">
-                <Icon name="solar:logout-3-bold-duotone" size="18" />
-                <span>Выйти</span>
-              </button>
-            </div>
+        <div class="profile__identity">
+          <p class="profile__label">Профиль</p>
+          <h1 class="profile__name">{{ auth.user?.nickname }}</h1>
+
+          <div class="profile__links">
+            <a
+              :href="`https://shikimori.io/${auth.user?.nickname}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="profile__link"
+            >
+              <span>Профиль на Shikimori</span>
+              <AppIcon name="arrow-up-right" :size="14" />
+            </a>
+            <button type="button" class="profile__logout" @click="auth.logout()">
+              <AppIcon name="logout" :size="14" />
+              <span>Выйти</span>
+            </button>
           </div>
         </div>
-      </div>
-    </div>
+      </header>
 
-    <div class="container profile-content">
-      <div v-if="lists.loading || loadingAnimes" class="profile-loading">
-        <div class="profile-loading-spinner"></div>
-        <p>Синхронизация...</p>
+      <dl class="profile__stats">
+        <div v-for="stat in stats" :key="stat.label" class="profile__stat">
+          <dt class="profile__stat-label">{{ stat.label }}</dt>
+          <dd class="profile__stat-value tabular">{{ stat.value }}</dd>
+        </div>
+      </dl>
+
+      <div v-if="lists.loading || loadingAnimes" class="profile__grid">
+        <span v-for="n in 10" :key="n" class="profile__skeleton"></span>
       </div>
 
       <template v-else>
-        <section v-if="recentHistory.length" class="profile-section">
-          <div class="section-header">
-            <h2 class="section-title">
-              <span class="section-title-accent"></span>
-              История изменений
-            </h2>
+        <section v-if="recentHistory.length" class="section profile__section">
+          <div class="section-head">
+            <h2 class="section-title">История</h2>
+            <span class="section-meta">Последние изменения в списках</span>
           </div>
 
-          <div class="history-list">
-            <NuxtLink
-              v-for="item in recentHistory"
-              :key="item.id"
-              :to="item.target?.id ? `/animes/${item.target.id}-${slugify(item.target.name || '')}` : '#'"
-              class="history-card"
-            >
-              <div class="history-card-poster-wrap">
-                <img
-                  v-if="posterOf(getHistoryAnime(item.target?.id)) || (item.target?.image?.original ? `https://shikimori.io${item.target.image.original}` : '')"
-                  :src="posterOf(getHistoryAnime(item.target?.id)) || (item.target?.image?.original ? `https://shikimori.io${item.target.image.original}` : '')"
-                  class="history-card-poster"
-                  :alt="item.target?.russian || item.target?.name || ''"
-                >
-                <div v-else class="history-card-poster history-card-poster-empty">
-                  <Icon name="solar:gallery-remove-bold-duotone" size="24" />
-                </div>
-                <div 
-                  class="history-card-badge" 
-                  :style="{ backgroundColor: getHistoryColor(item.description) }"
-                >
-                  <Icon name="solar:history-bold" size="14" />
-                </div>
-              </div>
-
-              <div class="history-card-content">
-                <h3 class="history-card-title">
-                  {{ item.target?.russian || item.target?.name || `Тайтл удален` }}
-                </h3>
-                <span class="history-card-status" :style="{ color: getHistoryColor(item.description) }">
-                  {{ item.description }}
+          <ul class="history">
+            <li v-for="entry in recentHistory" :key="entry.id" class="history__row">
+              <NuxtLink
+                :to="entry.target?.id ? `/animes/${entry.target.id}-${slugify(entry.target.name || '')}` : '/catalog'"
+                class="history__link"
+              >
+                <span class="history__poster">
+                  <img v-if="historyPoster(entry)" :src="historyPoster(entry)" alt="" loading="lazy">
                 </span>
-                <span class="history-card-date">{{ formatDate(item.created_at) }}</span>
-              </div>
-            </NuxtLink>
-          </div>
+                <span class="history__body">
+                  <span class="history__title">{{ entry.target?.russian || entry.target?.name || 'Тайтл удалён' }}</span>
+                  <span class="history__status" :class="`history__status--${historyTone(entry.description)}`">
+                    {{ entry.description }}
+                  </span>
+                </span>
+                <span class="history__date tabular">{{ formatDate(entry.created_at) }}</span>
+              </NuxtLink>
+            </li>
+          </ul>
         </section>
 
-        <section v-if="listSections.length" class="profile-section">
-          <div class="section-header">
-            <h2 class="section-title">
-              <span class="section-title-accent"></span>
-              Списки аниме
-            </h2>
+        <section class="section profile__section">
+          <div class="section-head">
+            <h2 class="section-title">Списки</h2>
+            <span class="section-meta">{{ lists.rates.length }} тайтлов</span>
           </div>
 
-          <div class="tabs-list">
+          <div class="tabs" role="tablist">
             <button
-              v-for="s in listSections"
-              :key="s.key"
-              class="tabs-item"
-              :class="{ 'tabs-item-active': activeTab === s.key }"
-              :style="{ '--tab-color': statusColors[s.key] }"
-              @click="activeTab = s.key"
+              v-for="section in listSections"
+              :key="section.key"
+              type="button"
+              class="tabs__item"
+              :class="{ 'tabs__item--active': activeTab === section.key }"
+              role="tab"
+              :aria-selected="activeTab === section.key"
+              @click="activeTab = section.key"
             >
-              {{ s.label }}
-              <span class="tabs-item-count">{{ s.items.length }}</span>
+              <span>{{ section.label }}</span>
+              <span class="tabs__count tabular">{{ section.items.length }}</span>
             </button>
           </div>
 
-          <div class="profile-grid" v-if="activeSection">
+          <div v-if="activeSection?.items.length" class="profile__grid">
             <template v-for="rate in activeSection.items" :key="rate.id">
-              <TitleCard
-                v-if="getAnime(rate)"
-                :item="getAnime(rate)!"
-              />
-            </template>
-            <template v-if="loadingAnimes">
-              <div
-                v-for="rate in activeSection.items"
-                :key="'sk-' + rate.id"
-                class="profile-skeleton"
-              ></div>
+              <TitleCard v-if="getAnime(rate)" :item="getAnime(rate)!" />
             </template>
           </div>
-        </section>
 
-        <div v-if="!lists.loading && !loadingAnimes && !totalCount" class="profile-empty">
-          <Icon name="solar:ghost-bold-duotone" size="64" class="profile-empty-icon" />
-          <h2 class="profile-empty-title">Списки пусты</h2>
-          <NuxtLink to="/catalog" class="btn-action btn-action-primary">
-            Каталог
-          </NuxtLink>
-        </div>
+          <div v-else class="profile__empty">
+            <p class="profile__empty-title">В этом списке пусто</p>
+            <p class="profile__empty-text">Отметьте тайтл в каталоге — он появится здесь.</p>
+            <NuxtLink to="/catalog" class="btn btn--outline">В каталог</NuxtLink>
+          </div>
+        </section>
       </template>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.profile-page {
-  min-height: 100vh;
-  padding-bottom: 80px;
-  margin-top: 70px;
-}
+.profile {
+  padding-block: 28px 64px;
 
-.profile-hero {
-  position: relative;
-  min-height: 200px;
-  display: flex;
-  align-items: flex-end;
-  padding-bottom: 2rem;
-  margin-bottom: 20px;
-  overflow: visible;
-  background: none;
-
-  @media (max-width: 768px) {
-    min-height: unset;
-    align-items: center;
-    padding: 2rem 0;
-  }
-}
-
-
-.user-identity {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    width: 100%;
-    gap: 16px;
+  @include respond(tablet) {
+    padding-block: 40px 88px;
   }
 
-  &-avatar-wrap {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    border-radius: 24px;
-    overflow: visible;
-  }
-
-  &-avatar {
-    width: 100%;
-    height: 100%;
-    border-radius: 24px;
-    object-fit: cover;
-  }
-
-  &-placeholder {
-    width: 100%;
-    height: 100%;
+  &__head {
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--muted);
-  }
+    gap: 20px;
+    padding-bottom: 24px;
 
-  &-indicator {
-    position: absolute;
-    bottom: -4px;
-    right: -4px;
-    width: 20px;
-    height: 20px;
-    background: var(--bg);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  &-pulse {
-    width: 12px;
-    height: 12px;
-    background: var(--cyan);
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--cyan);
-  }
-
-  &-info {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  &-name {
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: #fff;
-    margin: 0;
-  }
-
-  &-actions {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.btn-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.2s;
-
-  &-info {
-    background: var(--surface2);
-    color: var(--text);
-    border: 1px solid var(--border);
-    &:hover { background: var(--surface3); }
-  }
-
-  &-danger {
-    background: rgba(var(--accent), 0.1);
-    color: var(--accent);
-    border: 1px solid var(--border);
-    &:hover { background: rgba(var(--accent), 0.2); }
-  }
-
-  &-primary {
-    background: var(--accent);
-    color: #fff;
-    &:hover { background: var(--accent2); }
-  }
-}
-
-.profile-content {
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
-}
-
-.profile-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.section-header {
-  .section-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
-
-    &-accent {
-      width: 4px;
-      height: 16px;
-      background: var(--accent);
-      border-radius: 2px;
+    @include respond(mobile-l) {
+      gap: 28px;
     }
   }
-}
 
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.history-card {
-  display: flex;
-  gap: 16px;
-  padding: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  transition: all 0.2s;
-
-  &:hover {
-    background: var(--surface2);
-    transform: translateX(4px);
-  }
-
-  &-poster-wrap {
-    position: relative;
-    width: 60px;
-    height: 84px;
-    border-radius: 8px;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  &-poster {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  &-badge {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
+  &__avatar {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    width: 78px;
+    height: 78px;
+    flex: none;
+    overflow: hidden;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    color: var(--ink-3);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    @include respond(tablet) {
+      width: 96px;
+      height: 96px;
+    }
   }
 
-  &-content {
+  &__identity {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     gap: 4px;
+    min-width: 0;
   }
 
-  &-title {
-    font-size: 0.95rem;
+  &__label {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+
+  &__name {
+    font-size: clamp(26px, 4vw, 38px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-top: 6px;
+  }
+
+  &__link,
+  &__logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-3);
+    transition: color var(--dur-fast) var(--ease);
+
+    &:hover {
+      color: var(--ink);
+    }
+  }
+
+  &__logout:hover {
+    color: var(--seal);
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--rule-strong);
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 8px;
+
+    @include respond(tablet) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  &__stat {
+    padding: 12px 16px 12px 0;
+    border-right: 1px solid var(--rule);
+
+    &:first-child {
+      padding-left: 0;
+    }
+
+    &:last-child {
+      border-right: 0;
+    }
+
+    @include respond(tablet) {
+      padding: 14px 20px;
+    }
+  }
+
+  &__stat-label {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    margin-bottom: 2px;
+  }
+
+  &__stat-value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.1;
+  }
+
+  &__section {
+    padding-block: 40px 0;
+
+    :deep(.section-head) {
+      margin-bottom: 16px;
+    }
+
+    @include respond(tablet) {
+      padding-block: 48px 0;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 18px 10px;
+
+    @include respond(tablet) {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 24px 14px;
+    }
+
+    @include respond(laptop) {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 28px 18px;
+    }
+  }
+
+  &__skeleton {
+    display: block;
+    aspect-ratio: 2 / 3;
+    background: var(--paper-sunk);
+    border-radius: 2px;
+    animation: skeleton-pulse 1600ms var(--ease) infinite;
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-block: 32px;
+  }
+
+  &__empty-title {
+    font-family: var(--font-display);
+    font-size: 22px;
     font-weight: 600;
-    color: #fff;
-    margin: 0;
   }
 
-  &-status {
-    font-size: 0.85rem;
-  }
-
-  &-date {
-    font-size: 0.75rem;
-    color: var(--muted);
+  &__empty-text {
+    font-size: 14px;
+    color: var(--ink-3);
+    margin-bottom: 6px;
   }
 }
 
-.tabs-list {
+.history {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+
+  &__row {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  &__link {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding-block: 10px;
+    color: var(--ink);
+    transition: background-color var(--dur-fast) var(--ease);
+
+    &:hover {
+      background: var(--paper-raised);
+
+      .history__title {
+        color: var(--lapis-deep);
+      }
+    }
+  }
+
+  &__poster {
+    display: block;
+    width: 40px;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    background: var(--paper-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: 14.5px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color var(--dur-fast) var(--ease);
+  }
+
+  &__status {
+    font-size: 12.5px;
+
+    &--seal {
+      color: var(--seal);
+    }
+
+    &--lapis {
+      color: var(--lapis-deep);
+    }
+
+    &--signal {
+      color: var(--signal);
+    }
+
+    &--muted {
+      color: var(--ink-3);
+    }
+
+    &--ink {
+      color: var(--ink-2);
+    }
+  }
+
+  &__date {
+    font-size: 12px;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 20px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--rule);
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
-}
 
-.tabs-item {
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: all 0.2s;
-
-  &-active {
-    background: var(--tab-color, var(--accent));
-    color: #fff;
-    border-color: transparent;
+  &::-webkit-scrollbar {
+    display: none;
   }
 
-  &-count {
-    font-size: 0.75rem;
-    opacity: 0.7;
-    margin-left: 4px;
+  &__item {
+    position: relative;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 0 0 10px;
+    white-space: nowrap;
+    font-size: 14px;
+    color: var(--ink-3);
+    transition: color var(--dur-fast) var(--ease);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      bottom: -1px;
+      height: 2px;
+      background: var(--lapis);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--dur) var(--ease);
+    }
+
+    &:hover {
+      color: var(--ink-2);
+    }
+
+    &--active {
+      color: var(--ink);
+
+      &::after {
+        transform: scaleX(1);
+      }
+    }
   }
-}
 
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
-
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.profile-skeleton {
-  aspect-ratio: 2/3;
-  background: var(--surface2);
-  border-radius: 12px;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
-}
-
-.profile-empty {
-  padding: 60px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  color: var(--muted);
-}
-
-.profile-loading {
-  padding: 100px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  color: var(--muted);
-
-  &-spinner {
-    width: 32px;
-    height: 32px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  &__count {
+    font-size: 12px;
+    color: var(--ink-3);
   }
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 </style>

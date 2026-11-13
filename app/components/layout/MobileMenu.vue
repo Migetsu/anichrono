@@ -1,352 +1,297 @@
 <script setup lang="ts">
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const uiStore = useUIStore()
 const auth = useAuthStore()
 
-const menuItems = [
-  { name: 'Главная', path: '/', icon: 'solar:home-2-bold' },
-  { name: 'Поиск', icon: 'solar:magnifer-bold', action: () => uiStore.toggleSearchModal() },
-  { name: 'Каталог', path: '/catalog', icon: 'solar:library-bold' },
-  { name: 'Фильмы', path: '/movies', icon: 'solar:clapperboard-play-bold' },
-  { name: 'Расписание', path: '/schedule', icon: 'solar:calendar-bold' },
-  { name: 'Рандом', path: '/random', icon: 'solar:ghost-bold' },
+const items = [
+  { label: 'Главная', to: '/', icon: 'home' as const },
+  { label: 'Каталог', to: '/catalog', icon: 'grid' as const },
+  { label: 'Фильмы', to: '/movies', icon: 'film' as const },
+  { label: 'Расписание', to: '/schedule', icon: 'calendar' as const },
+  { label: 'Рандом', to: '/random', icon: 'star' as const },
 ]
 
-const socialLinks = [
-  { name: 'Telegram', url: 'https://t.me/anichrono', icon: 'simple-icons:telegram' },
-]
-
-const closeMenu = () => {
-  uiStore.closeMobileMenu()
-}
-
-const handleItemClick = (item: any) => {
-  if (item.action) {
-    item.action()
-  } else {
-    closeMenu()
-  }
-}
+const close = () => uiStore.closeMobileMenu()
 </script>
 
 <template>
-  <Transition name="fade">
-    <div v-if="uiStore.isMobileMenuOpen" class="mobile-menu-overlay" @click="closeMenu"></div>
+  <Transition name="veil">
+    <div v-if="uiStore.isMobileMenuOpen" class="menu-veil" @click="close" />
   </Transition>
 
-  <Transition name="slide">
-    <div v-if="uiStore.isMobileMenuOpen" class="mobile-menu">
-      <div class="mobile-menu__header">
-        <div class="mobile-menu__logo">
-          <img src="@/assets/images/logo.jpg" alt="AniChrono">
-          <span>AniChrono</span>
-        </div>
-        <button class="mobile-menu__close" @click="closeMenu">
-          <Icon name="material-symbols:close-rounded" size="28" />
+  <Transition name="sheet">
+    <aside v-if="uiStore.isMobileMenuOpen" class="menu" aria-label="Меню">
+      <div class="menu__head">
+        <NuxtLink to="/" class="menu__brand" @click="close">
+          <img class="menu__logo" src="@/assets/images/logo.jpg" alt="">
+          <span class="menu__word">AniChrono</span>
+        </NuxtLink>
+        <button type="button" class="icon-btn" title="Закрыть" @click="close">
+          <AppIcon name="close" :size="20" />
+          <span class="visually-hidden">Закрыть</span>
         </button>
       </div>
 
-      <div class="mobile-menu__profile">
-        <!-- NO GLOW HERE -->
+      <div class="menu__account">
         <template v-if="!auth.isLoggedIn">
-          <button class="mobile-menu__profile-btn" @click="auth.login()">
-            <div class="mobile-menu__profile-avatar placeholder">
-              <Icon name="solar:user-circle-bold-duotone" size="28" />
-            </div>
-            <div class="mobile-menu__profile-info">
-              <span class="mobile-menu__profile-name">Войти в аккаунт</span>
-              <span class="mobile-menu__profile-status">Синхронизируйте списки с Шикимори</span>
-            </div>
-            <Icon name="solar:alt-arrow-right-linear" class="mobile-menu__profile-arrow" />
+          <button type="button" class="menu__login" @click="auth.login()">
+            <span class="menu__text">
+              <span class="menu__name">Войти в аккаунт</span>
+              <span class="menu__hint">Списки синхронизируются с Shikimori</span>
+            </span>
+            <AppIcon name="arrow-right" :size="18" />
           </button>
         </template>
         <template v-else>
-          <NuxtLink to="/profile" class="mobile-menu__profile-btn" @click="closeMenu">
-            <div class="mobile-menu__profile-avatar-wrapper">
-              <img v-if="auth.user?.image.x160" :src="auth.user?.image.x160" alt="avatar" class="mobile-menu__profile-avatar">
-              <div class="mobile-menu__profile-online"></div>
-            </div>
-            <div class="mobile-menu__profile-info">
-              <span class="mobile-menu__profile-name">{{ auth.user?.nickname }}</span>
-              <span class="mobile-menu__profile-status">Открыть профиль →</span>
-            </div>
+          <NuxtLink to="/profile" class="menu__profile" @click="close">
+            <img
+              v-if="auth.user?.image?.x160"
+              class="menu__avatar"
+              :src="auth.user.image.x160"
+              alt=""
+            >
+            <span class="menu__text">
+              <span class="menu__name">{{ auth.user?.nickname }}</span>
+              <span class="menu__hint">Открыть профиль</span>
+            </span>
           </NuxtLink>
-          <div class="mobile-menu__profile-divider"></div>
-          <button class="mobile-menu__logout" @click="auth.logout()">
-            <Icon name="solar:logout-3-bold-duotone" size="16" />
-            <span>Выйти из аккаунта</span>
+          <button type="button" class="menu__logout" @click="auth.logout()">
+            <AppIcon name="logout" :size="16" />
+            <span>Выйти</span>
           </button>
         </template>
       </div>
 
-      <nav class="mobile-menu__nav">
-        <ul class="mobile-menu__list">
-          <li v-for="item in menuItems" :key="item.name" class="mobile-menu__item">
-            <template v-if="item.path">
-              <NuxtLink :to="item.path" class="mobile-menu__link" @click="handleItemClick(item)">
-                <Icon :name="item.icon" class="mobile-menu__icon" />
-                <span>{{ item.name }}</span>
-              </NuxtLink>
-            </template>
-            <template v-else>
-              <button class="mobile-menu__link" @click="handleItemClick(item)">
-                <Icon :name="item.icon" class="mobile-menu__icon" />
-                <span>{{ item.name }}</span>
-              </button>
-            </template>
-          </li>
-        </ul>
+      <nav class="menu__nav">
+        <NuxtLink
+          v-for="item in items"
+          :key="item.to"
+          :to="item.to"
+          class="menu__row"
+          active-class="menu__row--active"
+          @click="close"
+        >
+          <AppIcon :name="item.icon" :size="18" />
+          <span>{{ item.label }}</span>
+        </NuxtLink>
       </nav>
 
-      <div class="mobile-menu__footer">
-        <div class="mobile-menu__socials">
-          <a v-for="social in socialLinks" :key="social.name" :href="social.url" class="mobile-menu__social" target="_blank" rel="noopener noreferrer">
-            <Icon :name="social.icon" size="20" />
-          </a>
-        </div>
-        <p class="mobile-menu__copyright">© 2026 AniChrono. Все права защищены.</p>
+      <div class="menu__foot">
+        <a
+          class="menu__telegram"
+          href="https://t.me/anichrono"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <AppIcon name="telegram" :size="18" />
+          <span>Telegram</span>
+        </a>
+        <p class="menu__copy">© {{ new Date().getFullYear() }} AniChrono</p>
       </div>
-    </div>
+    </aside>
   </Transition>
 </template>
 
 <style lang="scss" scoped>
-.mobile-menu-overlay {
+.menu-veil {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 1000;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.72);
 }
 
-.mobile-menu {
+.menu {
   position: fixed;
   top: 0;
   right: 0;
-  width: 80%;
-  max-width: 320px;
-  height: 100%;
-  background: var(--bg);
-  z-index: 1001;
+  z-index: 201;
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  width: min(360px, 88vw);
+  height: 100%;
+  background: var(--paper-raised);
+  border-left: 1px solid var(--rule-strong);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
+  padding: 16px var(--gutter) calc(16px + env(safe-area-inset-bottom, 0));
 
-  &__header {
+  &__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 40px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  &__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--ink);
   }
 
   &__logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    object-fit: cover;
+  }
+
+  &__word {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__account {
+    padding-block: 18px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  &__login,
+  &__profile {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--text);
-    font-family: var(--font-logo);
-
-    img {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-    }
+    width: 100%;
+    text-align: left;
+    color: var(--ink);
   }
 
-  &__close {
-    background: none;
-    border: none;
-    color: var(--text);
-    cursor: pointer;
-    padding: 4px;
+  &__text {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s ease;
-
-    &:active {
-      transform: scale(0.9);
-    }
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
   }
 
-  &__profile {
-    position: relative;
-    margin-bottom: 24px;
-    // Removed background completely
-    overflow: visible;
+  &__name {
+    font-size: 15px;
+    font-weight: 500;
+  }
 
-    &-btn {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: none;
-      border: none;
-      width: 100%;
-      padding: 12px 0; // Compact
-      text-align: left;
-      cursor: pointer;
-      color: var(--text);
-      text-decoration: none;
-      transition: background 0.2s;
-    }
+  &__hint {
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
 
-    &-avatar-wrapper {
-      position: relative;
-      flex-shrink: 0;
-    }
+  &__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 2px;
+    object-fit: cover;
+  }
 
-    &-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      object-fit: cover;
-      display: block;
+  &__login {
+    justify-content: space-between;
+    color: var(--ink);
 
-      &.placeholder {
-        color: var(--accent);
-      }
-    }
-
-    &-online {
-      position: absolute;
-      bottom: -2px;
-      right: -2px;
-      width: 12px;
-      height: 12px;
-      background: #4caf50;
-      border: 2px solid #0a0a0a;
-      border-radius: 50%;
-    }
-
-    &-info {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      flex: 1;
-      min-width: 0;
-    }
-
-    &-name {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    &-status {
-      font-size: 0.75rem;
-      color: rgba(255, 255, 255, 0.35);
-    }
-
-    &-arrow {
-      color: rgba(255, 255, 255, 0.25);
-      flex-shrink: 0;
-    }
-
-    &-divider {
-      height: 1px;
-      background: rgba(255, 255, 255, 0.06);
-      margin: 8px 0;
+    svg {
+      color: var(--lapis);
     }
   }
 
   &__logout {
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 8px 0;
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.35);
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: left;
-  }
-
-  &__nav {
-    flex: 1;
-  }
-
-  &__list {
-    display: flex;
-    flex-direction: column;
     gap: 8px;
-  }
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--ink-3);
+    transition: color var(--dur-fast) var(--ease);
 
-  &__item {
-    width: 100%;
-  }
-
-  &__link {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    color: var(--text);
-    font-weight: 600;
-    transition: background 0.2s ease, color 0.2s ease;
-    background: none;
-    border: none;
-    width: 100%;
-    cursor: pointer;
-    text-align: left;
-
-    &.router-link-active {
-      color: var(--accent);
-      .mobile-menu__icon { color: var(--accent); }
+    &:hover {
+      color: var(--signal);
     }
   }
 
-  &__icon {
-    font-size: 24px;
-    color: gray;
-  }
-
-  &__footer {
-    margin-top: auto;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  &__socials {
+  &__nav {
     display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
+    flex-direction: column;
+    padding-block: 8px;
   }
 
-  &__social {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.05);
+  &__row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--text);
+    gap: 12px;
+    height: 48px;
+    color: var(--ink-2);
+    border-bottom: 1px solid var(--rule);
+    transition: color var(--dur-fast) var(--ease);
+
+    svg {
+      color: var(--ink-3);
+    }
+
+    &:hover {
+      color: var(--ink);
+    }
+
+    &--active {
+      color: var(--lapis-deep);
+
+      svg {
+        color: var(--lapis);
+      }
+    }
   }
 
-  &__copyright {
-    font-size: 0.75rem;
-    color: gray;
+  &__chevron {
+    margin-left: auto;
+    color: var(--ink-3);
+  }
+
+  &__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+  }
+
+  &__telegram {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--ink-2);
+    transition: color var(--dur-fast) var(--ease);
+
+    &:hover {
+      color: var(--lapis-deep);
+    }
+  }
+
+  &__copy {
+    font-size: 12px;
+    color: var(--ink-3);
   }
 }
 
-// Transitions
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-.slide-enter-active, .slide-leave-active { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.slide-enter-from, .slide-leave-to { transform: translateX(100%); }
+.veil-enter-active,
+.veil-leave-active {
+  transition: opacity var(--dur) var(--ease);
+}
+
+.veil-enter-from,
+.veil-leave-to {
+  opacity: 0;
+}
+
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: transform var(--dur) var(--ease);
+}
+
+.sheet-enter-from,
+.sheet-leave-to {
+  transform: translateX(100%);
+}
 </style>

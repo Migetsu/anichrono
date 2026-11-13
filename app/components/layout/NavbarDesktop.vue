@@ -1,271 +1,250 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const uiStore = useUIStore()
 const auth = useAuthStore()
-const isNotificationHasUnread = ref(true)
+
+const links = [
+  { label: 'Каталог', to: '/catalog' },
+  { label: 'Фильмы', to: '/movies' },
+  { label: 'Расписание', to: '/schedule' },
+  { label: 'Рандом', to: '/random' },
+]
 </script>
 
 <template>
-    <nav class="navbar-desktop">
-        <div class="navbar-desktop__container">
-            <div class="navbar-desktop__left">
-                <NuxtLink to="/" class="navbar-desktop__logo">
-                    <span class="navbar-desktop__logo-ani">Ani</span>
-                    <span class="navbar-desktop__logo-chrono">Chrono</span>
-                </NuxtLink>
-            </div>
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <NuxtLink to="/" class="masthead__brand" aria-label="AniChrono — на главную">
+        <img class="masthead__logo" src="@/assets/images/logo.jpg" alt="">
+        <span class="masthead__word">AniChrono</span>
+      </NuxtLink>
 
-            <div class="navbar-desktop__center">
-                <NuxtLink to="/catalog" class="navbar-desktop__link" exact-active-class="navbar-desktop__link--active">
-                    КАТАЛОГ
-                </NuxtLink>
-                <NuxtLink to="/movies" class="navbar-desktop__link" exact-active-class="navbar-desktop__link--active">
-                    ФИЛЬМЫ
-                </NuxtLink>
-                <NuxtLink to="/schedule" class="navbar-desktop__link" exact-active-class="navbar-desktop__link--active">
-                    РАСПИСАНИЕ
-                </NuxtLink>
-                <NuxtLink to="/random" class="navbar-desktop__link" exact-active-class="navbar-desktop__link--active">
-                    РАНДОМ
-                </NuxtLink>
-            </div>
+      <nav class="masthead__nav" aria-label="Основное меню">
+        <NuxtLink
+          v-for="link in links"
+          :key="link.to"
+          :to="link.to"
+          class="masthead__link"
+          active-class="masthead__link--active"
+        >
+          {{ link.label }}
+        </NuxtLink>
+      </nav>
 
-            <div class="navbar-desktop__right">
-                <button class="navbar-desktop__icon-btn" title="Поиск" @click="uiStore.toggleSearchModal">
-                    <Icon name="mdi:search" size="20" />
-                </button>
+      <div class="masthead__tools">
+        <button type="button" class="masthead__search" @click="uiStore.toggleSearchModal()">
+          <AppIcon name="search" :size="16" />
+          <span>Поиск</span>
+        </button>
 
-                <div class="navbar-desktop__auth">
-                    <button class="navbar-desktop__btn-login" v-if="!auth.isLoggedIn" @click.prevent="auth.login()">ВОЙТИ</button>
-                    <div v-else class="navbar-desktop__profile-wrapper">
-                        <NuxtLink to="/profile" class="navbar-desktop__profile-link">
-                            <img class="profile-img" v-if="auth.user?.image.x160" :src="auth.user?.image.x160" alt="avatar">
-                            <span>{{ auth.user?.nickname }}</span>
-                        </NuxtLink>
-                        <button class="navbar-desktop__logout" @click="auth.logout()" title="Выйти">
-                            <Icon name="solar:logout-3-bold-duotone" size="18" />
-                        </button>
-                    </div>
-                </div>
+        <template v-if="!auth.isLoggedIn">
+          <button type="button" class="masthead__login" @click.prevent="auth.login()">
+            Войти
+          </button>
+        </template>
+        <template v-else>
+          <NuxtLink to="/profile" class="masthead__profile">
+            <img
+              v-if="auth.user?.image?.x160"
+              class="masthead__avatar"
+              :src="auth.user.image.x160"
+              alt=""
+            >
+            <span class="masthead__nickname">{{ auth.user?.nickname }}</span>
+          </NuxtLink>
+          <button type="button" class="icon-btn masthead__logout" title="Выйти" @click="auth.logout()">
+            <AppIcon name="logout" :size="17" />
+            <span class="visually-hidden">Выйти</span>
+          </button>
+        </template>
 
-                <button class="navbar-desktop__icon-btn" title="Меню" @click="uiStore.toggleMobileMenu">
-                    <Icon name="ci:hamburger-md" size="24" />
-                </button>
-            </div>
-        </div>
-    </nav>
+        <button
+          type="button"
+          class="icon-btn masthead__menu"
+          title="Меню"
+          @click="uiStore.toggleMobileMenu()"
+        >
+          <AppIcon name="menu" :size="19" />
+          <span class="visually-hidden">Меню</span>
+        </button>
+      </div>
+    </div>
+  </header>
 </template>
 
 <style lang="scss" scoped>
-.navbar-desktop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 70px;
-    z-index: 100;
-    background-color: var(--bg);
-    border-bottom: 1px solid var(--border);
-    display: none;
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: none;
+  background: var(--paper-sunk);
+  border-bottom: 1px solid var(--rule-strong);
 
-    @include respond(tablet-l) {
-        display: flex;
-        align-items: center;
+  @include respond(tablet-l) {
+    display: block;
+  }
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    height: var(--masthead-h);
+  }
+
+  &__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+    transition: color var(--dur-fast) var(--ease);
+
+    &:hover {
+      color: var(--lapis-deep);
+    }
+  }
+
+  &__logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    object-fit: cover;
+    border: 1px solid var(--rule);
+  }
+
+  &__word {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+    gap: 26px;
+    margin-inline: auto;
+  }
+
+  &__link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink-2);
+    transition: color var(--dur-fast) var(--ease);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      bottom: -1px;
+      height: 2px;
+      background: var(--lapis);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--dur) var(--ease);
     }
 
-    &__container {
-        width: 100%;
-        max-width: 1440px;
-        margin: 0 auto;
-        padding: 0 24px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: 100%;
+    &:hover {
+      color: var(--ink);
     }
 
-    &__left {
-        display: flex;
-        align-items: center;
-        gap: 20px;
+    &--active {
+      color: var(--ink);
+
+      &::after {
+        transform: scaleX(1);
+      }
     }
+  }
 
-    &__logo {
-        display: flex;
-        align-items: center;
-        font-size: 24px;
-        font-weight: 800;
-        letter-spacing: 2px;
-        color: var(--text);
-        font-family: var(--font-logo);
+  &__tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-        &-ani {
-            color: var(--accent);
-        }
+  &__search {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding-inline: 12px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    font-size: 13px;
+    color: var(--ink-2);
+    transition: color var(--dur-fast) var(--ease),
+      border-color var(--dur-fast) var(--ease);
 
-        &-chrono {
-            color: var(--chrono);
-        }
+    &:hover {
+      color: var(--ink);
+      border-color: var(--rule-strong);
     }
+  }
 
-    &__center {
-        display: flex;
-        align-items: center;
-        gap: 32px;
+  &__login {
+    height: 36px;
+    padding-inline: 16px;
+    border-radius: 2px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    border: 1px solid var(--rule-strong);
+    transition: background-color var(--dur-fast) var(--ease),
+      color var(--dur-fast) var(--ease),
+      border-color var(--dur-fast) var(--ease);
+
+    &:hover {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--paper);
     }
+  }
 
-    &__link {
-        position: relative;
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        height: 70px;
-        transition: color 0.2s;
+  &__profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px 4px 4px;
+    border-radius: 2px;
+    color: var(--ink);
+    transition: background-color var(--dur-fast) var(--ease);
 
-        &:hover {
-            color: var(--text);
-        }
-
-        &::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background-color: var(--accent);
-            transition: width 0.3s ease;
-        }
-
-        &--active {
-            color: var(--text);
-
-            &::after {
-                width: 100%;
-            }
-        }
+    &:hover {
+      background: var(--paper-sunk);
     }
+  }
 
-    &__right {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-    }
+  &__avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 2px;
+    object-fit: cover;
+  }
 
-    &__icon-btn {
-        position: relative;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: var(--surface);
-        color: var(--text);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-        border: none;
-        cursor: pointer;
+  &__nickname {
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-        &:hover {
-            background-color: var(--surface2);
-            color: var(--accent);
-            transform: translateY(-2px);
-        }
-    }
-
-    &__notification-dot {
-        position: absolute;
-        top: 8px;
-        right: 10px;
-        width: 6px;
-        height: 6px;
-        background-color: var(--accent);
-        border-radius: 50%;
-        border: 2px solid var(--surface);
-    }
-
-    &__auth {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    &__btn-login {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--text);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 10px 20px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: transparent;
-        cursor: pointer;
-        transition: all 0.2s ease;
-
-        &:hover {
-            background-color: var(--surface);
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-    }
-
-    &__profile-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: none; // REMOVED BACKGROUND
-        padding: 4px 0;
-        border: none; // REMOVED BORDER
-        transition: color 0.2s;
-    }
-
-    &__profile-link {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: var(--text);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 14px;
-        transition: color 0.2s;
-
-        &:hover {
-            color: var(--accent);
-        }
-
-        .profile-img {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            object-fit: cover;
-        }
-    }
-
-    &__logout {
-        background: transparent;
-        border: none;
-        color: var(--muted);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        padding: 6px;
-        border-radius: 8px;
-
-        &:hover {
-            color: var(--accent);
-            transform: scale(1.1);
-        }
-    }
+  &__logout {
+    width: 32px;
+    height: 32px;
+  }
 }
 </style>

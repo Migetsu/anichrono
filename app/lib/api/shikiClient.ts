@@ -3,9 +3,10 @@ import type { CacheEntry } from '@/types/shikimori'
 const CACHE_PREFIX = 'shiki_cache_'
 const TTL = 30 * 60 * 1000 // 30 minutes
 
-// Rate limiter to avoid rate limit (200ms = 5 requests per sec)
+// Rate limiter for the browser only: SSR requests are already serialized and
+// must not sleep, otherwise server rendering and sitemap generation crawl.
 let lastRequestTime = 0
-const MIN_REQUEST_INTERVAL = 300 
+const MIN_REQUEST_INTERVAL = 300
 
 function getCache<T>(key: string): T | null {
   if (typeof window === 'undefined') return null
@@ -62,6 +63,16 @@ function hashKey(keyRaw: string): string {
   return hash.toString()
 }
 
+interface GraphQLResponse<T> {
+  data?: T
+  errors?: Array<{ message: string }>
+}
+
+/**
+ * GraphQL request through the Nitro proxy. `$fetch` is used instead of the
+ * native `fetch` so the same call works during server rendering (relative
+ * URLs are not supported by `fetch` in Node).
+ */
 export async function shikiGQL<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
   const keyRaw = JSON.stringify({ query, variables })
   const key = hashKey(keyRaw)
@@ -70,46 +81,37 @@ export async function shikiGQL<T>(query: string, variables: Record<string, unkno
   if (cachedData) {
     return cachedData
   }
-  
-  // Rate limiting
-  const now = Date.now()
-  const timeSinceLastRequest = now - lastRequestTime
-  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
+
+  if (typeof window !== 'undefined') {
+    const wait = MIN_REQUEST_INTERVAL - (Date.now() - lastRequestTime)
+    if (wait > 0) {
+      await new Promise(resolve => setTimeout(resolve, wait))
+    }
+    lastRequestTime = Date.now()
   }
-  lastRequestTime = Date.now()
-  
-  const res = await fetch('/api/shiki-graphql', {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query, variables })
-  })
-  
-  if (!res.ok) {
-    if (res.status === 429) {
+
+  let json: GraphQLResponse<T>
+  try {
+    json = await $fetch<GraphQLResponse<T>>('/api/shiki-graphql', {
+      method: 'POST',
+      body: { query, variables },
+    })
+  } catch (e: unknown) {
+    const error = e as { status?: number, statusMessage?: string, message?: string }
+    if (error.status === 429) {
       throw new Error('Rate limit exceeded. Please try again later.')
     }
-    throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+    throw new Error(error.statusMessage || error.message || 'Shikimori request failed')
   }
-  
-  const contentType = res.headers.get('content-type')
-  if (!contentType?.includes('application/json')) {
-    const text = await res.text()
-    throw new Error(`Invalid response format: ${text.substring(0, 100)}`)
+
+  if (json.errors?.length) {
+    throw new Error(json.errors[0]?.message ?? 'GraphQL error')
   }
-  
-  const json = await res.json() as { data?: T; errors?: Array<{ message: string }> }
-  if (json.errors) {
-    const msg = json.errors[0]?.message ?? 'GraphQL error'
-    throw new Error(msg)
-  }
-  
+
   if (json.data) {
     setCache(key, json.data)
     return json.data
   }
-  
+
   throw new Error('No data in response')
 }

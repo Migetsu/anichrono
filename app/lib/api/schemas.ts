@@ -21,6 +21,8 @@ export const ShikimoriAnimeListItemSchema = z.object({
   score: z.number().optional().nullable(),
   kind: z.string().optional().nullable(),
   status: z.string().optional().nullable(),
+  rating: z.string().optional().nullable(),
+  duration: z.number().optional().nullable(),
   poster: PosterSchema,
   genres: z.array(GenreSchema).optional().nullable(),
   airedOn: z.object({

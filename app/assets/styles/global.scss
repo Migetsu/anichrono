@@ -1,69 +1,384 @@
-:root {
-    --bg:       #05050f;
-    --surface:  #0d0d20;
-    --surface2: #13132a;
-    --surface3: #181830;
-    --accent:   #e63946;
-    --accent2:  #ff6b6b;
-    --gold:     #ffd166;
-    --cyan:     #06d6a0;
-    --text:     #f0f0ff;
-    --muted:    #6b6b9a;
-    --chrono:   #4ecdc4;
-    --border:   rgba(230,57,70,0.25);
-    --glow:     0 0 30px rgba(230,57,70,0.45);
-    --glow2:    0 0 60px rgba(230,57,70,0.18);
-    --glow-cyan: 0 0 24px rgba(6,214,160,0.4);
+/* ==========================================================================
+   AniChrono — design tokens
+   Direction: late-night broadcast sheet — dark press paper, hairline rules,
+   one lapis accent, posters carry all the colour.
+   ========================================================================== */
 
-    --font-logo: "Orbitron", sans-serif;
-    --font-main: "Exo2", sans-serif;
+:root {
+    /* paper + ink */
+    --paper:        #101216;
+    --paper-raised: #1c2128;
+    --paper-sunk:   #0a0c0f;
+    --ink:          #eceae2;
+    --ink-2:        #b3b2ab;
+    --ink-3:        #85857f;
+
+    /* rules */
+    --rule:         rgba(236, 234, 226, 0.12);
+    --rule-strong:  rgba(236, 234, 226, 0.26);
+
+    /* accent */
+    --lapis:        #6d88ff;
+    --lapis-deep:   #b7c3ff;
+    --lapis-tint:   rgba(109, 136, 255, 0.14);
+
+    /* status */
+    --signal:       #e0a06a;
+    --signal-dot:   #f08a3c;
+
+    /* episode seal */
+    --seal:         #e0705c;
+
+    /* inverse surfaces (footer, inverted blocks) */
+    --inverse:      #0a0b0e;
+    --on-inverse:   #eceae2;
+    --on-inverse-2: rgba(236, 234, 226, 0.62);
+
+    /* type */
+    --font-display: "Oswald", "Arial Narrow", system-ui, sans-serif;
+    --font-main:    "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    /* motion */
+    --ease:         cubic-bezier(0.2, 0.7, 0.2, 1);
+    --dur-fast:     140ms;
+    --dur:          220ms;
+
+    /* layout */
+    --page-max:     1360px;
+    --gutter:       20px;
+    --masthead-h:   60px;
+    --tabbar-h:     60px;
+
+    /* ---------------------------------------------------------------
+       Legacy aliases. Screens that were not redesigned yet keep working
+       on the new palette until they are rebuilt.
+       --------------------------------------------------------------- */
+    --bg:         var(--paper);
+    --surface:    var(--paper-raised);
+    --surface2:   var(--paper-raised);
+    --surface3:   var(--paper-raised);
+    --text:       var(--ink);
+    --muted:      var(--ink-3);
+    --accent:     var(--lapis);
+    --accent2:    var(--lapis-deep);
+    --gold:       var(--signal);
+    --chrono:     var(--lapis-deep);
+    --border:     var(--rule);
+    --glow:       none;
+    --glow2:      none;
+    --glow-cyan:  none;
+    --bg-rgb:     16, 18, 22;
+    --accent-rgb: 109, 136, 255;
+    --text-rgb:   236, 234, 226;
+    --chrono-rgb: 183, 195, 255;
+    --font-logo:  var(--font-display);
+    --font-exo2:  var(--font-main);
 }
 
-* {
+@media (min-width: 768px) {
+    :root {
+        --gutter: 32px;
+        --masthead-h: 68px;
+    }
+}
+
+/* ---------- reset ---------- */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
-ul {
+html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-main);
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+ul,
+ol {
     list-style: none;
 }
 
 a {
+    color: inherit;
     text-decoration: none;
 }
 
-input {
-    border: none;
-    outline: none;
-}
-
-img {
+img,
+svg {
+    display: block;
     max-width: 100%;
 }
 
+img {
+    background: var(--paper-sunk);
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    border-radius: 0;
+}
+
 button {
-    border: none;
-    outline: none;
     cursor: pointer;
+}
+
+::selection {
+    background: var(--lapis);
+    color: var(--paper);
+}
+
+:focus-visible {
+    outline: 2px solid var(--lapis);
+    outline-offset: 2px;
+}
+
+/* ---------- type ---------- */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 0.96;
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+}
+
+p {
+    text-wrap: pretty;
+}
+
+b,
+strong {
+    font-weight: 600;
+}
+
+.tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
+/* ---------- layout ---------- */
+
+.container {
+    width: 100%;
+    max-width: var(--page-max);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+}
+
+.rule {
+    height: 1px;
+    background: var(--rule);
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---------- controls ---------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding-inline: 20px;
+    border-radius: 2px;
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    transition: background-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease),
+        border-color var(--dur-fast) var(--ease);
+
+    &:active {
+        transform: translateY(1px);
+    }
+}
+
+.btn--primary {
+    background: var(--ink);
+    color: var(--paper);
+
+    &:hover {
+        background: #ffffff;
+    }
+}
+
+.btn--outline {
+    border: 1px solid var(--rule-strong);
+    color: var(--ink);
+
+    &:hover {
+        border-color: var(--ink);
+    }
+}
+
+.btn--quiet {
+    height: 36px;
+    padding-inline: 12px;
+    color: var(--ink-2);
+    border: 1px solid transparent;
+
+    &:hover {
+        color: var(--ink);
+        border-color: var(--rule);
+    }
+}
+
+.link-quiet {
+    color: var(--lapis-deep);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease);
+
+    &:hover {
+        border-bottom-color: currentColor;
+    }
+}
+
+/* square icon button, used in the masthead and modal chrome */
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 2px;
+    color: var(--ink-2);
+    border: 1px solid transparent;
+    transition: color var(--dur-fast) var(--ease),
+        border-color var(--dur-fast) var(--ease),
+        background-color var(--dur-fast) var(--ease);
+
+    &:hover {
+        color: var(--ink);
+        border-color: var(--rule-strong);
+    }
+}
+
+/* ---------- section chrome ---------- */
+
+.section {
+    padding-block: 48px;
+
+    @media (min-width: 768px) {
+        padding-block: 64px;
+    }
+}
+
+.section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule-strong);
+}
+
+.section-title {
+    font-size: clamp(23px, 2.7vw, 30px);
+    font-weight: 600;
+    letter-spacing: 0.002em;
+}
+
+.section-meta {
+    font-size: 13px;
+    color: var(--ink-3);
+    letter-spacing: 0.01em;
+
+    @media (max-width: 767px) {
+        display: none;
+    }
+}
+
+/* ---------- entrance ---------- */
+
+@keyframes rise-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.rise {
+    animation: rise-in 520ms var(--ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
+/* ---------- scrollbars ---------- */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule-strong) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
     background: transparent;
 }
 
-html, body, #__nuxt {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    min-height: 100dvh;
-    background-color: var(--bg);
-    color: var(--text);
-    font-family: var(--font-main);
-    overflow-x: hidden;
-    overflow-y: overlay;
-}
-
-.container {
-    max-width: 1410px;
-    width: 100%;
-    padding: 0 15px;
-    margin: 0 auto;
+::-webkit-scrollbar-thumb {
+    background: var(--rule-strong);
+    border: 3px solid var(--paper);
+    border-radius: 6px;
 }

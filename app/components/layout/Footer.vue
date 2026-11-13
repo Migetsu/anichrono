@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
+
 const navLinks = [
   { name: 'Каталог', path: '/catalog' },
   { name: 'Фильмы', path: '/movies' },
@@ -10,242 +12,209 @@ const currentYear = new Date().getFullYear()
 </script>
 
 <template>
-  <footer class="footer">
-    <div class="footer__glow"></div>
-    <div class="container footer__inner">
+  <footer class="colophon">
+    <div class="container">
+      <div class="colophon__grid">
+        <div class="colophon__brand">
+          <NuxtLink to="/" class="colophon__logo">
+            <img class="colophon__logo-image" src="@/assets/images/logo.jpg" alt="">
+            <span>AniChrono</span>
+          </NuxtLink>
+          <p class="colophon__tagline">
+            Каталог, расписание эфира и личные списки аниме в одном месте.
+          </p>
+          <a
+            class="colophon__telegram"
+            href="https://t.me/m1getsu"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <AppIcon name="telegram" :size="17" />
+            <span>Написать мне</span>
+          </a>
+        </div>
 
-      <div class="footer__brand">
-        <NuxtLink to="/" class="footer__logo">
-          <span class="footer__logo-ani">Ani</span><span class="footer__logo-chrono">Chrono</span>
-        </NuxtLink>
-        <p class="footer__tagline">Смотри аниме. Следи за выходом.</p>
-        <a href="https://t.me/m1getsu" target="_blank" rel="noopener noreferrer" class="footer__telegram">
-          <Icon name="simple-icons:telegram" size="18" />
-          <span>Написать мне</span>
-        </a>
+        <nav class="colophon__nav" aria-label="Разделы">
+          <h2 class="colophon__label">Разделы</h2>
+          <ul class="colophon__list">
+            <li v-for="link in navLinks" :key="link.path">
+              <NuxtLink :to="link.path" class="colophon__link">{{ link.name }}</NuxtLink>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="colophon__about">
+          <h2 class="colophon__label">О сервисе</h2>
+          <p class="colophon__text">
+            Видео не хранится на сайте. Права на контент принадлежат правообладателям.
+          </p>
+          <p class="colophon__text">
+            Данные: <a href="https://shikimori.io" target="_blank" rel="noopener noreferrer">Shikimori</a>,
+            <a href="https://kodik-api.com" target="_blank" rel="noopener noreferrer">Kodik</a>,
+            <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">TMDB</a>.
+          </p>
+          <a class="colophon__mail" href="mailto:daniilpichujkov@gmail.com">
+            <AppIcon name="mail" :size="15" />
+            <span>daniilpichujkov@gmail.com</span>
+          </a>
+        </div>
       </div>
 
-      <nav class="footer__nav">
-        <span class="footer__nav-title">Навигация</span>
-        <ul class="footer__nav-list">
-          <li v-for="link in navLinks" :key="link.name">
-            <NuxtLink :to="link.path" class="footer__nav-link">{{ link.name }}</NuxtLink>
-          </li>
-        </ul>
-      </nav>
-
-      <div class="footer__info">
-        <span class="footer__nav-title">О сервисе</span>
-        <p class="footer__disclaimer">
-          AniChrono не хранит видеофайлы. Все права на контент принадлежат их правообладателям.
-        </p>
-        <p class="footer__powered">
-          Данные предоставлены <a href="https://shikimori.io" target="_blank" rel="noopener noreferrer">Shikimori</a> и Kodik.
-        </p>
-        <a href="mailto:daniilpichujkov@gmail.com" class="footer__email">
-          <Icon name="solar:letter-linear" size="15" />
-          <span>daniilpichujkov@gmail.com</span>
-        </a>
-      </div>
-
-    </div>
-
-    <div class="footer__bottom">
-      <div class="container footer__bottom-inner">
-        <span class="footer__copyright">© {{ currentYear }} AniChrono. Все права защищены.</span>
+      <div class="colophon__base">
+        <span class="tabular">© {{ currentYear }} AniChrono</span>
+        <span>Сделано для тех, кто смотрит ночью</span>
       </div>
     </div>
   </footer>
 </template>
 
 <style lang="scss" scoped>
-.footer {
-  position: relative;
+.colophon {
   margin-top: auto;
-  border-top: 1px solid var(--border);
-  background: var(--bg);
-  padding: 48px 0 0;
+  padding-top: 48px;
+  background: var(--inverse);
+  color: var(--on-inverse);
 
-  &__glow {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      rgba(var(--accent-rgb), 0.3) 20%, 
-      rgba(var(--chrono-rgb), 0.3) 80%, 
-      transparent 100%
-    );
-    pointer-events: none;
+  @include respond(tablet) {
+    padding-top: 64px;
   }
 
-  &__inner {
+  &__grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 36px;
     padding-bottom: 40px;
 
     @include respond(tablet) {
-      grid-template-columns: 1.5fr 1fr 1.5fr;
+      grid-template-columns: 1.4fr 0.8fr 1.4fr;
       gap: 48px;
-      padding-bottom: 60px;
+      padding-bottom: 56px;
     }
   }
 
   &__brand {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: 16px;
   }
 
   &__logo {
     display: inline-flex;
-    font-size: 1.5rem;
-    font-weight: 800;
-    text-decoration: none;
-    letter-spacing: -1px;
-    font-family: var(--font-logo);
+    align-items: center;
+    gap: 9px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--on-inverse);
+  }
 
-    &-ani {
-      color: var(--accent);
-    }
-
-    &-chrono {
-      color: var(--chrono);
-    }
+  &__logo-image {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    object-fit: cover;
   }
 
   &__tagline {
-    font-size: 0.9rem;
-    color: var(--muted);
-    margin: 0;
-    line-height: 1.5;
+    max-width: 34ch;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--on-inverse-2);
   }
 
   &__telegram {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #fff;
-    text-decoration: none;
-    padding: 12px 20px;
-    border-radius: 14px;
-    width: fit-content;
-    background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);
-    box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 8px;
+    height: 40px;
+    padding-inline: 14px;
+    border: 1px solid rgba(241, 240, 234, 0.24);
+    border-radius: 2px;
+    font-size: 13.5px;
+    color: var(--on-inverse);
+    transition: border-color var(--dur-fast) var(--ease),
+      background-color var(--dur-fast) var(--ease);
 
     &:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0, 136, 204, 0.4);
-      filter: brightness(1.1);
-    }
-
-    &:active {
-      transform: translateY(-1px);
+      border-color: var(--on-inverse);
+      background: rgba(241, 240, 234, 0.06);
     }
   }
 
-  &__nav {
+  &__label {
+    font-family: var(--font-main);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--on-inverse-2);
+    margin-bottom: 16px;
+  }
+
+  &__list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
+  }
 
-    &-title {
-      font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
+  &__link {
+    font-size: 14.5px;
+    color: var(--on-inverse);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--dur-fast) var(--ease);
 
-    &-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    &-link {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.2s;
-
-      &:hover {
-        color: var(--text);
-      }
-
-      &.router-link-active {
-        color: var(--accent);
-      }
+    &:hover {
+      border-bottom-color: var(--on-inverse);
     }
   }
 
-  &__info {
+  &__about {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
-  &__disclaimer,
-  &__powered {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin: 0;
+  &__text {
+    font-size: 13.5px;
     line-height: 1.6;
+    color: var(--on-inverse-2);
+    max-width: 46ch;
 
     a {
-      color: var(--text);
-      font-weight: 600;
-      text-decoration: none;
-      border-bottom: 1px solid transparent;
-      transition: all 0.2s;
+      color: var(--on-inverse);
+      border-bottom: 1px solid rgba(241, 240, 234, 0.35);
+      transition: border-color var(--dur-fast) var(--ease);
 
       &:hover {
-        color: var(--accent);
-        border-bottom-color: var(--accent);
+        border-bottom-color: var(--on-inverse);
       }
     }
   }
 
-  &__email {
+  &__mail {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.85rem;
-    color: var(--muted);
-    text-decoration: none;
-    transition: color 0.2s;
+    font-size: 13.5px;
+    color: var(--on-inverse-2);
+    transition: color var(--dur-fast) var(--ease);
 
     &:hover {
-      color: var(--accent);
+      color: var(--on-inverse);
     }
   }
 
-  &__bottom {
-    border-top: 1px solid var(--border);
-    background: var(--surface);
-
-    &-inner {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px 0;
-    }
-  }
-
-  &__copyright {
-    font-size: 0.8rem;
-    color: var(--muted);
+  &__base {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-block: 18px;
+    border-top: 1px solid rgba(241, 240, 234, 0.16);
+    font-size: 12.5px;
+    color: var(--on-inverse-2);
   }
 }
 </style>

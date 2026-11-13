@@ -1,3 +1,5 @@
+import { isKidsAnime } from '#shared/kids'
+
 export default defineCachedEventHandler(async (event) => {
   const config = useRuntimeConfig()
 
@@ -31,6 +33,8 @@ export default defineCachedEventHandler(async (event) => {
           animes(ids: "${chunkIds.join(',')}", limit: ${chunkSize}) {
             id
             score
+            rating
+            duration
             poster {
               mainUrl
               originalUrl
@@ -77,9 +81,11 @@ export default defineCachedEventHandler(async (event) => {
           originalUrl: 'https://shikimori.io' + entry.anime.image.original
         },
         score: postersMap.get(entry.anime.id)?.score ? parseFloat(postersMap.get(entry.anime.id)?.score) : 0,
+        rating: postersMap.get(entry.anime.id)?.rating ?? null,
+        duration: postersMap.get(entry.anime.id)?.duration ?? entry.duration ?? null,
         genres: postersMap.get(entry.anime.id)?.genres || entry.anime.genres || []
       }
-    }))
+    })).filter(entry => !isKidsAnime(entry.anime))
 
   } catch (e: any) {
     console.error('Calendar Fetch Error:', e)
@@ -91,5 +97,5 @@ export default defineCachedEventHandler(async (event) => {
 }, {
   maxAge: 60 * 60, // 1 hour
   name: 'calendar',
-  getKey: () => 'all'
+  getKey: () => 'all-kids-v3'
 });
