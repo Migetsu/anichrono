@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import { format, isToday, isTomorrow } from 'date-fns'
-import { ru } from 'date-fns/locale'
+import { dayKey, isTodayInDisplayZone, relativeDayLabel } from '#shared/datetime'
 import type { CalendarEntry, ScheduleState } from '@/types/schedule'
 
 
@@ -21,39 +20,33 @@ export const useScheduleStore = defineStore('schedule', {
       if (!state.entries.length) return []
 
       const groups: Record<string, CalendarEntry[]> = {}
-      
+
       state.entries.forEach(entry => {
         if (!entry.next_episode_at) return
-        const dateObj = new Date(entry.next_episode_at)
-        const dateKey = format(dateObj, 'yyyy-MM-dd')
-        
-        if (!groups[dateKey]) groups[dateKey] = []
-        groups[dateKey].push(entry)
+        const date = new Date(entry.next_episode_at)
+        if (Number.isNaN(date.getTime())) return
+
+        const key = dayKey(date)
+        if (!groups[key]) groups[key] = []
+        groups[key]!.push(entry)
       })
 
       // Sort dates
       const sortedDates = Object.keys(groups).sort()
 
-      return sortedDates.map(date => {
-        const d = new Date(date)
-        let label = format(d, 'EEEE, d MMMM', { locale: ru })
-        
-        if (isToday(d)) {
-          label = `Сегодня, ${format(d, 'd MMMM', { locale: ru })}`
-        } else if (isTomorrow(d)) {
-          label = `Завтра, ${format(d, 'd MMMM', { locale: ru })}`
-        }
-
-        label = label.charAt(0).toUpperCase() + label.slice(1)
+      return sortedDates.map(key => {
+        const entries = groups[key] ?? []
+        const first = entries[0]
+        const date = first ? new Date(first.next_episode_at) : new Date(`${key}T00:00:00+03:00`)
 
         return {
-          date,
-          label,
-          isToday: isToday(d),
-          entries: (groups[date] || []).sort((a, b) => {
-              const timeA = a.next_episode_at ? new Date(a.next_episode_at).getTime() : 0
-              const timeB = b.next_episode_at ? new Date(b.next_episode_at).getTime() : 0
-              return timeA - timeB
+          date: key,
+          label: relativeDayLabel(date),
+          isToday: isTodayInDisplayZone(date),
+          entries: entries.slice().sort((a, b) => {
+            const timeA = a.next_episode_at ? new Date(a.next_episode_at).getTime() : 0
+            const timeB = b.next_episode_at ? new Date(b.next_episode_at).getTime() : 0
+            return timeA - timeB
           })
         }
       })

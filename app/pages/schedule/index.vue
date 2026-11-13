@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-import { format, parseISO } from 'date-fns'
 import { useScheduleStore } from '@/stores/schedule'
+import { formatTime } from '#shared/datetime'
 import type { CalendarEntry } from '@/types/schedule'
 import { slugify } from '@/utils/slugify'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -58,8 +58,8 @@ const metaLine = computed(() => {
 })
 
 function timeOf(value: string) {
-  const date = parseISO(value)
-  return Number.isNaN(date.getTime()) ? '—' : format(date, 'HH:mm')
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '—' : formatTime(date)
 }
 
 function subOf(entry: { anime: { kind?: string | null; airedOn?: { year: number | null } } }) {
