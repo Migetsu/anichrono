@@ -50,16 +50,34 @@ onMounted(async () => {
   await loadFilms(true)
 })
 
+function canLoadMore() {
+  return hasMore.value && !isLoading.value && !isLoadingMore.value
+}
+
+function loadMoreIfNeeded() {
+  if (typeof window === 'undefined' || !canLoadMore()) return
+  const el = loadMoreTrigger.value
+  if (!el) return
+  if (el.getBoundingClientRect().top <= window.innerHeight + 240) {
+    handleLoadMore()
+  }
+}
+
 useIntersectionObserver(
   loadMoreTrigger,
   (entries) => {
-    const entry = entries[0]
-    if (entry?.isIntersecting && hasMore.value && !isLoading.value && !isLoadingMore.value) {
+    if (entries[0]?.isIntersecting && canLoadMore()) {
       handleLoadMore()
     }
   },
   { rootMargin: '240px' },
 )
+
+// Keep loading while the sentinel stays visible after a new page is appended.
+watch([isLoadingMore, isLoading, () => films.value.length], async () => {
+  await nextTick()
+  loadMoreIfNeeded()
+})
 
 const headingMeta = computed(() => {
   if (isLoading.value) return 'Загружаем'

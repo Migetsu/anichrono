@@ -26,6 +26,7 @@ export function useSearch() {
   const isLoading = ref(false)
   const isLoadingMore = ref(false)
   const error = ref<string | null>(null)
+  const loadMoreError = ref<string | null>(null)
   const hasMore = ref(true)
   
   // Actions
@@ -72,9 +73,20 @@ export function useSearch() {
           if (page.rawCount < ITEMS_PER_PAGE) {
               hasMore.value = false
           }
+
+          loadMoreError.value = null
       } catch (e: any) {
           console.error('Failed to load catalog:', e)
-          if (reset) error.value = e.message || 'Ошибка загрузки'
+          if (reset) {
+              error.value = e.message || 'Ошибка загрузки'
+          } else {
+              // A failed page must not finish pagination: keep hasMore, remember
+              // the error and roll the page counter back so "retry" refetches
+              // the same page instead of skipping it.
+              loadMoreError.value = e.message || 'Ошибка загрузки'
+              const current = filters.value.page ?? 1
+              if (current > 1) filters.value.page = current - 1
+          }
       } finally {
           isLoading.value = false
           isLoadingMore.value = false
@@ -128,6 +140,7 @@ export function useSearch() {
     isLoading,
     isLoadingMore,
     error,
+    loadMoreError,
     hasMore,
     activeFiltersCount,
     

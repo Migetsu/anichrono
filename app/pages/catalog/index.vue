@@ -33,6 +33,7 @@ const {
   isLoading,
   isLoadingMore,
   error,
+  loadMoreError,
   hasMore,
   activeFiltersCount,
   loadAnimes,
@@ -47,15 +48,19 @@ const loadMoreTrigger = ref<HTMLElement | null>(null)
 const { data: initial } = await useAsyncData('catalog-initial', async () => {
   const [genreList, page] = await Promise.all([
     fetchGenres().catch(() => []),
-    fetchCatalog({ order: 'popularity', page: 1, limit: ITEMS_PER_PAGE }).catch(() => ({ items: [], rawCount: 0 })),
+    fetchCatalog({ order: 'popularity', page: 1, limit: ITEMS_PER_PAGE }).catch(() => null),
   ])
   return { genreList, page }
 })
 
-if (initial.value) {
+if (initial.value?.page) {
   genres.value = initial.value.genreList
   animes.value = initial.value.page.items
   hasMore.value = initial.value.page.rawCount >= ITEMS_PER_PAGE
+} else {
+  // SSR failed (rate limit or network): keep pagination open and retry in the
+  // browser instead of showing an empty "everything loaded" state.
+  hasMore.value = true
 }
 
 onMounted(() => {
@@ -68,18 +73,55 @@ const applyFilters = useDebounceFn(() => {
   loadAnimes(true)
 }, 350)
 
-watch(filters, applyFilters, { deep: true })
+// Only filter fields reset the list. The page counter changes during infinite
+// scroll and watching it reloaded page 1 on every "load more".
+watch(
+  () => [
+    filters.value.order,
+    filters.value.status,
+    filters.value.kind,
+    filters.value.rating,
+    filters.value.score,
+    filters.value.genre,
+  ],
+  () => applyFilters(),
+  { deep: true },
+)
+
+function canLoadMore() {
+  return hasMore.value && !isLoading.value && !isLoadingMore.value && !loadMoreError.value
+}
+
+function retryLoadMore() {
+  loadMoreError.value = null
+  handleLoadMore()
+}
+
+function loadMoreIfNeeded() {
+  if (typeof window === 'undefined' || !canLoadMore()) return
+  const el = loadMoreTrigger.value
+  if (!el) return
+  if (el.getBoundingClientRect().top <= window.innerHeight + 240) {
+    handleLoadMore()
+  }
+}
 
 useIntersectionObserver(
   loadMoreTrigger,
   (entries) => {
-    const entry = entries[0]
-    if (entry?.isIntersecting && hasMore.value && !isLoading.value && !isLoadingMore.value) {
+    if (entries[0]?.isIntersecting && canLoadMore()) {
       handleLoadMore()
     }
   },
   { rootMargin: '240px' },
 )
+
+// After a page is appended the sentinel can stay inside the viewport, so the
+// observer never fires again. Re-check the position after every load.
+watch([isLoadingMore, isLoading, () => animes.value.length], async () => {
+  await nextTick()
+  loadMoreIfNeeded()
+})
 
 const headingMeta = computed(() => {
   if (isLoading.value) return 'Загружаем'
@@ -158,6 +200,10 @@ const headingMeta = computed(() => {
 
             <div ref="loadMoreTrigger" class="catalog__more">
               <span v-if="isLoadingMore" class="catalog__more-text">Загружаем ещё</span>
+              <span v-else-if="loadMoreError" class="catalog__more-error">
+                Не удалось загрузить ещё страницу.
+                <button type="button" class="catalog__more-retry" @click="retryLoadMore">Повторить</button>
+              </span>
               <span v-else-if="!hasMore" class="catalog__more-text">Это все тайтлы по этим фильтрам</span>
             </div>
           </template>
@@ -351,6 +397,25 @@ const headingMeta = computed(() => {
   &__more-text {
     font-size: 12.5px;
     color: var(--ink-3);
+  }
+
+  &__more-error {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+
+  &__more-retry {
+    font-size: 12.5px;
+    color: var(--lapis-deep);
+    border-bottom: 1px solid currentColor;
+
+    &:hover {
+      color: var(--ink);
+    }
   }
 }
 </style>

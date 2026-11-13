@@ -1,4 +1,4 @@
-﻿import { shikiGQL } from '~/lib/api/shikiClient'
+import { shikiGQL } from '~/lib/api/shikiClient'
 import type { ShikimoriAnimeListItem, AnimesQueryResponse } from '~/types/shikimori'
 import type { CatalogFilters, Genre } from '@/types/catalog'
 import { AnimesQueryResponseSchema } from '@/lib/api/schemas'
@@ -123,9 +123,9 @@ export async function fetchCatalog(filters: CatalogFilters = {}): Promise<Catalo
       rawCount: raw.length,
     }
   } catch (error) {
-    console.error('Failed to fetch catalog:', error)
-    // Return empty array on error to prevent page crash
-    return { items: [], rawCount: 0 }
+    // Let callers decide what a failed page means: a rate limit must not end
+    // pagination, otherwise the catalog silently stops at the current page.
+    throw error instanceof Error ? error : new Error('Failed to fetch catalog')
   }
 }
 
