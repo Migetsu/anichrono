@@ -112,9 +112,9 @@ function metaFor(item: ShikimoriAnimeListItem) {
             @click="selectResult"
           >
             <img
-              v-if="item.poster?.originalUrl"
+              v-if="item.poster?.previewUrl || item.poster?.mainUrl || item.poster?.originalUrl"
               class="search__poster"
-              :src="item.poster.originalUrl"
+              :src="item.poster.previewUrl || item.poster.mainUrl || item.poster.originalUrl"
               :alt="''"
               loading="lazy"
             >

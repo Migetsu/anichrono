@@ -9,7 +9,7 @@ export default defineNuxtConfig({
       kodikApiUrl: process.env.KODIK_API_URL || 'https://kodik-api.com',
       tmdbApiUrl: 'https://api.themoviedb.org/3',
       siteUrl: process.env.SITE_URL || 'https://anichrono.vercel.app',
-      yandexMetricaId: process.env.YANDEX_METRICA_ID
+      yandexMetricaId: process.env.YANDEX_METRICA_ID,
     }
   },
 
@@ -19,7 +19,12 @@ export default defineNuxtConfig({
         lang: 'ru',
       },
       link: [
-        { rel: 'icon', type: 'image/jpeg', href: '/logo.jpg' }
+        { rel: 'icon', type: 'image/jpeg', href: '/logo.jpg' },
+        // Warm up the two image hosts used by posters; posters dominate LCP.
+        { rel: 'preconnect', href: 'https://shikimori.io', crossorigin: '' },
+        { rel: 'preconnect', href: 'https://image.tmdb.org', crossorigin: '' },
+        { rel: 'dns-prefetch', href: 'https://shikimori.io' },
+        { rel: 'dns-prefetch', href: 'https://image.tmdb.org' },
       ]
     }
   },
@@ -32,6 +37,17 @@ export default defineNuxtConfig({
   css: [
     "@/assets/styles/global.scss"
   ],
+
+  // Public pages are identical for every visitor, so let the CDN serve a cached
+  // copy and refresh it in the background. This cuts TTFB on slow connections.
+  routeRules: {
+    '/': { swr: 300 },
+    '/catalog': { swr: 300 },
+    '/schedule': { swr: 600 },
+    '/movies': { swr: 300 },
+    '/animes/**': { swr: 900 },
+    '/movies/**': { swr: 900 },
+  },
 
   vite: {
     css: {
@@ -47,7 +63,6 @@ export default defineNuxtConfig({
   },
 
   modules: [
-    '@nuxt/icon',
     '@pinia/nuxt',
     '@nuxt/fonts',
     '@nuxtjs/sitemap',
@@ -68,13 +83,13 @@ export default defineNuxtConfig({
       {
         name: "Oswald",
         provider: 'google',
-        weights: [500, 600, 700],
+        weights: [500, 600],
         subsets: ['cyrillic', 'latin'],
       },
       {
         name: "Golos Text",
         provider: 'google',
-        weights: [400, 500, 600],
+        weights: [400, 500],
         subsets: ['cyrillic', 'latin'],
       },
     ]

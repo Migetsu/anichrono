@@ -17,7 +17,7 @@ const items = computed(() => latestStore.latest)
 const isLoading = computed(() => latestStore.loadingLatest && !items.value.length)
 
 function posterOf(item: ShikimoriAnimeListItem): string {
-  return item.poster?.originalUrl || item.poster?.mainUrl || ''
+  return item.poster?.mainUrl || item.poster?.preview2xUrl || item.poster?.originalUrl || ''
 }
 
 const kindLabels: Record<string, string> = {

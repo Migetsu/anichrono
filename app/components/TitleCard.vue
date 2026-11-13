@@ -45,7 +45,14 @@ const metaLine = computed(() =>
   <div class="anime-card">
     <NuxtLink :to="`/animes/${item.id}-${slugify(item.name)}`" class="anime-card__link">
       <span class="anime-card__frame">
-        <img v-if="posterUrl" :src="posterUrl" :alt="item.russian || item.name" class="anime-card__image" loading="lazy">
+        <img
+          v-if="posterUrl"
+          :src="posterUrl"
+          :alt="item.russian || item.name"
+          class="anime-card__image"
+          loading="lazy"
+          decoding="async"
+        >
         <span v-else class="anime-card__image anime-card__image--empty"></span>
 
         <span v-if="Number(item.score)" class="anime-card__score tabular">

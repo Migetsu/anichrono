@@ -24,7 +24,7 @@ const kindLabels: Record<string, string> = {
 }
 
 function posterOf(item: ShikimoriAnimeListItem): string {
-  return item.poster?.originalUrl || item.poster?.mainUrl || ''
+  return item.poster?.previewUrl || item.poster?.mainUrl || item.poster?.originalUrl || ''
 }
 
 function subOf(item: ShikimoriAnimeListItem) {

@@ -11,7 +11,7 @@ const title = computed(() => (props.item as TMDBMovie).title || (props.item as T
 const original = computed(() => (props.item as TMDBMovie).original_title || (props.item as TMDBTV).original_name)
 const date = computed(() => (props.item as TMDBMovie).release_date || (props.item as TMDBTV).first_air_date)
 const year = computed(() => (date.value ? new Date(date.value).getFullYear() : ''))
-const posterUrl = computed(() => getTMDBImageUrl(props.item.poster_path, 'w500'))
+const posterUrl = computed(() => getTMDBImageUrl(props.item.poster_path, 'w342'))
 const score = computed(() => (Number(props.item.vote_average) ? Number(props.item.vote_average).toFixed(1) : null))
 
 const meta = computed(() =>
@@ -22,7 +22,7 @@ const meta = computed(() =>
 <template>
   <NuxtLink :to="`/movies/${type}-${item.id}`" class="film-card">
     <span class="film-card__frame">
-      <img v-if="posterUrl" :src="posterUrl" :alt="title" class="film-card__image" loading="lazy">
+      <img v-if="posterUrl" :src="posterUrl" :alt="title" class="film-card__image" loading="lazy" decoding="async">
       <span v-else class="film-card__image film-card__image--empty"></span>
       <span v-if="score" class="film-card__score tabular">{{ score }}</span>
     </span>

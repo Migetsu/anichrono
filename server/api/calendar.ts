@@ -37,6 +37,8 @@ export default defineCachedEventHandler(async (event) => {
             duration
             poster {
               mainUrl
+              main2xUrl
+              previewUrl
               originalUrl
             }
             genres {
@@ -97,5 +99,5 @@ export default defineCachedEventHandler(async (event) => {
 }, {
   maxAge: 60 * 60, // 1 hour
   name: 'calendar',
-  getKey: () => 'all-kids-v3'
+  getKey: () => 'all-kids-v4'
 });

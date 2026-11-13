@@ -76,8 +76,8 @@ function pluralEpisodes(count: number) {
   return 'серий'
 }
 
-function posterOf(entry: { anime: { poster?: { originalUrl?: string; mainUrl?: string }; image?: { original?: string; preview?: string } } }) {
-  const direct = entry.anime.poster?.originalUrl || entry.anime.poster?.mainUrl
+function posterOf(entry: { anime: { poster?: { originalUrl?: string; mainUrl?: string; previewUrl?: string }; image?: { original?: string; preview?: string } } }) {
+  const direct = entry.anime.poster?.previewUrl || entry.anime.poster?.mainUrl || entry.anime.poster?.originalUrl
   if (direct) return direct
   const image = entry.anime.image
   if (image?.original && !image.original.includes('missing')) return `https://shikimori.io${image.original}`

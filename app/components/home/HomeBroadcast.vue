@@ -41,7 +41,7 @@ const kindLabels: Record<string, string> = {
 }
 
 function posterOf(item: ShikimoriAnimeListItem): string {
-  const direct = item.poster?.originalUrl || item.poster?.mainUrl
+  const direct = item.poster?.main2xUrl || item.poster?.mainUrl || item.poster?.originalUrl
   if (direct) return direct
 
   const image = (item as unknown as { image?: { original?: string; preview?: string } }).image
@@ -202,7 +202,14 @@ const linkFor = (id: number, title: string) => `/animes/${id}-${slugify(title)}`
             class="hero__poster"
             :aria-label="`Открыть ${current.title}`"
           >
-            <img v-if="current.poster" :src="current.poster" :alt="current.title" class="hero__image">
+            <img
+              v-if="current.poster"
+              :src="current.poster"
+              :alt="current.title"
+              class="hero__image"
+              fetchpriority="high"
+              decoding="async"
+            >
             <span v-else class="hero__image hero__image--empty" aria-hidden="true"></span>
             <span v-if="current.episode" class="hero__stamp" aria-hidden="true">
               <span class="hero__stamp-num tabular">{{ String(current.episode).padStart(2, '0') }}</span>

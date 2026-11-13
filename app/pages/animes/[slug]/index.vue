@@ -125,8 +125,7 @@ const chronology = computed(() =>
 )
 
 function posterOf(item: ShikimoriAnimeFull) {
-  const direct = item.poster?.originalUrl || item.poster?.mainUrl
-  return direct || ''
+  return item.poster?.mainUrl || item.poster?.originalUrl || ''
 }
 
 const canonical = computed(() =>
@@ -296,8 +295,8 @@ onMounted(async () => {
                 <span class="chrono__relation">{{ relationLabel(link.relationKind, link.relationText) }}</span>
                 <span class="chrono__poster">
                   <img
-                    v-if="link.anime.poster?.mainUrl || link.anime.poster?.originalUrl"
-                    :src="link.anime.poster.mainUrl || link.anime.poster.originalUrl"
+                    v-if="link.anime.poster?.previewUrl || link.anime.poster?.mainUrl || link.anime.poster?.originalUrl"
+                    :src="link.anime.poster.previewUrl || link.anime.poster.mainUrl || link.anime.poster.originalUrl"
                     alt=""
                     loading="lazy"
                   >

@@ -1,4 +1,4 @@
-// GraphQL Queries for Shikimori API
+﻿// GraphQL Queries for Shikimori API
 
 export const ANIME_DETAILS_QUERY = `
   query ($ids: String, $limit: Int) {
@@ -10,6 +10,8 @@ export const ANIME_DETAILS_QUERY = `
       score
       poster { 
         mainUrl 
+        main2xUrl
+        previewUrl
         originalUrl 
       }
       airedOn { 
@@ -34,6 +36,8 @@ export const ANIME_SEARCH_QUERY = `
       score
       poster { 
         mainUrl 
+        main2xUrl
+        previewUrl
         originalUrl 
       }
       airedOn { 
@@ -61,6 +65,8 @@ export const ANIME_DETAILS_FULL_QUERY = `
       nextEpisodeAt
       poster { 
         mainUrl 
+        main2xUrl
+        previewUrl
         originalUrl 
       }
       airedOn { 
@@ -110,6 +116,8 @@ export const ANIME_RELATED_QUERY = `
           score
           poster {
             mainUrl
+            main2xUrl
+            previewUrl
             originalUrl
           }
         }

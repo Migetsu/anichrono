@@ -1,4 +1,4 @@
-import { shikiGQL } from '~/lib/api/shikiClient'
+﻿import { shikiGQL } from '~/lib/api/shikiClient'
 import type { ShikimoriAnimeListItem, AnimesQueryResponse, AnimeStatusString } from '@/types/shikimori'
 import { isKidsAnime } from '#shared/kids'
 
@@ -12,7 +12,7 @@ const QUERY = `
       score
       rating
       duration
-      poster { originalUrl }
+      poster { mainUrl previewUrl originalUrl }
       genres { id name russian }
       airedOn { year }
     }

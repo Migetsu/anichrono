@@ -173,7 +173,7 @@ const crumbs = computed(() => [
 
         <header class="film__hero">
           <div class="film__poster">
-            <img v-if="film.poster_path" :src="getTMDBImageUrl(film.poster_path, 'original')" :alt="title">
+            <img v-if="film.poster_path" :src="getTMDBImageUrl(film.poster_path, 'w500')" :alt="title" fetchpriority="high">
             <span v-else class="film__poster-empty"></span>
           </div>
 

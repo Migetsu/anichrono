@@ -1,4 +1,4 @@
-import { shikiGQL } from '~/lib/api/shikiClient'
+﻿import { shikiGQL } from '~/lib/api/shikiClient'
 import type { ShikimoriAnimeListItem, AnimesQueryResponse } from '~/types/shikimori'
 import type { CatalogFilters, Genre } from '@/types/catalog'
 import { AnimesQueryResponseSchema } from '@/lib/api/schemas'
@@ -36,7 +36,7 @@ const CATALOG_QUERY = `
       rating
       status
       duration
-      poster { originalUrl }
+      poster { mainUrl previewUrl originalUrl }
       genres { id name russian }
       airedOn { year }
     }
